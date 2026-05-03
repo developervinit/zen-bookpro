@@ -62,9 +62,9 @@ class ZBP_Shortcode {
     public function render_shortcode( $atts ) {
         $atts = shortcode_atts(
             array(
-                'product_id'  => '',
-                'experience'  => '',
-                'activity'    => '',
+                'product_id' => '',
+                'experience' => '',
+                'activity'   => '',
             ),
             $atts,
             'zen_bookpro'
@@ -83,7 +83,6 @@ class ZBP_Shortcode {
         $activity_filter   = isset( $_GET['activity'] ) ? wp_unslash( $_GET['activity'] ) : $atts['activity'];
 
         $filters = array(
-            'product_id'          => absint( $atts['product_id'] ),
             'experience_category' => absint( $experience_filter ),
             'activity_type'       => absint( $activity_filter ),
         );

@@ -18,6 +18,7 @@ define( 'ZBP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once ZBP_PLUGIN_PATH . 'includes/class-zbp-loader.php';
 require_once ZBP_PLUGIN_PATH . 'includes/class-zbp-shortcode.php';
+require_once ZBP_PLUGIN_PATH . 'includes/class-zbp-admin.php';
 require_once ZBP_PLUGIN_PATH . 'includes/services/class-zbp-product-service.php';
 
 /**

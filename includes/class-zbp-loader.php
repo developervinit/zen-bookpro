@@ -10,7 +10,14 @@ class ZBP_Loader {
      * @return void
      */
     public function run() {
-        $shortcode = new ZBP_Shortcode( new ZBP_Product_Service() );
+        $product_service = new ZBP_Product_Service();
+
+        $shortcode = new ZBP_Shortcode( $product_service );
         $shortcode->register();
+
+        if ( is_admin() ) {
+            $admin = new ZBP_Admin( $product_service );
+            $admin->register();
+        }
     }
 }
