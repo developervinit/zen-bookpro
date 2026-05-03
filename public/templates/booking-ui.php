@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -74,62 +74,60 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <div class="zbp-product-list">
-        <article class="zbp-product-card zbp-slot-card">
-            <div class="zbp-card-icon">&#128293;</div>
-            <div class="zbp-card-content">
-                <div class="zbp-card-top">
-                    <h4>FREE FLOW: Sauna, Icebath, Infrared</h4>
-                    <div class="zbp-coins">ZENCOINS: <span>5</span></div>
-                </div>
+        <?php if ( ! empty( $products ) ) : ?>
+            <?php foreach ( $products as $product ) : ?>
+                <?php
+                $is_slot_based = ! empty( $product['is_slot_based'] );
+                $image_html    = ! empty( $product['image'] )
+                    ? '<img src="' . esc_url( $product['image'] ) . '" alt="' . esc_attr( $product['title'] ) . '" class="zbp-product-image" />'
+                    : '<span class="zbp-image-placeholder">&#128247;</span>';
+                ?>
+                <article class="zbp-product-card <?php echo $is_slot_based ? 'zbp-slot-card' : 'zbp-event-card'; ?>">
+                    <div class="zbp-card-icon"><?php echo wp_kses_post( $image_html ); ?></div>
+                    <div class="zbp-card-content">
+                        <div class="zbp-card-top">
+                            <h4><?php echo esc_html( $product['title'] ); ?></h4>
+                            <div class="zbp-coins"><?php esc_html_e( 'Price:', 'zen-bookpro' ); ?> <span><?php echo wp_kses_post( wp_strip_all_tags( $product['price_html'] ? $product['price_html'] : __( 'N/A', 'zen-bookpro' ) ) ); ?></span></div>
+                        </div>
 
-                <div class="zbp-select-wrap">
-                    <label for="zbp-slot-select">Choose Slot</label>
-                    <select id="zbp-slot-select">
-                        <option>Choose Slot</option>
-                        <option>08:00-09:00</option>
-                        <option>09:00-10:00</option>
-                    </select>
-                </div>
+                        <?php if ( $is_slot_based ) : ?>
+                            <div class="zbp-select-wrap">
+                                <label><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></label>
+                                <select>
+                                    <option><?php esc_html_e( 'Slot data coming in next step', 'zen-bookpro' ); ?></option>
+                                </select>
+                            </div>
 
-                <div class="zbp-slot-chips">
-                    <span>08:00-09:00</span>
-                    <span>09:00-10:00</span>
-                    <span>11:00-12:00</span>
-                    <span>12:00-13:00</span>
-                    <span>13:00-14:00</span>
-                    <span>14:00-15:00</span>
-                    <span>18:00-19:00</span>
-                    <span>19:00-20:00</span>
-                    <span>20:00-21:00</span>
-                    <span>21:00-22:00</span>
-                </div>
+                            <div class="zbp-slot-chips">
+                                <span><?php esc_html_e( 'Slot Placeholder', 'zen-bookpro' ); ?></span>
+                            </div>
 
-                <div class="zbp-card-bottom">
-                    <div class="zbp-duration">(60 min)</div>
-                    <button class="zbp-join-btn" type="button">Join</button>
-                </div>
-            </div>
-        </article>
+                            <div class="zbp-card-bottom">
+                                <div class="zbp-duration"><?php echo esc_html( $product['duration'] ); ?></div>
+                                <button class="zbp-join-btn" type="button"><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
+                            </div>
+                        <?php else : ?>
+                            <div class="zbp-event-meta">
+                                <p><?php esc_html_e( '08:00-09:00 (placeholder)', 'zen-bookpro' ); ?></p>
+                                <p><?php echo esc_html( $product['duration'] ); ?></p>
+                                <p><?php esc_html_e( 'Availability placeholder', 'zen-bookpro' ); ?></p>
+                            </div>
 
-        <article class="zbp-product-card zbp-event-card">
-            <div class="zbp-card-icon">&#129496;</div>
-            <div class="zbp-card-content">
-                <div class="zbp-card-top">
-                    <h4>MEDITATION: Dynamic Vinyasa Flow (ENG)</h4>
-                    <div class="zbp-coins">ZENCOINS: <span>5</span></div>
+                            <div class="zbp-card-bottom">
+                                <div></div>
+                                <button class="zbp-ended-btn" type="button"><?php esc_html_e( 'Class Ended', 'zen-bookpro' ); ?></button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        <?php else : ?>
+            <article class="zbp-product-card zbp-empty-state">
+                <div class="zbp-card-content">
+                    <h4><?php esc_html_e( 'No booking products found.', 'zen-bookpro' ); ?></h4>
+                    <p><?php esc_html_e( 'Try changing taxonomy filters or create booking products in WooCommerce.', 'zen-bookpro' ); ?></p>
                 </div>
-
-                <div class="zbp-event-meta">
-                    <p>08:00-09:00 (60 min)</p>
-                    <p>19/19 (Vol)</p>
-                    <p>Maria Pez</p>
-                </div>
-
-                <div class="zbp-card-bottom">
-                    <div></div>
-                    <button class="zbp-ended-btn" type="button">Class Ended</button>
-                </div>
-            </div>
-        </article>
+            </article>
+        <?php endif; ?>
     </div>
 </div>

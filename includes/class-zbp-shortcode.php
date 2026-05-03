@@ -1,9 +1,25 @@
-﻿<?php
+<?php
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 class ZBP_Shortcode {
+    /**
+     * Product service instance.
+     *
+     * @var ZBP_Product_Service
+     */
+    private $product_service;
+
+    /**
+     * Constructor.
+     *
+     * @param ZBP_Product_Service $product_service Product service.
+     */
+    public function __construct( $product_service ) {
+        $this->product_service = $product_service;
+    }
+
     /**
      * Register shortcode and front-end assets.
      *
@@ -46,7 +62,9 @@ class ZBP_Shortcode {
     public function render_shortcode( $atts ) {
         $atts = shortcode_atts(
             array(
-                'product_id' => '',
+                'product_id'  => '',
+                'experience'  => '',
+                'activity'    => '',
             ),
             $atts,
             'zen_bookpro'
@@ -60,6 +78,17 @@ class ZBP_Shortcode {
         if ( ! file_exists( $template_file ) ) {
             return '';
         }
+
+        $experience_filter = isset( $_GET['experience'] ) ? wp_unslash( $_GET['experience'] ) : $atts['experience'];
+        $activity_filter   = isset( $_GET['activity'] ) ? wp_unslash( $_GET['activity'] ) : $atts['activity'];
+
+        $filters = array(
+            'product_id'          => $atts['product_id'],
+            'experience_category' => sanitize_title( $experience_filter ),
+            'activity_type'       => sanitize_title( $activity_filter ),
+        );
+
+        $products = $this->product_service->get_products( $filters );
 
         ob_start();
         $product_id = $atts['product_id'];

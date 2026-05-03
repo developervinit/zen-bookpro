@@ -331,3 +331,31 @@
         flex-direction: column;
     }
 }
+.zbp-product-image {
+    border-radius: 8px;
+    height: 68px;
+    object-fit: cover;
+    width: 68px;
+}
+
+.zbp-image-placeholder {
+    align-items: center;
+    display: inline-flex;
+    font-size: 28px;
+    height: 68px;
+    justify-content: center;
+    width: 68px;
+}
+
+.zbp-empty-state {
+    grid-template-columns: 1fr;
+}
+
+.zbp-empty-state .zbp-card-content h4 {
+    margin: 0 0 8px;
+}
+
+.zbp-empty-state .zbp-card-content p {
+    color: var(--zbp-muted);
+    margin: 0;
+}
