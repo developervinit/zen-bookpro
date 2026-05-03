@@ -83,9 +83,9 @@ class ZBP_Shortcode {
         $activity_filter   = isset( $_GET['activity'] ) ? wp_unslash( $_GET['activity'] ) : $atts['activity'];
 
         $filters = array(
-            'product_id'          => $atts['product_id'],
-            'experience_category' => sanitize_title( $experience_filter ),
-            'activity_type'       => sanitize_title( $activity_filter ),
+            'product_id'          => absint( $atts['product_id'] ),
+            'experience_category' => absint( $experience_filter ),
+            'activity_type'       => absint( $activity_filter ),
         );
 
         $products = $this->product_service->get_products( $filters );

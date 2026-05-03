@@ -15,60 +15,70 @@ class ZBP_Product_Service {
         $filters = wp_parse_args(
             $filters,
             array(
-                'product_id'           => '',
-                'experience_category'  => '',
-                'activity_type'        => '',
+                'product_id'           => 0,
+                'experience_category'  => 0,
+                'activity_type'        => 0,
             )
         );
+
+        $product_id            = absint( $filters['product_id'] );
+        $experience_category_id = absint( $filters['experience_category'] );
+        $activity_type_id       = absint( $filters['activity_type'] );
 
         $query_args = array(
             'post_type'      => 'product',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
-            'meta_query'     => array(
-                'relation' => 'OR',
+            'tax_query'      => array(
                 array(
-                    'key'     => '_wc_booking',
-                    'compare' => 'EXISTS',
-                ),
-                array(
-                    'key'     => '_product_type',
-                    'value'   => 'booking',
-                    'compare' => '=',
+                    'taxonomy' => 'product_type',
+                    'field'    => 'slug',
+                    'terms'    => array( 'booking' ),
                 ),
             ),
         );
 
-        if ( ! empty( $filters['product_id'] ) ) {
-            $query_args['post__in'] = array( absint( $filters['product_id'] ) );
+        if ( $product_id > 0 ) {
+            $query_args['post__in'] = array( $product_id );
         }
 
-        $tax_query = array();
-
-        if ( ! empty( $filters['experience_category'] ) ) {
-            $tax_query[] = array(
+        if ( $experience_category_id > 0 ) {
+            $query_args['tax_query'][] = array(
                 'taxonomy' => 'experience_category',
-                'field'    => 'slug',
-                'terms'    => sanitize_title( $filters['experience_category'] ),
+                'field'    => 'term_id',
+                'terms'    => array( $experience_category_id ),
             );
         }
 
-        if ( ! empty( $filters['activity_type'] ) ) {
-            $tax_query[] = array(
+        if ( $activity_type_id > 0 ) {
+            $query_args['tax_query'][] = array(
                 'taxonomy' => 'activity_type',
-                'field'    => 'slug',
-                'terms'    => sanitize_title( $filters['activity_type'] ),
+                'field'    => 'term_id',
+                'terms'    => array( $activity_type_id ),
             );
         }
 
-        if ( ! empty( $tax_query ) ) {
-            if ( count( $tax_query ) > 1 ) {
-                $tax_query['relation'] = 'AND';
-            }
-            $query_args['tax_query'] = $tax_query;
+        if ( count( $query_args['tax_query'] ) > 1 ) {
+            $query_args['tax_query']['relation'] = 'AND';
         }
+
+        $this->debug_log(
+            array(
+                'selected_term_ids' => array(
+                    'experience_category' => $experience_category_id,
+                    'activity_type'       => $activity_type_id,
+                ),
+                'query_args'         => $query_args,
+            )
+        );
 
         $query = new WP_Query( $query_args );
+
+        $this->debug_log(
+            array(
+                'returned_posts_count' => (int) $query->found_posts,
+            )
+        );
 
         if ( ! $query->have_posts() ) {
             return array();
@@ -85,7 +95,8 @@ class ZBP_Product_Service {
 
             $booking_data = $this->get_booking_data( $wc_product );
             $duration     = $this->get_duration_label( $booking_data );
-            $products[]   = array(
+
+            $products[] = array(
                 'id'                => $wc_product->get_id(),
                 'title'             => $wc_product->get_name(),
                 'image'             => get_the_post_thumbnail_url( $wc_product->get_id(), 'medium' ),
@@ -110,25 +121,22 @@ class ZBP_Product_Service {
      * @return array
      */
     private function get_booking_data( $product ) {
-        if ( ! method_exists( $product, 'get_type' ) ) {
-            return array();
-        }
-
-        $is_booking_product = 'booking' === $product->get_type() || get_post_meta( $product->get_id(), '_wc_booking', true );
-
-        if ( ! $is_booking_product ) {
+        if ( ! method_exists( $product, 'get_type' ) || 'booking' !== $product->get_type() ) {
             return array();
         }
 
         $booking_data = array(
-            'duration'     => get_post_meta( $product->get_id(), '_wc_booking_duration', true ),
-            'duration_unit'=> get_post_meta( $product->get_id(), '_wc_booking_duration_unit', true ),
-            'availability' => get_post_meta( $product->get_id(), '_wc_booking_availability', true ),
+            'duration'      => get_post_meta( $product->get_id(), '_wc_booking_duration', true ),
+            'duration_unit' => get_post_meta( $product->get_id(), '_wc_booking_duration_unit', true ),
+            'availability'  => get_post_meta( $product->get_id(), '_wc_booking_availability', true ),
         );
 
-        return array_filter( $booking_data, static function ( $value ) {
-            return '' !== $value && null !== $value;
-        } );
+        return array_filter(
+            $booking_data,
+            static function ( $value ) {
+                return '' !== $value && null !== $value;
+            }
+        );
     }
 
     /**
@@ -147,5 +155,20 @@ class ZBP_Product_Service {
         $unit     = ! empty( $booking_data['duration_unit'] ) ? sanitize_text_field( $booking_data['duration_unit'] ) : __( 'minute', 'zen-bookpro' );
 
         return sprintf( '%d %s', $duration, $unit );
+    }
+
+    /**
+     * Temporary debug logs to trace query behavior.
+     *
+     * @param array $payload Debug data.
+     *
+     * @return void
+     */
+    private function debug_log( $payload ) {
+        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+            return;
+        }
+
+        error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
     }
 }
