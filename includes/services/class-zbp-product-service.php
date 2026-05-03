@@ -21,45 +21,19 @@ class ZBP_Product_Service {
             )
         );
 
-        $product_id            = absint( $filters['product_id'] );
+        $product_id             = absint( $filters['product_id'] );
         $experience_category_id = absint( $filters['experience_category'] );
         $activity_type_id       = absint( $filters['activity_type'] );
 
         $query_args = array(
-            'post_type'      => 'product',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'tax_query'      => array(
-                array(
-                    'taxonomy' => 'product_type',
-                    'field'    => 'slug',
-                    'terms'    => array( 'booking' ),
-                ),
-            ),
+            'status' => 'publish',
+            'limit'  => -1,
+            'type'   => 'booking',
+            'return' => 'objects',
         );
 
         if ( $product_id > 0 ) {
-            $query_args['post__in'] = array( $product_id );
-        }
-
-        if ( $experience_category_id > 0 ) {
-            $query_args['tax_query'][] = array(
-                'taxonomy' => 'experience_category',
-                'field'    => 'term_id',
-                'terms'    => array( $experience_category_id ),
-            );
-        }
-
-        if ( $activity_type_id > 0 ) {
-            $query_args['tax_query'][] = array(
-                'taxonomy' => 'activity_type',
-                'field'    => 'term_id',
-                'terms'    => array( $activity_type_id ),
-            );
-        }
-
-        if ( count( $query_args['tax_query'] ) > 1 ) {
-            $query_args['tax_query']['relation'] = 'AND';
+            $query_args['include'] = array( $product_id );
         }
 
         $this->debug_log(
@@ -68,28 +42,36 @@ class ZBP_Product_Service {
                     'experience_category' => $experience_category_id,
                     'activity_type'       => $activity_type_id,
                 ),
-                'query_args'         => $query_args,
+                'wc_get_products_args' => $query_args,
             )
         );
 
-        $query = new WP_Query( $query_args );
+        $wc_products = wc_get_products( $query_args );
 
         $this->debug_log(
             array(
-                'returned_posts_count' => (int) $query->found_posts,
+                'wc_products_count_before_tax_filters' => is_array( $wc_products ) ? count( $wc_products ) : 0,
             )
         );
 
-        if ( ! $query->have_posts() ) {
+        if ( empty( $wc_products ) ) {
             return array();
         }
 
         $products = array();
 
-        foreach ( $query->posts as $post ) {
-            $wc_product = wc_get_product( $post->ID );
+        foreach ( $wc_products as $wc_product ) {
+            if ( ! $wc_product || ! method_exists( $wc_product, 'get_id' ) ) {
+                continue;
+            }
 
-            if ( ! $wc_product ) {
+            $product_post_id = $wc_product->get_id();
+
+            if ( $experience_category_id > 0 && ! has_term( $experience_category_id, 'experience_category', $product_post_id ) ) {
+                continue;
+            }
+
+            if ( $activity_type_id > 0 && ! has_term( $activity_type_id, 'activity_type', $product_post_id ) ) {
                 continue;
             }
 
@@ -97,9 +79,9 @@ class ZBP_Product_Service {
             $duration     = $this->get_duration_label( $booking_data );
 
             $products[] = array(
-                'id'                => $wc_product->get_id(),
+                'id'                => $product_post_id,
                 'title'             => $wc_product->get_name(),
-                'image'             => get_the_post_thumbnail_url( $wc_product->get_id(), 'medium' ),
+                'image'             => get_the_post_thumbnail_url( $product_post_id, 'medium' ),
                 'price_html'        => $wc_product->get_price_html(),
                 'duration'          => $duration,
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
@@ -108,7 +90,11 @@ class ZBP_Product_Service {
             );
         }
 
-        wp_reset_postdata();
+        $this->debug_log(
+            array(
+                'returned_products_count_after_tax_filters' => count( $products ),
+            )
+        );
 
         return $products;
     }
