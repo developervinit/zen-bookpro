@@ -18,6 +18,9 @@ class ZBP_Loader {
         if ( is_admin() ) {
             $admin = new ZBP_Admin( $product_service );
             $admin->register();
+
+            $product_mode = new ZBP_Product_Mode();
+            $product_mode->register();
         }
     }
 }
