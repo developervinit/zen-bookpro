@@ -5,6 +5,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ZBP_Product_Service {
     /**
+     * Slot service.
+     *
+     * @var ZBP_Slot_Service
+     */
+    private $slot_service;
+
+    /**
+     * Constructor.
+     */
+    public function __construct() {
+        $this->slot_service = new ZBP_Slot_Service();
+    }
+
+    /**
      * Fetch booking products with optional taxonomy filters.
      *
      * @param array $filters Filter values.
@@ -17,11 +31,13 @@ class ZBP_Product_Service {
             array(
                 'experience_category' => 0,
                 'activity_type'       => 0,
+                'selected_date'       => '',
             )
         );
 
         $experience_category_id = absint( $filters['experience_category'] );
         $activity_type_id       = absint( $filters['activity_type'] );
+        $selected_date          = $this->normalize_selected_date( $filters['selected_date'] );
 
         $all_products = wc_get_products(
             array(
@@ -105,7 +121,7 @@ class ZBP_Product_Service {
             )
         );
 
-        return $this->map_products_for_template( $taxonomy_filtered );
+        return $this->map_products_for_template( $taxonomy_filtered, $selected_date );
     }
 
     /**
@@ -172,11 +188,12 @@ class ZBP_Product_Service {
     /**
      * Map product objects to template-ready arrays.
      *
-     * @param array $products Product objects.
+     * @param array  $products      Product objects.
+     * @param string $selected_date Date string.
      *
      * @return array
      */
-    private function map_products_for_template( $products ) {
+    private function map_products_for_template( $products, $selected_date ) {
         $mapped = array();
 
         foreach ( $products as $product ) {
@@ -184,21 +201,61 @@ class ZBP_Product_Service {
                 continue;
             }
 
+            $product_id   = (int) $product->get_id();
+            $mode         = $this->get_product_mode( $product_id );
             $booking_data = $this->get_booking_data( $product );
+            $slots        = $this->slot_service->get_slots_for_product( $product, $selected_date, $mode );
 
             $mapped[] = array(
-                'id'                => (int) $product->get_id(),
+                'id'                => $product_id,
                 'title'             => $product->get_name(),
-                'image'             => get_the_post_thumbnail_url( $product->get_id(), 'medium' ),
+                'mode'              => $mode,
+                'image'             => get_the_post_thumbnail_url( $product_id, 'medium' ),
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
                 'has_booking_data'  => ! empty( $booking_data ),
-                'is_slot_based'     => true,
+                'is_slot_based'     => 'free_flow' === $mode,
+                'slots'             => $slots,
             );
         }
 
         return $mapped;
+    }
+
+    /**
+     * Normalize selected date input to Y-m-d.
+     *
+     * @param string $selected_date Date string.
+     *
+     * @return string
+     */
+    private function normalize_selected_date( $selected_date ) {
+        $selected_date = sanitize_text_field( (string) $selected_date );
+
+        if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $selected_date ) ) {
+            return $selected_date;
+        }
+
+        return wp_date( 'Y-m-d' );
+    }
+
+    /**
+     * Get product mode value.
+     *
+     * @param int $product_id Product ID.
+     *
+     * @return string
+     */
+    private function get_product_mode( $product_id ) {
+        $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
+        $mode = sanitize_key( $mode );
+
+        if ( ! in_array( $mode, array( 'free_flow', 'event' ), true ) ) {
+            return 'free_flow';
+        }
+
+        return $mode;
     }
 
     /**

@@ -65,6 +65,7 @@ class ZBP_Shortcode {
                 'product_id' => '',
                 'experience' => '',
                 'activity'   => '',
+                'date'       => '',
             ),
             $atts,
             'zen_bookpro'
@@ -81,10 +82,12 @@ class ZBP_Shortcode {
 
         $experience_filter = isset( $_GET['experience'] ) ? wp_unslash( $_GET['experience'] ) : $atts['experience'];
         $activity_filter   = isset( $_GET['activity'] ) ? wp_unslash( $_GET['activity'] ) : $atts['activity'];
+        $date_filter       = isset( $_GET['date'] ) ? wp_unslash( $_GET['date'] ) : $atts['date'];
 
         $filters = array(
             'experience_category' => absint( $experience_filter ),
             'activity_type'       => absint( $activity_filter ),
+            'selected_date'       => sanitize_text_field( $date_filter ),
         );
 
         $products = $this->product_service->get_products( $filters );
