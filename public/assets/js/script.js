@@ -6,8 +6,197 @@ console.log("ZBP Script Running");
     document.addEventListener("DOMContentLoaded", function () {
         var wrappers = document.querySelectorAll(".zbp-booking-ui");
         console.log("ZBP Debug: wrappers found:", wrappers.length);
-        console.log("ZBP Debug: next button:", document.querySelector(".zbp-nav-next"));
-        console.log("ZBP Debug: prev button:", document.querySelector(".zbp-nav-prev"));
+
+        function escapeHtml(value) {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function slotLabel(slot) {
+            if (!slot || typeof slot !== "object") {
+                return "Unavailable";
+            }
+
+            if (slot.label) {
+                return slot.label;
+            }
+
+            return "Unavailable";
+        }
+
+        function renderEmptyState(productList) {
+            productList.innerHTML =
+                '<article class="zbp-product-card zbp-empty-state">' +
+                '<div class="zbp-card-content">' +
+                "<h4>No booking products found.</h4>" +
+                "<p>Try another date or adjust your filters.</p>" +
+                "</div>" +
+                "</article>";
+        }
+
+        function renderProducts(productList, products) {
+            if (!productList) {
+                return;
+            }
+
+            if (!Array.isArray(products) || products.length === 0) {
+                renderEmptyState(productList);
+                return;
+            }
+
+            var html = products
+                .map(function (product) {
+                    var isSlotBased = product.mode !== "event";
+                    var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
+                    var imageHtml = product.image
+                        ? '<img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
+                        : '<span class="zbp-image-placeholder">&#128247;</span>';
+                    var duration = escapeHtml(product.duration || "Duration N/A");
+                    var price = escapeHtml(product.price || "N/A");
+                    var slots = Array.isArray(product.slots) ? product.slots : [];
+
+                    if (isSlotBased) {
+                        var options = slots.length
+                            ? slots
+                                  .map(function (slot) {
+                                      var label = slotLabel(slot);
+                                      return '<option value="' + escapeHtml(label) + '">' + escapeHtml(label) + "</option>";
+                                  })
+                                  .join("")
+                            : '<option value="">No slots available</option>';
+
+                        var chips = slots.length
+                            ? slots
+                                  .map(function (slot) {
+                                      return "<span>" + escapeHtml(slotLabel(slot)) + "</span>";
+                                  })
+                                  .join("")
+                            : "<span>No slots</span>";
+
+                        return (
+                            '<article class="zbp-product-card ' +
+                            cardClass +
+                            '">' +
+                            '<div class="zbp-card-icon">' +
+                            imageHtml +
+                            "</div>" +
+                            '<div class="zbp-card-content">' +
+                            '<div class="zbp-card-top">' +
+                            "<h4>" +
+                            escapeHtml(product.name) +
+                            "</h4>" +
+                            '<div class="zbp-coins">Price: <span>' +
+                            price +
+                            "</span></div>" +
+                            "</div>" +
+                            '<div class="zbp-select-wrap">' +
+                            "<label>Choose Slot</label>" +
+                            "<select>" +
+                            options +
+                            "</select>" +
+                            "</div>" +
+                            '<div class="zbp-slot-chips">' +
+                            chips +
+                            "</div>" +
+                            '<div class="zbp-card-bottom">' +
+                            '<div class="zbp-duration">' +
+                            duration +
+                            "</div>" +
+                            '<button class="zbp-join-btn" type="button">Join</button>' +
+                            "</div>" +
+                            "</div>" +
+                            "</article>"
+                        );
+                    }
+
+                    var firstSlot = slots.length ? slotLabel(slots[0]) : "No slot available";
+
+                    return (
+                        '<article class="zbp-product-card ' +
+                        cardClass +
+                        '">' +
+                        '<div class="zbp-card-icon">' +
+                        imageHtml +
+                        "</div>" +
+                        '<div class="zbp-card-content">' +
+                        '<div class="zbp-card-top">' +
+                        "<h4>" +
+                        escapeHtml(product.name) +
+                        "</h4>" +
+                        '<div class="zbp-coins">Price: <span>' +
+                        price +
+                        "</span></div>" +
+                        "</div>" +
+                        '<div class="zbp-event-meta">' +
+                        "<p>" +
+                        escapeHtml(firstSlot) +
+                        "</p>" +
+                        "<p>" +
+                        duration +
+                        "</p>" +
+                        "</div>" +
+                        '<div class="zbp-card-bottom">' +
+                        "<div></div>" +
+                        '<button class="zbp-ended-btn" type="button">Class Ended</button>' +
+                        "</div>" +
+                        "</div>" +
+                        "</article>"
+                    );
+                })
+                .join("");
+
+            productList.innerHTML = html;
+        }
+
+        function fetchSlots(dateKey, wrapper, productList) {
+            if (!window.zbpAjax || !zbpAjax.ajaxUrl) {
+                console.error("ZBP Debug: AJAX config missing");
+                return;
+            }
+
+            var payload = new URLSearchParams();
+            payload.append("action", "zbp_get_slots");
+            payload.append("date", dateKey);
+            payload.append("nonce", zbpAjax.nonce || "");
+
+            fetch(zbpAjax.ajaxUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: payload.toString(),
+                credentials: "same-origin",
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (result) {
+                    if (!result || !result.success) {
+                        console.error("ZBP Debug: slot fetch failed", result);
+                        renderEmptyState(productList);
+                        return;
+                    }
+
+                    var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
+                    renderProducts(productList, products);
+                    wrapper.dispatchEvent(
+                        new CustomEvent("zbp_slots_updated", {
+                            detail: {
+                                selected_date: dateKey,
+                                products_count: products.length,
+                            },
+                        })
+                    );
+                })
+                .catch(function (error) {
+                    console.error("ZBP Debug: ajax error", error);
+                    renderEmptyState(productList);
+                });
+        }
 
         wrappers.forEach(function (wrapper) {
             var filterToggle = wrapper.querySelector(".zbp-filter-toggle");
@@ -19,16 +208,22 @@ console.log("ZBP Script Running");
             var dateRow = wrapper.querySelector(".zbp-date-row");
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
             var nextBtn = wrapper.querySelector(".zbp-nav-next");
+            var productList = wrapper.querySelector(".zbp-product-list");
 
-            console.log("ZBP Debug: wrapper next button:", nextBtn);
-            console.log("ZBP Debug: wrapper prev button:", prevBtn);
-            console.log("ZBP Debug: week range node:", weekRange);
-            console.log("ZBP Debug: date row node:", dateRow);
-
-            if (!dateRow || !weekRange) {
-                console.log("ZBP Debug: init aborted - missing dateRow or weekRange");
+            if (!dateRow || !weekRange || !productList) {
+                console.log("ZBP Debug: init aborted - missing date row, week range, or product list");
                 return;
             }
+
+            wrapper.addEventListener("zbp_date_selected", function (event) {
+                var selectedKey = event && event.detail ? event.detail.selected_date : "";
+
+                if (!selectedKey) {
+                    return;
+                }
+
+                fetchSlots(selectedKey, wrapper, productList);
+            });
 
             function openModal() {
                 if (!modal || !overlay) {
@@ -127,17 +322,12 @@ console.log("ZBP Script Running");
 
             function renderWeek() {
                 var weekEnd = addDays(weekStart, 6);
-                console.log("ZBP Debug: rendering calendar");
-                console.log("ZBP Debug: weekStart:", weekStart);
-                console.log("ZBP Debug: weekEnd:", weekEnd);
                 weekRange.textContent = formatHeaderRange(weekStart, weekEnd);
 
                 dateRow.innerHTML = "";
-                var generatedDates = [];
 
                 for (var i = 0; i < 7; i += 1) {
                     var dayDate = addDays(weekStart, i);
-                    generatedDates.push(formatDateKey(dayDate));
                     var button = document.createElement("button");
                     button.type = "button";
                     button.className = "zbp-date-item";
@@ -171,20 +361,10 @@ console.log("ZBP Script Running");
                 if (prevBtn) {
                     prevBtn.disabled = weekStart.getTime() <= currentWeekStart.getTime();
                 }
-
-                console.log("ZBP Debug:", {
-                    stage: "calendar_audit",
-                    today: formatDateKey(today),
-                    week_start: formatDateKey(weekStart),
-                    week_end: formatDateKey(weekEnd),
-                    generated_dates: generatedDates,
-                    selected_date: formatDateKey(selectedDate),
-                });
             }
 
             if (prevBtn) {
                 prevBtn.addEventListener("click", function () {
-                    console.log("ZBP Debug: prev clicked");
                     var nextPrevStart = addDays(weekStart, -7);
 
                     if (nextPrevStart.getTime() < currentWeekStart.getTime()) {
@@ -193,46 +373,19 @@ console.log("ZBP Script Running");
 
                     weekStart = nextPrevStart;
                     renderWeek();
-
-                    console.log("ZBP Debug:", {
-                        stage: "week_change",
-                        direction: "prev",
-                        week_start: formatDateKey(weekStart),
-                        week_end: formatDateKey(addDays(weekStart, 6)),
-                    });
-
                     emitDateSelected(selectedDate);
                 });
             }
 
             if (nextBtn) {
                 nextBtn.addEventListener("click", function () {
-                    console.log("ZBP Debug: next clicked");
                     weekStart = addDays(weekStart, 7);
                     renderWeek();
-
-                    console.log("ZBP Debug:", {
-                        stage: "week_change",
-                        direction: "next",
-                        week_start: formatDateKey(weekStart),
-                        week_end: formatDateKey(addDays(weekStart, 6)),
-                    });
-
                     emitDateSelected(selectedDate);
                 });
             }
-            console.log("ZBP Debug: event listeners attached");
 
             renderWeek();
-            console.log("ZBP Debug: initial render triggered");
-
-            console.log("ZBP Debug:", {
-                stage: "calendar_init",
-                today: formatDateKey(today),
-                week_start: formatDateKey(weekStart),
-                week_end: formatDateKey(addDays(weekStart, 6)),
-            });
-
             emitDateSelected(selectedDate);
         });
     });
