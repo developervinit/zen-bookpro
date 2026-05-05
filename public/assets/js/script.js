@@ -1,3 +1,4 @@
+console.log("ZBP Script Running");
 (function () {
     "use strict";
     console.log("ZBP Debug: script loaded");
