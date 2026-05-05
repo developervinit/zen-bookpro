@@ -69,6 +69,14 @@
                 return y + "-" + m + "-" + d;
             }
 
+            function parseDateKeyLocal(dateKey) {
+                var parts = dateKey.split("-");
+                if (parts.length !== 3) {
+                    return startOfDay(new Date());
+                }
+                return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            }
+
             function formatHeaderRange(start, end) {
                 var startLabel = String(start.getDate()).padStart(2, "0") + "." + String(start.getMonth() + 1).padStart(2, "0") + ".";
                 var endLabel = String(end.getDate()).padStart(2, "0") + "." + String(end.getMonth() + 1).padStart(2, "0") + "." + end.getFullYear();
@@ -111,9 +119,11 @@
                 weekRange.textContent = formatHeaderRange(weekStart, weekEnd);
 
                 dateRow.innerHTML = "";
+                var generatedDates = [];
 
                 for (var i = 0; i < 7; i += 1) {
                     var dayDate = addDays(weekStart, i);
+                    generatedDates.push(formatDateKey(dayDate));
                     var button = document.createElement("button");
                     button.type = "button";
                     button.className = "zbp-date-item";
@@ -135,7 +145,7 @@
                     button.appendChild(weekday);
 
                     button.addEventListener("click", function (event) {
-                        var newDate = startOfDay(new Date(event.currentTarget.getAttribute("data-date")));
+                        var newDate = startOfDay(parseDateKeyLocal(event.currentTarget.getAttribute("data-date")));
                         selectedDate = newDate;
                         renderWeek();
                         emitDateSelected(selectedDate);
@@ -147,6 +157,15 @@
                 if (prevBtn) {
                     prevBtn.disabled = weekStart.getTime() <= currentWeekStart.getTime();
                 }
+
+                console.log("ZBP Debug:", {
+                    stage: "calendar_audit",
+                    today: formatDateKey(today),
+                    week_start: formatDateKey(weekStart),
+                    week_end: formatDateKey(weekEnd),
+                    generated_dates: generatedDates,
+                    selected_date: formatDateKey(selectedDate),
+                });
             }
 
             if (prevBtn) {
@@ -158,7 +177,6 @@
                     }
 
                     weekStart = nextPrevStart;
-                    selectedDate = new Date(weekStart);
                     renderWeek();
 
                     console.log("ZBP Debug:", {
@@ -175,7 +193,6 @@
             if (nextBtn) {
                 nextBtn.addEventListener("click", function () {
                     weekStart = addDays(weekStart, 7);
-                    selectedDate = new Date(weekStart);
                     renderWeek();
 
                     console.log("ZBP Debug:", {
