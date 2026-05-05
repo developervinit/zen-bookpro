@@ -36,6 +36,10 @@ class ZBP_Shortcode {
      * @return void
      */
     public function register_assets() {
+        error_log( '[ZBP Debug] register_assets() fired on wp_enqueue_scripts.' );
+        $script_url = ZBP_PLUGIN_URL . 'public/assets/js/script.js';
+        error_log( '[ZBP Debug] Script URL generated: ' . $script_url );
+
         wp_register_style(
             'zbp-style',
             ZBP_PLUGIN_URL . 'public/assets/css/style.css',
@@ -45,7 +49,7 @@ class ZBP_Shortcode {
 
         wp_register_script(
             'zbp-script',
-            ZBP_PLUGIN_URL . 'public/assets/js/script.js',
+            $script_url,
             array(),
             ZBP_VERSION,
             true
@@ -71,6 +75,7 @@ class ZBP_Shortcode {
             'zen_bookpro'
         );
 
+        error_log( '[ZBP Debug] render_shortcode() called. Enqueuing zbp-style and zbp-script.' );
         wp_enqueue_style( 'zbp-style' );
         wp_enqueue_script( 'zbp-script' );
 
