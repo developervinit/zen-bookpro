@@ -26,6 +26,10 @@ class ZBP_Product_Service {
      * @return array
      */
     public function get_products( $filters = array() ) {
+        if ( ! function_exists( 'wc_get_products' ) ) {
+            return array();
+        }
+
         $filters = wp_parse_args(
             $filters,
             array(
@@ -130,6 +134,10 @@ class ZBP_Product_Service {
      * @return array
      */
     public function get_all_bookable_products() {
+        if ( ! function_exists( 'wc_get_products' ) ) {
+            return array();
+        }
+
         $all_products = wc_get_products(
             array(
                 'status' => 'publish',

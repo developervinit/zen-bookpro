@@ -49,8 +49,9 @@ function zbp_dependencies_admin_notice() {
 
 function zbp_init_plugin() {
     if ( ! zbp_dependencies_met() ) {
-        add_action( 'admin_notices', 'zbp_dependencies_admin_notice' );
-        return;
+        if ( is_admin() ) {
+            add_action( 'admin_notices', 'zbp_dependencies_admin_notice' );
+        }
     }
 
     $loader = new ZBP_Loader();
