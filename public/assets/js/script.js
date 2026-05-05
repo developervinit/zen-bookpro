@@ -1,8 +1,12 @@
 (function () {
     "use strict";
+    console.log("ZBP Debug: script loaded");
 
     document.addEventListener("DOMContentLoaded", function () {
         var wrappers = document.querySelectorAll(".zbp-booking-ui");
+        console.log("ZBP Debug: wrappers found:", wrappers.length);
+        console.log("ZBP Debug: next button:", document.querySelector(".zbp-nav-next"));
+        console.log("ZBP Debug: prev button:", document.querySelector(".zbp-nav-prev"));
 
         wrappers.forEach(function (wrapper) {
             var filterToggle = wrapper.querySelector(".zbp-filter-toggle");
@@ -15,7 +19,13 @@
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
             var nextBtn = wrapper.querySelector(".zbp-nav-next");
 
+            console.log("ZBP Debug: wrapper next button:", nextBtn);
+            console.log("ZBP Debug: wrapper prev button:", prevBtn);
+            console.log("ZBP Debug: week range node:", weekRange);
+            console.log("ZBP Debug: date row node:", dateRow);
+
             if (!dateRow || !weekRange) {
+                console.log("ZBP Debug: init aborted - missing dateRow or weekRange");
                 return;
             }
 
@@ -116,6 +126,9 @@
 
             function renderWeek() {
                 var weekEnd = addDays(weekStart, 6);
+                console.log("ZBP Debug: rendering calendar");
+                console.log("ZBP Debug: weekStart:", weekStart);
+                console.log("ZBP Debug: weekEnd:", weekEnd);
                 weekRange.textContent = formatHeaderRange(weekStart, weekEnd);
 
                 dateRow.innerHTML = "";
@@ -170,6 +183,7 @@
 
             if (prevBtn) {
                 prevBtn.addEventListener("click", function () {
+                    console.log("ZBP Debug: prev clicked");
                     var nextPrevStart = addDays(weekStart, -7);
 
                     if (nextPrevStart.getTime() < currentWeekStart.getTime()) {
@@ -192,6 +206,7 @@
 
             if (nextBtn) {
                 nextBtn.addEventListener("click", function () {
+                    console.log("ZBP Debug: next clicked");
                     weekStart = addDays(weekStart, 7);
                     renderWeek();
 
@@ -205,8 +220,10 @@
                     emitDateSelected(selectedDate);
                 });
             }
+            console.log("ZBP Debug: event listeners attached");
 
             renderWeek();
+            console.log("ZBP Debug: initial render triggered");
 
             console.log("ZBP Debug:", {
                 stage: "calendar_init",
