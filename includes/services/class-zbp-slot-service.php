@@ -14,7 +14,9 @@ class ZBP_Slot_Service {
      * @return array
      */
     public function get_slots_for_product( $product, $selected_date, $mode ) {
-        if ( ! $product || ! method_exists( $product, 'is_type' ) || ! $product->is_type( 'booking' ) ) {
+        $product = $this->get_booking_product( $product );
+
+        if ( ! $product ) {
             return array();
         }
 
@@ -25,6 +27,19 @@ class ZBP_Slot_Service {
         if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
             return array();
         }
+
+        $availability_rules = method_exists( $product, 'get_availability' ) ? $product->get_availability() : array();
+        if ( ! is_array( $availability_rules ) ) {
+            $availability_rules = array();
+        }
+
+        $this->debug_log(
+            array(
+                'stage'              => 'booking_rules_detected',
+                'product_id'         => (int) $product->get_id(),
+                'availability_rules' => $availability_rules,
+            )
+        );
 
         $blocks = $product->get_blocks_in_range( $from, $to );
 
@@ -42,10 +57,10 @@ class ZBP_Slot_Service {
 
         $this->debug_log(
             array(
-                'stage'      => 'slot_fetch',
-                'product_id' => (int) $product->get_id(),
-                'date'       => $date_context['date'],
-                'total_slots'=> count( $slots ),
+                'stage'            => 'blocks_generated',
+                'product_id'       => (int) $product->get_id(),
+                'selected_date'    => $date_context['date'],
+                'generated_blocks' => $slots,
             )
         );
 
@@ -53,22 +68,50 @@ class ZBP_Slot_Service {
 
         $this->debug_log(
             array(
-                'stage'      => 'mode_applied',
-                'product_id' => (int) $product->get_id(),
-                'mode'       => $mode,
-                'final_slots'=> count( $final_slots ),
-            )
-        );
-
-        $this->debug_log(
-            array(
-                'stage'      => 'slot_final',
-                'product_id' => (int) $product->get_id(),
-                'slots'      => $final_slots,
+                'stage'          => 'final_slots',
+                'product_id'     => (int) $product->get_id(),
+                'mode'           => $mode,
+                'slots_returned' => $final_slots,
             )
         );
 
         return $final_slots;
+    }
+
+    /**
+     * Resolve a WC_Product_Booking instance from mixed product input.
+     *
+     * @param mixed $product Product object or ID.
+     *
+     * @return WC_Product_Booking|null
+     */
+    private function get_booking_product( $product ) {
+        $product_id = 0;
+
+        if ( is_object( $product ) && method_exists( $product, 'get_id' ) ) {
+            $product_id = (int) $product->get_id();
+        } elseif ( is_numeric( $product ) ) {
+            $product_id = absint( $product );
+        }
+
+        if ( $product_id <= 0 ) {
+            return null;
+        }
+
+        $resolved_product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+
+        if ( ! $resolved_product || ! method_exists( $resolved_product, 'is_type' ) || ! $resolved_product->is_type( 'booking' ) ) {
+            return null;
+        }
+
+        if ( class_exists( 'WC_Product_Booking' ) && ! ( $resolved_product instanceof WC_Product_Booking ) ) {
+            $booking_product = new WC_Product_Booking( $product_id );
+            if ( $booking_product && method_exists( $booking_product, 'is_type' ) && $booking_product->is_type( 'booking' ) ) {
+                return $booking_product;
+            }
+        }
+
+        return $resolved_product;
     }
 
     /**
