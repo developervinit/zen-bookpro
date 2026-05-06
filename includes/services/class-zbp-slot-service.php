@@ -204,7 +204,7 @@ class ZBP_Slot_Service {
                 'product_id'         => (int) $product->get_id(),
                 'booking_form_class' => get_class( $booking_form ),
                 'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
-            ))
+            ));
         echo "</pre>";
 
         $this->debug_log(
