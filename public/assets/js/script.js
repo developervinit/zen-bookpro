@@ -58,7 +58,7 @@ console.log("ZBP Script Running");
                     var duration = escapeHtml(product.duration || "Duration N/A");
                     var price = escapeHtml(product.price || "N/A");
                     var slots = Array.isArray(product.slots) ? product.slots : [];
-
+console.log("cstslot", slots);
                     if (isSlotBased) {
                         var options = slots.length
                             ? slots
@@ -216,6 +216,7 @@ console.log("ZBP Script Running");
             }
 
             wrapper.addEventListener("zbp_date_selected", function (event) {
+                console.log("date_selected");
                 var selectedKey = event && event.detail ? event.detail.selected_date : "";
 
                 if (!selectedKey) {
