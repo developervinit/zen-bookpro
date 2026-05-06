@@ -63,6 +63,21 @@ class ZBP_Slot_Service {
             )
         );
 
+        echo "<pre>";
+        print_r(array(
+                'stage'                => 'generated_timestamps',
+                'product_id'           => (int) $product->get_id(),
+                'generated_timestamps' => array_values(
+                    array_filter(
+                        array_map(
+                            array( $this, 'extract_block_start' ),
+                            $blocks
+                        )
+                    )
+                ),
+            ));
+        echo "</pre>";
+
         $this->debug_log(
             array(
                 'stage'                => 'generated_timestamps',
@@ -79,6 +94,15 @@ class ZBP_Slot_Service {
         );
 
         $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
+
+        echo "<pre>";
+        print_r(array(
+                'stage'        => 'mapped_slots',
+                'product_id'   => (int) $product->get_id(),
+                'mapped_slots' => $slots,
+            ));
+        echo "</pre>";
+        
         $this->debug_log(
             array(
                 'stage'        => 'mapped_slots',
@@ -197,15 +221,6 @@ class ZBP_Slot_Service {
         } else {
             $blocks = array();
         }
-
-        echo "<pre>";
-        print_r(array(
-                'stage'              => 'woo_blocks_generated',
-                'product_id'         => (int) $product->get_id(),
-                'booking_form_class' => get_class( $booking_form ),
-                'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
-            ));
-        echo "</pre>";
 
         $this->debug_log(
             array(
