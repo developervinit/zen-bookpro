@@ -28,6 +28,14 @@ class ZBP_Slot_Service {
             return array();
         }
 
+        $this->debug_log(
+            array(
+                'stage'        => 'booking_product_loaded',
+                'product_id'   => (int) $product->get_id(),
+                'product_type' => 'booking',
+            )
+        );
+
         $availability_rules = method_exists( $product, 'get_availability' ) ? $product->get_availability() : array();
         if ( ! is_array( $availability_rules ) ) {
             $availability_rules = array();
@@ -35,8 +43,9 @@ class ZBP_Slot_Service {
 
         $this->debug_log(
             array(
-                'stage'              => 'booking_rules_detected',
+                'stage'              => 'availability_detected',
                 'product_id'         => (int) $product->get_id(),
+                'selected_date'      => $date_context['date'],
                 'availability_rules' => $availability_rules,
             )
         );
@@ -53,22 +62,26 @@ class ZBP_Slot_Service {
             );
         }
 
-        $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
+        if ( ! is_array( $blocks ) ) {
+            $blocks = array();
+        }
 
         $this->debug_log(
             array(
-                'stage'            => 'blocks_generated',
-                'product_id'       => (int) $product->get_id(),
-                'selected_date'    => $date_context['date'],
-                'generated_blocks' => $slots,
+                'stage'                  => 'blocks_generated',
+                'product_id'             => (int) $product->get_id(),
+                'generated_blocks_count' => count( $blocks ),
+                'generated_blocks'       => $blocks,
             )
         );
+
+        $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
 
         $final_slots = $this->apply_mode_logic( $slots, $mode );
 
         $this->debug_log(
             array(
-                'stage'          => 'final_slots',
+                'stage'          => 'slots_finalized',
                 'product_id'     => (int) $product->get_id(),
                 'mode'           => $mode,
                 'slots_returned' => $final_slots,
@@ -183,17 +196,18 @@ class ZBP_Slot_Service {
             }
 
             $slots[] = array(
-                'start'  => $start,
-                'end'    => $end,
-                'label'  => wp_date( 'H:i', $start ) . ' - ' . wp_date( 'H:i', $end ),
-                'status' => $status,
+                'start'     => wp_date( 'Y-m-d H:i:s', $start ),
+                'end'       => wp_date( 'Y-m-d H:i:s', $end ),
+                'label'     => wp_date( 'g:i A', $start ) . ' - ' . wp_date( 'g:i A', $end ),
+                'timestamp' => $start,
+                'status'    => $status,
             );
         }
 
         usort(
             $slots,
             static function ( $a, $b ) {
-                return $a['start'] <=> $b['start'];
+                return $a['timestamp'] <=> $b['timestamp'];
             }
         );
 
