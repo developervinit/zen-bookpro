@@ -61,7 +61,8 @@ var_dump("Here 3");
                 )
             );
         }
-
+        var_dump('here4');
+var_dump($blocks);
         if ( ! is_array( $blocks ) ) {
             $blocks = array();
         }
