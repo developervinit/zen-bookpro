@@ -24,9 +24,6 @@ class ZBP_Slot_Service {
         $from         = $date_context['from'];
         $to           = $date_context['to'];
 //var_dump($date_context);
-        if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
-            return array();
-        }
 // var_dump("Here 2");
         $this->debug_log(
             array(
@@ -50,17 +47,7 @@ class ZBP_Slot_Service {
             )
         );
 
-        $blocks = $product->get_blocks_in_range( $from, $to );
-//var_dump($blocks);
-        if ( method_exists( $product, 'get_available_blocks' ) ) {
-            $blocks = $product->get_available_blocks(
-                array(
-                    'blocks' => $blocks,
-                    'from'   => $from,
-                    'to'     => $to,
-                )
-            );
-        }
+        $blocks = $this->generate_blocks_with_booking_form( $product, $from, $to );
 // var_dump('here4');
 // var_dump($blocks);
         if ( ! is_array( $blocks ) ) {
@@ -76,7 +63,29 @@ class ZBP_Slot_Service {
             )
         );
 
+        $this->debug_log(
+            array(
+                'stage'                => 'generated_timestamps',
+                'product_id'           => (int) $product->get_id(),
+                'generated_timestamps' => array_values(
+                    array_filter(
+                        array_map(
+                            array( $this, 'extract_block_start' ),
+                            $blocks
+                        )
+                    )
+                ),
+            )
+        );
+
         $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
+        $this->debug_log(
+            array(
+                'stage'        => 'mapped_slots',
+                'product_id'   => (int) $product->get_id(),
+                'mapped_slots' => $slots,
+            )
+        );
 
         $final_slots = $this->apply_mode_logic( $slots, $mode );
 
@@ -148,8 +157,57 @@ class ZBP_Slot_Service {
         return array(
             'date' => $date->format( 'Y-m-d' ),
             'from' => $date->getTimestamp(),
-            'to'   => $date->setTime( 23, 59, 59 )->getTimestamp(),
+            'to'   => $date->modify( '+1 day' )->getTimestamp(),
         );
+    }
+
+    /**
+     * Generate blocks via WooCommerce Bookings booking-form engine.
+     *
+     * @param WC_Product_Booking $product Booking product.
+     * @param int                $from    Start-of-day timestamp.
+     * @param int                $to      Next-day boundary timestamp.
+     *
+     * @return array
+     */
+    private function generate_blocks_with_booking_form( $product, $from, $to ) {
+        if ( ! class_exists( 'WC_Booking_Form' ) ) {
+            return array();
+        }
+
+        $booking_form = new WC_Booking_Form( $product );
+        if ( ! $booking_form || ! is_object( $booking_form ) ) {
+            return array();
+        }
+
+        $this->debug_log(
+            array(
+                'stage'      => 'booking_form_initialized',
+                'product_id' => (int) $product->get_id(),
+            )
+        );
+
+        // Prefer booking-form-native generators; fallback only within booking form methods.
+        if ( method_exists( $booking_form, 'get_blocks_in_range' ) ) {
+            $blocks = $booking_form->get_blocks_in_range( $from, $to );
+        } elseif ( method_exists( $booking_form, 'get_blocks' ) ) {
+            $blocks = $booking_form->get_blocks( $from, $to );
+        } elseif ( method_exists( $booking_form, 'get_available_blocks' ) ) {
+            $blocks = $booking_form->get_available_blocks( $from, $to );
+        } else {
+            $blocks = array();
+        }
+
+        $this->debug_log(
+            array(
+                'stage'              => 'woo_blocks_generated',
+                'product_id'         => (int) $product->get_id(),
+                'booking_form_class' => get_class( $booking_form ),
+                'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
+            )
+        );
+
+        return is_array( $blocks ) ? $blocks : array();
     }
 
     /**
@@ -306,5 +364,4 @@ class ZBP_Slot_Service {
         error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
     }
 }
-
 
