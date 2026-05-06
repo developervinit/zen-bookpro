@@ -15,7 +15,7 @@ class ZBP_Slot_Service {
      */
     public function get_slots_for_product( $product, $selected_date, $mode ) {
         $product = $this->get_booking_product( $product );
-
+var_dump("Here 1");
         if ( ! $product ) {
             return array();
         }
@@ -23,11 +23,11 @@ class ZBP_Slot_Service {
         $date_context = $this->normalize_date( $selected_date );
         $from         = $date_context['from'];
         $to           = $date_context['to'];
-
+var_dump($date_context);
         if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
             return array();
         }
-
+var_dump("Here 2");
         $this->debug_log(
             array(
                 'stage'        => 'booking_product_loaded',
@@ -40,7 +40,7 @@ class ZBP_Slot_Service {
         if ( ! is_array( $availability_rules ) ) {
             $availability_rules = array();
         }
-
+var_dump("Here 3");
         $this->debug_log(
             array(
                 'stage'              => 'availability_detected',
@@ -51,7 +51,7 @@ class ZBP_Slot_Service {
         );
 
         $blocks = $product->get_blocks_in_range( $from, $to );
-
+var_dump($blocks);
         if ( method_exists( $product, 'get_available_blocks' ) ) {
             $blocks = $product->get_available_blocks(
                 array(
