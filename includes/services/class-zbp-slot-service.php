@@ -23,7 +23,7 @@ var_dump("Here 1");
         $date_context = $this->normalize_date( $selected_date );
         $from         = $date_context['from'];
         $to           = $date_context['to'];
-var_dump($date_context);
+//var_dump($date_context);
         if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
             return array();
         }
@@ -51,7 +51,7 @@ var_dump("Here 3");
         );
 
         $blocks = $product->get_blocks_in_range( $from, $to );
-var_dump($blocks);
+//var_dump($blocks);
         if ( method_exists( $product, 'get_available_blocks' ) ) {
             $blocks = $product->get_available_blocks(
                 array(
@@ -210,7 +210,7 @@ var_dump($blocks);
                 return $a['timestamp'] <=> $b['timestamp'];
             }
         );
-
+var_dump($slots);
         return $slots;
     }
 
