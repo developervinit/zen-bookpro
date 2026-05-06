@@ -15,7 +15,7 @@ class ZBP_Slot_Service {
      */
     public function get_slots_for_product( $product, $selected_date, $mode ) {
         $product = $this->get_booking_product( $product );
-var_dump("Here 1");
+// var_dump("Here 1");
         if ( ! $product ) {
             return array();
         }
@@ -27,7 +27,7 @@ var_dump("Here 1");
         if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
             return array();
         }
-var_dump("Here 2");
+// var_dump("Here 2");
         $this->debug_log(
             array(
                 'stage'        => 'booking_product_loaded',
@@ -40,7 +40,7 @@ var_dump("Here 2");
         if ( ! is_array( $availability_rules ) ) {
             $availability_rules = array();
         }
-var_dump("Here 3");
+// var_dump("Here 3");
         $this->debug_log(
             array(
                 'stage'              => 'availability_detected',
@@ -61,8 +61,8 @@ var_dump("Here 3");
                 )
             );
         }
-        var_dump('here4');
-var_dump($blocks);
+// var_dump('here4');
+// var_dump($blocks);
         if ( ! is_array( $blocks ) ) {
             $blocks = array();
         }
@@ -172,8 +172,14 @@ var_dump($blocks);
 
         $slots = array();
 
-        foreach ( $blocks as $block ) {
+        foreach ( $blocks as $block_key => $block ) {
             $start = $this->extract_block_start( $block );
+
+            // WooCommerce Bookings can return block timestamps as array keys:
+            // [1778068800 => 0, 1778072400 => 0, ...]
+            if ( $start <= 0 && is_numeric( $block_key ) ) {
+                $start = (int) $block_key;
+            }
 
             if ( $start <= 0 ) {
                 continue;
@@ -211,7 +217,7 @@ var_dump($blocks);
                 return $a['timestamp'] <=> $b['timestamp'];
             }
         );
-var_dump($slots);
+// var_dump($slots);
         return $slots;
     }
 
@@ -300,3 +306,5 @@ var_dump($slots);
         error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
     }
 }
+
+
