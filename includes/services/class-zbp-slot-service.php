@@ -47,7 +47,7 @@ class ZBP_Slot_Service {
             )
         );
 
-        $blocks = $this->generate_blocks_with_booking_form( $product, $from, $to );
+        $blocks = $this->generate_blocks_with_booking_form( $product, $date_context );
 // var_dump('here4');
 // var_dump($blocks);
         if ( ! is_array( $blocks ) ) {
@@ -62,21 +62,6 @@ class ZBP_Slot_Service {
                 'generated_blocks'       => $blocks,
             )
         );
-
-        echo "<pre>";
-        print_r(array(
-                'stage'                => 'generated_timestamps',
-                'product_id'           => (int) $product->get_id(),
-                'generated_timestamps' => array_values(
-                    array_filter(
-                        array_map(
-                            array( $this, 'extract_block_start' ),
-                            $blocks
-                        )
-                    )
-                ),
-            ));
-        echo "</pre>";
 
         $this->debug_log(
             array(
@@ -94,15 +79,6 @@ class ZBP_Slot_Service {
         );
 
         $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
-
-        echo "<pre>";
-        print_r(array(
-                'stage'        => 'mapped_slots',
-                'product_id'   => (int) $product->get_id(),
-                'mapped_slots' => $slots,
-            ));
-        echo "</pre>";
-        
         $this->debug_log(
             array(
                 'stage'        => 'mapped_slots',
@@ -188,13 +164,12 @@ class ZBP_Slot_Service {
     /**
      * Generate blocks via WooCommerce Bookings booking-form engine.
      *
-     * @param WC_Product_Booking $product Booking product.
-     * @param int                $from    Start-of-day timestamp.
-     * @param int                $to      Next-day boundary timestamp.
+     * @param WC_Product_Booking $product      Booking product.
+     * @param array              $date_context Normalized date payload.
      *
      * @return array
      */
-    private function generate_blocks_with_booking_form( $product, $from, $to ) {
+    private function generate_blocks_with_booking_form( $product, $date_context ) {
         if ( ! class_exists( 'WC_Booking_Form' ) ) {
             return array();
         }
@@ -211,15 +186,47 @@ class ZBP_Slot_Service {
             )
         );
 
-        // Prefer booking-form-native generators; fallback only within booking form methods.
-        if ( method_exists( $booking_form, 'get_blocks_in_range' ) ) {
-            $blocks = $booking_form->get_blocks_in_range( $from, $to );
-        } elseif ( method_exists( $booking_form, 'get_blocks' ) ) {
-            $blocks = $booking_form->get_blocks( $from, $to );
-        } elseif ( method_exists( $booking_form, 'get_available_blocks' ) ) {
-            $blocks = $booking_form->get_available_blocks( $from, $to );
-        } else {
-            $blocks = array();
+        $booking_data = $this->build_booking_form_context( $product, $date_context );
+
+        $this->debug_log(
+            array(
+                'stage'        => 'booking_data_payload',
+                'product_id'   => (int) $product->get_id(),
+                'booking_data' => $booking_data,
+            )
+        );
+
+        $blocks = array();
+
+        // Try frontend-like method signatures with full context first.
+        if ( method_exists( $booking_form, 'get_posted_data' ) ) {
+            $posted_data = $this->invoke_booking_form_method( $booking_form, 'get_posted_data', array( $booking_data ) );
+            if ( is_array( $posted_data ) && ! empty( $posted_data ) ) {
+                if ( method_exists( $booking_form, 'get_blocks' ) ) {
+                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks', array( $posted_data ) );
+                }
+
+                if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks_in_range' ) ) {
+                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks_in_range', array( $posted_data ) );
+                }
+
+                if ( empty( $blocks ) && method_exists( $booking_form, 'get_available_blocks' ) ) {
+                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_available_blocks', array( $posted_data ) );
+                }
+            }
+        }
+
+        // Compatibility fallbacks for versions expecting explicit range args.
+        if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks_in_range' ) ) {
+            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks_in_range', array( $date_context['from'], $date_context['to'], $booking_data ) );
+        }
+
+        if ( empty( $blocks ) && method_exists( $booking_form, 'get_available_blocks' ) ) {
+            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_available_blocks', array( $date_context['from'], $date_context['to'], $booking_data ) );
+        }
+
+        if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks' ) ) {
+            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks', array( $date_context['from'], $date_context['to'], $booking_data ) );
         }
 
         $this->debug_log(
@@ -228,10 +235,85 @@ class ZBP_Slot_Service {
                 'product_id'         => (int) $product->get_id(),
                 'booking_form_class' => get_class( $booking_form ),
                 'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
+                'generated_blocks'   => is_array( $blocks ) ? $blocks : array(),
             )
         );
 
         return is_array( $blocks ) ? $blocks : array();
+    }
+
+    /**
+     * Build booking-form context matching native frontend payload shape.
+     *
+     * @param WC_Product_Booking $product      Booking product.
+     * @param array              $date_context Normalized date payload.
+     *
+     * @return array
+     */
+    private function build_booking_form_context( $product, $date_context ) {
+        $date_ts  = isset( $date_context['from'] ) ? (int) $date_context['from'] : current_time( 'timestamp' );
+        $duration = method_exists( $product, 'get_duration' ) ? max( 1, absint( $product->get_duration() ) ) : 1;
+
+        $min_persons = method_exists( $product, 'get_min_persons' ) ? absint( $product->get_min_persons() ) : 0;
+        $persons     = max( 1, $min_persons );
+
+        return array(
+            'add-to-cart'                  => (int) $product->get_id(),
+            'wc_bookings_field_start_date' => gmdate( 'Y-m-d', $date_ts ),
+            'wc_bookings_field_start_date_year' => gmdate( 'Y', $date_ts ),
+            'wc_bookings_field_start_date_month' => gmdate( 'n', $date_ts ),
+            'wc_bookings_field_start_date_day' => gmdate( 'j', $date_ts ),
+            'wc_bookings_field_duration'   => $duration,
+            'wc_bookings_field_qty'        => 1,
+            'wc_bookings_field_persons'    => $persons,
+            'wc_bookings_field_timezone'   => wp_timezone_string(),
+            'date'                         => isset( $date_context['date'] ) ? $date_context['date'] : wp_date( 'Y-m-d', $date_ts ),
+            'timestamp'                    => $date_ts,
+            'from'                         => isset( $date_context['from'] ) ? (int) $date_context['from'] : $date_ts,
+            'to'                           => isset( $date_context['to'] ) ? (int) $date_context['to'] : ( $date_ts + DAY_IN_SECONDS ),
+        );
+    }
+
+    /**
+     * Invoke booking-form method defensively for varying Woo versions/signatures.
+     *
+     * @param object $booking_form Booking form object.
+     * @param string $method       Method name.
+     * @param array  $args         Preferred argument list.
+     *
+     * @return mixed
+     */
+    private function invoke_booking_form_method( $booking_form, $method, $args ) {
+        if ( ! method_exists( $booking_form, $method ) ) {
+            return array();
+        }
+
+        try {
+            $reflection = new ReflectionMethod( $booking_form, $method );
+            $arg_count  = $reflection->getNumberOfParameters();
+
+            $trimmed_args = array_slice( $args, 0, $arg_count );
+
+            return call_user_func_array( array( $booking_form, $method ), $trimmed_args );
+        } catch ( Exception $e ) {
+            $this->debug_log(
+                array(
+                    'stage'   => 'booking_form_method_error',
+                    'method'  => $method,
+                    'message' => $e->getMessage(),
+                )
+            );
+        } catch ( Error $e ) {
+            $this->debug_log(
+                array(
+                    'stage'   => 'booking_form_method_error',
+                    'method'  => $method,
+                    'message' => $e->getMessage(),
+                )
+            );
+        }
+
+        return array();
     }
 
     /**
