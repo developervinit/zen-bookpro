@@ -47,12 +47,21 @@ class ZBP_Slot_Service {
             )
         );
 
-        $blocks = $this->generate_blocks_with_booking_form( $product, $date_context );
+        $blocks = $this->generate_blocks_with_product_method( $product, $date_context );
 // var_dump('here4');
 // var_dump($blocks);
         if ( ! is_array( $blocks ) ) {
             $blocks = array();
         }
+
+        echo '<pre>';
+        print_r( array( 'debug_label' => 'Raw blocks returned by WooCommerce', 'blocks' => $blocks ) );
+        print_r( array( 'debug_label' => 'Array keys', 'keys' => array_keys( $blocks ) ) );
+        print_r( array( 'debug_label' => 'Array values', 'values' => array_values( $blocks ) ) );
+        print_r( array( 'debug_label' => 'Nested block structure', 'nested' => $this->inspect_nested_structure( $blocks ) ) );
+        print_r( array( 'debug_label' => 'Timestamp locations', 'timestamps' => $this->find_timestamp_locations( $blocks ) ) );
+        echo '</pre>';
+        die();
 
         $this->debug_log(
             array(
@@ -122,6 +131,25 @@ class ZBP_Slot_Service {
         );
 
         return $final_slots;
+    }
+
+    /**
+     * Temporary debug fetch via legacy product method only.
+     *
+     * @param WC_Product_Booking $product      Booking product.
+     * @param array              $date_context Normalized date payload.
+     *
+     * @return array
+     */
+    private function generate_blocks_with_product_method( $product, $date_context ) {
+        if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
+            return array();
+        }
+
+        $booking_data = $this->build_booking_form_context( $product, $date_context );
+        $blocks       = $this->invoke_product_method( $product, 'get_blocks_in_range', array( $date_context['from'], $date_context['to'], $booking_data ) );
+
+        return is_array( $blocks ) ? $blocks : array();
     }
 
     /**
@@ -358,6 +386,106 @@ class ZBP_Slot_Service {
     }
 
     /**
+     * Invoke product method defensively for varying Woo versions/signatures.
+     *
+     * @param object $product Product object.
+     * @param string $method  Method name.
+     * @param array  $args    Preferred argument list.
+     *
+     * @return mixed
+     */
+    private function invoke_product_method( $product, $method, $args ) {
+        if ( ! method_exists( $product, $method ) ) {
+            return array();
+        }
+
+        try {
+            $reflection   = new ReflectionMethod( $product, $method );
+            $arg_count    = $reflection->getNumberOfParameters();
+            $trimmed_args = array_slice( $args, 0, $arg_count );
+
+            return call_user_func_array( array( $product, $method ), $trimmed_args );
+        } catch ( Exception $e ) {
+            return array();
+        } catch ( Error $e ) {
+            return array();
+        }
+    }
+
+    /**
+     * Build a compact recursive shape map of nested block payload.
+     *
+     * @param mixed  $value  Input value.
+     * @param string $path   Dot path.
+     * @param int    $depth  Depth guard.
+     *
+     * @return array
+     */
+    private function inspect_nested_structure( $value, $path = 'root', $depth = 0 ) {
+        if ( $depth > 6 ) {
+            return array( $path . ' => [depth_limit]' );
+        }
+
+        if ( ! is_array( $value ) ) {
+            return array( $path . ' => ' . gettype( $value ) );
+        }
+
+        $shape = array( $path . ' => array(' . count( $value ) . ')' );
+        foreach ( $value as $key => $item ) {
+            $child_path = $path . '[' . $key . ']';
+            if ( is_array( $item ) ) {
+                $shape = array_merge( $shape, $this->inspect_nested_structure( $item, $child_path, $depth + 1 ) );
+            } else {
+                $shape[] = $child_path . ' => ' . gettype( $item ) . ' (' . $item . ')';
+            }
+        }
+
+        return $shape;
+    }
+
+    /**
+     * Find likely timestamp keys/values in nested payload.
+     *
+     * @param mixed  $value Input payload.
+     * @param string $path  Dot path.
+     *
+     * @return array
+     */
+    private function find_timestamp_locations( $value, $path = 'root' ) {
+        $hits = array();
+
+        if ( ! is_array( $value ) ) {
+            return $hits;
+        }
+
+        foreach ( $value as $key => $item ) {
+            $current_path = $path . '[' . $key . ']';
+
+            if ( is_numeric( $key ) && (int) $key >= 1000000000 ) {
+                $hits[] = array(
+                    'path'  => $current_path,
+                    'where' => 'key',
+                    'value' => (int) $key,
+                );
+            }
+
+            if ( is_numeric( $item ) && (int) $item >= 1000000000 ) {
+                $hits[] = array(
+                    'path'  => $current_path,
+                    'where' => 'value',
+                    'value' => (int) $item,
+                );
+            }
+
+            if ( is_array( $item ) ) {
+                $hits = array_merge( $hits, $this->find_timestamp_locations( $item, $current_path ) );
+            }
+        }
+
+        return $hits;
+    }
+
+    /**
      * Convert booking blocks to slot payload.
      *
      * @param WC_Product $product    Product object.
@@ -511,4 +639,3 @@ class ZBP_Slot_Service {
         error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
     }
 }
-
