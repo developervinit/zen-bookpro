@@ -213,13 +213,13 @@ echo "<pre>";
 
         $booking_data = $this->build_booking_form_context( $product, $date_context );
 
-        echo "<pre>";
+        /*echo "<pre>";
         print_r(array(
                 'stage'        => 'booking_data_payload',
                 'product_id'   => (int) $product->get_id(),
                 'booking_data' => $booking_data,
             ));
-        echo "</pre>";    
+        echo "</pre>"; */   
 
         $this->debug_log(
             array(
@@ -262,7 +262,7 @@ echo "<pre>";
             $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks', array( $date_context['from'], $date_context['to'], $booking_data ) );
         }
 
-        echo "<pre>";
+        /*echo "<pre>";
         print_r(array(
                 'stage'              => 'woo_blocks_generated',
                 'product_id'         => (int) $product->get_id(),
@@ -270,7 +270,7 @@ echo "<pre>";
                 'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
                 'generated_blocks'   => is_array( $blocks ) ? $blocks : array(),
             ));
-        echo "</pre>";    
+        echo "</pre>";*/    
 
         $this->debug_log(
             array(
