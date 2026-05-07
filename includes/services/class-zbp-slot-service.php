@@ -110,7 +110,7 @@ class ZBP_Slot_Service {
             )
         );
 
-        $final_slots = $this->apply_modechoe_logic( $slots, $mode );
+        $final_slots = $this->apply_mode_logic( $slots, $mode );
 
         $this->debug_log(
             array(
