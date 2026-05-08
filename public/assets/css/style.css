@@ -1,4 +1,4 @@
-﻿.zbp-booking-ui {
+.zbp-booking-ui {
     --zbp-bg: #3f3f42;
     --zbp-card: #444447;
     --zbp-border: #8a8a8c;
@@ -169,6 +169,11 @@
     font-size: 14px;
     padding: 12px;
     width: 100%;
+}
+
+.zbp-select-wrap select option {
+    background: #3b3b3d;
+    color: var(--zbp-text);
 }
 
 .zbp-slot-chips {

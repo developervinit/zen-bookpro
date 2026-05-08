@@ -17,14 +17,9 @@ console.log("ZBP Script Running");
         }
 
         function slotLabel(slot) {
-            if (!slot || typeof slot !== "object") {
-                return "Unavailable";
-            }
-
-            if (slot.label) {
-                return slot.label;
-            }
-
+            if (!slot) return "Unavailable";
+            if (typeof slot === "string") return slot;
+            if (slot.label) return slot.label;
             return "Unavailable";
         }
 
@@ -57,14 +52,21 @@ console.log("ZBP Script Running");
                         : '<span class="zbp-image-placeholder">&#128247;</span>';
                     var duration = escapeHtml(product.duration || "Duration N/A");
                     var price = escapeHtml(product.price || "N/A");
-                    var slots = Array.isArray(product.slots) ? product.slots : [];
-console.log("cstslot", slots);
+                    var slots = [];
+                    if (Array.isArray(product.slots)) {
+                        slots = product.slots;
+                    } else if (product.slots && typeof product.slots === "object") {
+                        slots = Object.keys(product.slots).map(function(k) { return product.slots[k]; });
+                    }
+                    console.log("cstslot", slots);
+
                     if (isSlotBased) {
                         var options = slots.length
                             ? slots
                                   .map(function (slot) {
                                       var label = slotLabel(slot);
-                                      return '<option value="' + escapeHtml(label) + '">' + escapeHtml(label) + "</option>";
+                                      var val = (slot && slot.value) ? slot.value : label;
+                                      return '<option value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</option>";
                                   })
                                   .join("")
                             : '<option value="">No slots available</option>';
