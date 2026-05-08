@@ -15,141 +15,23 @@ class ZBP_Slot_Service {
      */
     public function get_slots_for_product( $product, $selected_date, $mode ) {
         $product = $this->get_booking_product( $product );
-// var_dump("Here 1");
         if ( ! $product ) {
             return array();
         }
 
         $date_context = $this->normalize_date( $selected_date );
-        $from         = $date_context['from'];
-        $to           = $date_context['to'];
-//var_dump($date_context);
-// var_dump("Here 2");
-        $this->debug_log(
-            array(
-                'stage'        => 'booking_product_loaded',
-                'product_id'   => (int) $product->get_id(),
-                'product_type' => 'booking',
-            )
-        );
+        $form_payload = $this->build_native_booking_form_payload( $product, $date_context );
+        $form_encoded = http_build_query( $form_payload, '', '&' );
 
-        $availability_rules = method_exists( $product, 'get_availability' ) ? $product->get_availability() : array();
-        if ( ! is_array( $availability_rules ) ) {
-            $availability_rules = array();
-        }
-// var_dump("Here 3");
-        $this->debug_log(
-            array(
-                'stage'              => 'availability_detected',
-                'product_id'         => (int) $product->get_id(),
-                'selected_date'      => $date_context['date'],
-                'availability_rules' => $availability_rules,
-            )
-        );
+        $this->debug_pre_dump( 'zbp_wc_native_payload', $form_payload );
 
-        $blocks = $this->generate_blocks_with_product_method( $product, $date_context );
-// var_dump('here4');
-// var_dump($blocks);
-        if ( ! is_array( $blocks ) ) {
-            $blocks = array();
-        }
+        $slot_html = $this->request_native_woo_slots_html( $form_encoded );
+        $this->debug_pre_dump( 'zbp_wc_native_html', $slot_html );
 
-        echo '<pre>';
-        print_r( array( 'debug_label' => 'Raw blocks returned by WooCommerce', 'blocks' => $blocks ) );
-        print_r( array( 'debug_label' => 'Array keys', 'keys' => array_keys( $blocks ) ) );
-        print_r( array( 'debug_label' => 'Array values', 'values' => array_values( $blocks ) ) );
-        print_r( array( 'debug_label' => 'Nested block structure', 'nested' => $this->inspect_nested_structure( $blocks ) ) );
-        print_r( array( 'debug_label' => 'Timestamp locations', 'timestamps' => $this->find_timestamp_locations( $blocks ) ) );
-        echo '</pre>';
-        die();
+        $slots = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
+        $this->debug_pre_dump( 'zbp_wc_parsed_slots', $slots );
 
-        $this->debug_log(
-            array(
-                'stage'                  => 'blocks_generated',
-                'product_id'             => (int) $product->get_id(),
-                'generated_blocks_count' => count( $blocks ),
-                'generated_blocks'       => $blocks,
-            )
-        );
-
-        // echo "<pre>";
-        // print_r(array(
-        //         'stage'                => 'generated_timestamps',
-        //         'product_id'           => (int) $product->get_id(),
-        //         'generated_timestamps' => array_values(
-        //             array_filter(
-        //                 array_map(
-        //                     array( $this, 'extract_block_start' ),
-        //                     $blocks
-        //                 )
-        //             )
-        //         ),
-        //     ));
-        // echo "</pre>";    
-
-        $this->debug_log(
-            array(
-                'stage'                => 'generated_timestamps',
-                'product_id'           => (int) $product->get_id(),
-                'generated_timestamps' => array_values(
-                    array_filter(
-                        array_map(
-                            array( $this, 'extract_block_start' ),
-                            $blocks
-                        )
-                    )
-                ),
-            )
-        );
-
-        //  "<pre>";
-        // print_r(array(
-        //         'stage'        => 'mapped_slots',
-        //         'product_id'   => (int) $product->get_id(),
-        //         'mapped_slots' => $slots,
-        //     ));
-        // echo "</pre>";    
-
-        $slots = $this->map_blocks_to_slots( $product, $blocks, $date_context['date'] );
-        $this->debug_log(
-            array(
-                'stage'        => 'mapped_slots',
-                'product_id'   => (int) $product->get_id(),
-                'mapped_slots' => $slots,
-            )
-        );
-
-        $final_slots = $this->apply_mode_logic( $slots, $mode );
-
-        $this->debug_log(
-            array(
-                'stage'          => 'slots_finalized',
-                'product_id'     => (int) $product->get_id(),
-                'mode'           => $mode,
-                'slots_returned' => $final_slots,
-            )
-        );
-
-        return $final_slots;
-    }
-
-    /**
-     * Temporary debug fetch via legacy product method only.
-     *
-     * @param WC_Product_Booking $product      Booking product.
-     * @param array              $date_context Normalized date payload.
-     *
-     * @return array
-     */
-    private function generate_blocks_with_product_method( $product, $date_context ) {
-        if ( ! method_exists( $product, 'get_blocks_in_range' ) ) {
-            return array();
-        }
-
-        $booking_data = $this->build_booking_form_context( $product, $date_context );
-        $blocks       = $this->invoke_product_method( $product, 'get_blocks_in_range', array( $date_context['from'], $date_context['to'], $booking_data ) );
-
-        return is_array( $blocks ) ? $blocks : array();
+        return $this->apply_mode_logic( $slots, $mode );
     }
 
     /**
@@ -206,406 +88,218 @@ class ZBP_Slot_Service {
         $date = $date->setTime( 0, 0, 0 );
 
         return array(
-            'date' => $date->format( 'Y-m-d' ),
+            'date' => $date->format( 'Y-m-d'),
             'from' => $date->getTimestamp(),
             'to'   => $date->modify( '+1 day' )->getTimestamp(),
         );
     }
 
     /**
-     * Generate blocks via WooCommerce Bookings booking-form engine.
+     * Build payload in native Woo booking-form field format.
      *
      * @param WC_Product_Booking $product      Booking product.
      * @param array              $date_context Normalized date payload.
      *
      * @return array
      */
-    private function generate_blocks_with_booking_form( $product, $date_context ) {
-        if ( ! class_exists( 'WC_Booking_Form' ) ) {
-            return array();
-        }
+    private function build_native_booking_form_payload( $product, $date_context ) {
+        $date_ts = (int) $date_context['from'];
 
-        $booking_form = new WC_Booking_Form( $product );
-        if ( ! $booking_form || ! is_object( $booking_form ) ) {
-            return array();
-        }
-
-        $this->debug_log(
-            array(
-                'stage'      => 'booking_form_initialized',
-                'product_id' => (int) $product->get_id(),
-            )
+        $payload = array(
+            'add-to-cart'                        => (int) $product->get_id(),
+            'wc_bookings_field_start_date_year'  => wp_date( 'Y', $date_ts ),
+            'wc_bookings_field_start_date_month' => wp_date( 'n', $date_ts ),
+            'wc_bookings_field_start_date_day'   => wp_date( 'j', $date_ts ),
+            'wc_bookings_field_duration'         => 1,
+            'wc_bookings_field_qty'              => 1,
         );
 
-        $booking_data = $this->build_booking_form_context( $product, $date_context );
+        if ( method_exists( $product, 'has_persons' ) && $product->has_persons() ) {
+            $min_persons = method_exists( $product, 'get_min_persons' ) ? absint( $product->get_min_persons() ) : 1;
+            $payload['wc_bookings_field_persons'] = max( 1, $min_persons );
+        }
 
-        // echo "<pre>";
-        // print_r(array(
-        //         'stage'        => 'booking_data_payload',
-        //         'product_id'   => (int) $product->get_id(),
-        //         'booking_data' => $booking_data,
-        //     ));
-        // echo "</pre>";    
-
-        $this->debug_log(
-            array(
-                'stage'        => 'booking_data_payload',
-                'product_id'   => (int) $product->get_id(),
-                'booking_data' => $booking_data,
-            )
-        );
-
-        $blocks = array();
-
-        // Try frontend-like method signatures with full context first.
-        if ( method_exists( $booking_form, 'get_posted_data' ) ) {
-            $posted_data = $this->invoke_booking_form_method( $booking_form, 'get_posted_data', array( $booking_data ) );
-            if ( is_array( $posted_data ) && ! empty( $posted_data ) ) {
-                if ( method_exists( $booking_form, 'get_blocks' ) ) {
-                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks', array( $posted_data ) );
-                }
-
-                if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks_in_range' ) ) {
-                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks_in_range', array( $posted_data ) );
-                }
-
-                if ( empty( $blocks ) && method_exists( $booking_form, 'get_available_blocks' ) ) {
-                    $blocks = $this->invoke_booking_form_method( $booking_form, 'get_available_blocks', array( $posted_data ) );
+        if ( method_exists( $product, 'has_resources' ) && $product->has_resources() && method_exists( $product, 'is_resource_assignment_type' ) && $product->is_resource_assignment_type( 'customer' ) ) {
+            $resources = method_exists( $product, 'get_resources' ) ? $product->get_resources() : array();
+            if ( is_array( $resources ) && 1 === count( $resources ) ) {
+                $resource = reset( $resources );
+                if ( is_object( $resource ) && isset( $resource->ID ) ) {
+                    $payload['wc_bookings_field_resource'] = (int) $resource->ID;
                 }
             }
         }
 
-        // Compatibility fallbacks for versions expecting explicit range args.
-        if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks_in_range' ) ) {
-            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks_in_range', array( $date_context['from'], $date_context['to'], $booking_data ) );
-        }
+        return $payload;
+    }
 
-        if ( empty( $blocks ) && method_exists( $booking_form, 'get_available_blocks' ) ) {
-            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_available_blocks', array( $date_context['from'], $date_context['to'], $booking_data ) );
-        }
-
-        if ( empty( $blocks ) && method_exists( $booking_form, 'get_blocks' ) ) {
-            $blocks = $this->invoke_booking_form_method( $booking_form, 'get_blocks', array( $date_context['from'], $date_context['to'], $booking_data ) );
-        }
-
-        // echo "<pre>";
-        // print_r(array(
-        //         'stage'              => 'woo_blocks_generated',
-        //         'product_id'         => (int) $product->get_id(),
-        //         'booking_form_class' => get_class( $booking_form ),
-        //         'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
-        //         'generated_blocks'   => is_array( $blocks ) ? $blocks : array(),
-        //     ));
-        // echo "</pre>";    
-
-        $this->debug_log(
+    /**
+     * Reuse native Woo endpoint by POSTing action=wc_bookings_get_blocks.
+     *
+     * @param string $encoded_form Serialized booking form payload.
+     *
+     * @return string
+     */
+    private function request_native_woo_slots_html( $encoded_form ) {
+        $response = wp_remote_post(
+            admin_url( 'admin-ajax.php' ),
             array(
-                'stage'              => 'woo_blocks_generated',
-                'product_id'         => (int) $product->get_id(),
-                'booking_form_class' => get_class( $booking_form ),
-                'blocks_count'       => is_array( $blocks ) ? count( $blocks ) : 0,
-                'generated_blocks'   => is_array( $blocks ) ? $blocks : array(),
+                'timeout' => 20,
+                'body'    => array(
+                    'action' => 'wc_bookings_get_blocks',
+                    'form'   => $encoded_form,
+                ),
             )
         );
 
-        return is_array( $blocks ) ? $blocks : array();
-    }
-
-    /**
-     * Build booking-form context matching native frontend payload shape.
-     *
-     * @param WC_Product_Booking $product      Booking product.
-     * @param array              $date_context Normalized date payload.
-     *
-     * @return array
-     */
-    private function build_booking_form_context( $product, $date_context ) {
-        $date_ts  = isset( $date_context['from'] ) ? (int) $date_context['from'] : current_time( 'timestamp' );
-        $duration = method_exists( $product, 'get_duration' ) ? max( 1, absint( $product->get_duration() ) ) : 1;
-
-        $min_persons = method_exists( $product, 'get_min_persons' ) ? absint( $product->get_min_persons() ) : 0;
-        $persons     = max( 1, $min_persons );
-
-        return array(
-            'add-to-cart'                  => (int) $product->get_id(),
-            'wc_bookings_field_start_date' => gmdate( 'Y-m-d', $date_ts ),
-            'wc_bookings_field_start_date_year' => gmdate( 'Y', $date_ts ),
-            'wc_bookings_field_start_date_month' => gmdate( 'n', $date_ts ),
-            'wc_bookings_field_start_date_day' => gmdate( 'j', $date_ts ),
-            'wc_bookings_field_duration'   => $duration,
-            'wc_bookings_field_qty'        => 1,
-            'wc_bookings_field_persons'    => $persons,
-            'wc_bookings_field_timezone'   => wp_timezone_string(),
-            'date'                         => isset( $date_context['date'] ) ? $date_context['date'] : wp_date( 'Y-m-d', $date_ts ),
-            'timestamp'                    => $date_ts,
-            'from'                         => isset( $date_context['from'] ) ? (int) $date_context['from'] : $date_ts,
-            'to'                           => isset( $date_context['to'] ) ? (int) $date_context['to'] : ( $date_ts + DAY_IN_SECONDS ),
-        );
-    }
-
-    /**
-     * Invoke booking-form method defensively for varying Woo versions/signatures.
-     *
-     * @param object $booking_form Booking form object.
-     * @param string $method       Method name.
-     * @param array  $args         Preferred argument list.
-     *
-     * @return mixed
-     */
-    private function invoke_booking_form_method( $booking_form, $method, $args ) {
-        if ( ! method_exists( $booking_form, $method ) ) {
-            return array();
-        }
-
-        try {
-            $reflection = new ReflectionMethod( $booking_form, $method );
-            $arg_count  = $reflection->getNumberOfParameters();
-
-            $trimmed_args = array_slice( $args, 0, $arg_count );
-
-            return call_user_func_array( array( $booking_form, $method ), $trimmed_args );
-        } catch ( Exception $e ) {
+        if ( is_wp_error( $response ) ) {
             $this->debug_log(
                 array(
-                    'stage'   => 'booking_form_method_error',
-                    'method'  => $method,
-                    'message' => $e->getMessage(),
+                    'stage'   => 'native_woo_request_error',
+                    'message' => $response->get_error_message(),
                 )
             );
-        } catch ( Error $e ) {
-            $this->debug_log(
-                array(
-                    'stage'   => 'booking_form_method_error',
-                    'method'  => $method,
-                    'message' => $e->getMessage(),
-                )
-            );
+            return '';
         }
 
-        return array();
+        $body = wp_remote_retrieve_body( $response );
+
+        return is_string( $body ) ? $body : '';
     }
 
     /**
-     * Invoke product method defensively for varying Woo versions/signatures.
+     * Parse WooCommerce returned HTML into structured slot rows.
      *
-     * @param object $product Product object.
-     * @param string $method  Method name.
-     * @param array  $args    Preferred argument list.
-     *
-     * @return mixed
-     */
-    private function invoke_product_method( $product, $method, $args ) {
-        if ( ! method_exists( $product, $method ) ) {
-            return array();
-        }
-
-        try {
-            $reflection   = new ReflectionMethod( $product, $method );
-            $arg_count    = $reflection->getNumberOfParameters();
-            $trimmed_args = array_slice( $args, 0, $arg_count );
-
-            return call_user_func_array( array( $product, $method ), $trimmed_args );
-        } catch ( Exception $e ) {
-            return array();
-        } catch ( Error $e ) {
-            return array();
-        }
-    }
-
-    /**
-     * Build a compact recursive shape map of nested block payload.
-     *
-     * @param mixed  $value  Input value.
-     * @param string $path   Dot path.
-     * @param int    $depth  Depth guard.
+     * @param string $html       Returned HTML from wc_bookings_get_blocks.
+     * @param string $target_date Selected date in Y-m-d.
      *
      * @return array
      */
-    private function inspect_nested_structure( $value, $path = 'root', $depth = 0 ) {
-        if ( $depth > 6 ) {
-            return array( $path . ' => [depth_limit]' );
-        }
-
-        if ( ! is_array( $value ) ) {
-            return array( $path . ' => ' . gettype( $value ) );
-        }
-
-        $shape = array( $path . ' => array(' . count( $value ) . ')' );
-        foreach ( $value as $key => $item ) {
-            $child_path = $path . '[' . $key . ']';
-            if ( is_array( $item ) ) {
-                $shape = array_merge( $shape, $this->inspect_nested_structure( $item, $child_path, $depth + 1 ) );
-            } else {
-                $shape[] = $child_path . ' => ' . gettype( $item ) . ' (' . $item . ')';
-            }
-        }
-
-        return $shape;
-    }
-
-    /**
-     * Find likely timestamp keys/values in nested payload.
-     *
-     * @param mixed  $value Input payload.
-     * @param string $path  Dot path.
-     *
-     * @return array
-     */
-    private function find_timestamp_locations( $value, $path = 'root' ) {
-        $hits = array();
-
-        if ( ! is_array( $value ) ) {
-            return $hits;
-        }
-
-        foreach ( $value as $key => $item ) {
-            $current_path = $path . '[' . $key . ']';
-
-            if ( is_numeric( $key ) && (int) $key >= 1000000000 ) {
-                $hits[] = array(
-                    'path'  => $current_path,
-                    'where' => 'key',
-                    'value' => (int) $key,
-                );
-            }
-
-            if ( is_numeric( $item ) && (int) $item >= 1000000000 ) {
-                $hits[] = array(
-                    'path'  => $current_path,
-                    'where' => 'value',
-                    'value' => (int) $item,
-                );
-            }
-
-            if ( is_array( $item ) ) {
-                $hits = array_merge( $hits, $this->find_timestamp_locations( $item, $current_path ) );
-            }
-        }
-
-        return $hits;
-    }
-
-    /**
-     * Convert booking blocks to slot payload.
-     *
-     * @param WC_Product $product    Product object.
-     * @param mixed      $blocks     Blocks payload.
-     * @param string     $date_match Selected date.
-     *
-     * @return array
-     */
-    private function map_blocks_to_slots( $product, $blocks, $date_match ) {
-        if ( empty( $blocks ) || ! is_array( $blocks ) ) {
+    private function parse_slots_from_woo_html( $html, $target_date ) {
+        if ( '' === trim( (string) $html ) ) {
             return array();
         }
-
-        $duration      = method_exists( $product, 'get_duration' ) ? max( 1, absint( $product->get_duration() ) ) : 1;
-        $duration_unit = method_exists( $product, 'get_duration_unit' ) ? $product->get_duration_unit() : 'minute';
-        $now           = current_time( 'timestamp' );
 
         $slots = array();
 
-        foreach ( $blocks as $block_key => $block ) {
-            $start = $this->extract_block_start( $block );
+        if ( class_exists( 'DOMDocument' ) ) {
+            $dom = new DOMDocument();
+            libxml_use_internal_errors( true );
+            $dom->loadHTML( '<!doctype html><html><body>' . $html . '</body></html>' );
+            libxml_clear_errors();
 
-            // WooCommerce Bookings can return block timestamps as array keys:
-            // [1778068800 => 0, 1778072400 => 0, ...]
-            if ( $start <= 0 && is_numeric( $block_key ) ) {
-                $start = (int) $block_key;
+            $xpath = new DOMXPath( $dom );
+
+            // Non-customer durations: <li class="block"><a data-value="ISO">Label</a></li>
+            $anchors = $xpath->query( "//li[contains(concat(' ', normalize-space(@class), ' '), ' block ')]/a[@data-value]" );
+            if ( $anchors instanceof DOMNodeList ) {
+                foreach ( $anchors as $anchor ) {
+                    $label = trim( preg_replace( '/\s+/', ' ', $anchor->textContent ) );
+                    $value = trim( $anchor->getAttribute( 'data-value' ) );
+                    $slot  = $this->build_slot_row( $label, $value, $target_date );
+                    if ( ! empty( $slot ) ) {
+                        $slots[] = $slot;
+                    }
+                }
             }
 
-            if ( $start <= 0 ) {
-                continue;
+            // Customer durations: select start-time options.
+            if ( empty( $slots ) ) {
+                $options = $xpath->query( "//select[@id='wc-bookings-form-start-time']/option[@value!='0']" );
+                if ( $options instanceof DOMNodeList ) {
+                    foreach ( $options as $option ) {
+                        $label = trim( preg_replace( '/\s+/', ' ', $option->textContent ) );
+                        $value = trim( $option->getAttribute( 'value' ) );
+                        $slot  = $this->build_slot_row( $label, $value, $target_date );
+                        if ( ! empty( $slot ) ) {
+                            $slots[] = $slot;
+                        }
+                    }
+                }
             }
-
-            if ( wp_date( 'Y-m-d', $start ) !== $date_match ) {
-                continue;
-            }
-
-            $end = strtotime( sprintf( '+%d %s', $duration, $duration_unit ), $start );
-            if ( false === $end ) {
-                $end = $start;
-            }
-
-            $status = 'available';
-
-            if ( $end < $now ) {
-                $status = 'expired';
-            } elseif ( $this->is_slot_full( $product, $start, $end ) ) {
-                $status = 'full';
-            }
-
-            $slots[] = array(
-                'start'     => wp_date( 'Y-m-d H:i:s', $start ),
-                'end'       => wp_date( 'Y-m-d H:i:s', $end ),
-                'label'     => wp_date( 'g:i A', $start ) . ' - ' . wp_date( 'g:i A', $end ),
-                'timestamp' => $start,
-                'status'    => $status,
-            );
         }
+
+        // Final fallback: parse list items by regex.
+        if ( empty( $slots ) && preg_match_all( '/<li[^>]*class="[^"]*block[^"]*"[^>]*>\s*<a[^>]*data-value="([^"]+)"[^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER ) ) {
+            foreach ( $matches as $match ) {
+                $value = isset( $match[1] ) ? html_entity_decode( $match[1], ENT_QUOTES, 'UTF-8' ) : '';
+                $label = isset( $match[2] ) ? trim( wp_strip_all_tags( html_entity_decode( $match[2], ENT_QUOTES, 'UTF-8' ) ) ) : '';
+                $slot  = $this->build_slot_row( $label, $value, $target_date );
+                if ( ! empty( $slot ) ) {
+                    $slots[] = $slot;
+                }
+            }
+        }
+
+        $slots = $this->unique_slots( $slots );
 
         usort(
             $slots,
-            static function ( $a, $b ) {
-                return $a['timestamp'] <=> $b['timestamp'];
+            static function( $a, $b ) {
+                return (int) $a['timestamp'] <=> (int) $b['timestamp'];
             }
         );
-// var_dump($slots);
+
         return $slots;
     }
 
     /**
-     * Extract block start timestamp from mixed block payload.
+     * Normalize label/value into slot object.
      *
-     * @param mixed $block Block payload.
+     * @param string $label       Slot label from Woo HTML.
+     * @param string $value       ISO value from Woo HTML.
+     * @param string $target_date Selected date.
      *
-     * @return int
+     * @return array
      */
-    private function extract_block_start( $block ) {
-        if ( is_numeric( $block ) ) {
-            return (int) $block;
+    private function build_slot_row( $label, $value, $target_date ) {
+        $label = trim( (string) $label );
+        $value = trim( (string) $value );
+
+        if ( '' === $label ) {
+            return array();
         }
 
-        if ( is_array( $block ) ) {
-            if ( isset( $block['start'] ) && is_numeric( $block['start'] ) ) {
-                return (int) $block['start'];
-            }
-
-            if ( isset( $block[0] ) && is_numeric( $block[0] ) ) {
-                return (int) $block[0];
-            }
+        $timestamp = strtotime( substr( $value, 0, 19 ) );
+        if ( false === $timestamp ) {
+            $timestamp = strtotime( $target_date . ' ' . $label );
+        }
+        if ( false === $timestamp ) {
+            $timestamp = 0;
         }
 
-        return 0;
+        $status = ( $timestamp > 0 && $timestamp < current_time( 'timestamp' ) ) ? 'expired' : 'available';
+
+        return array(
+            'start'     => $timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $timestamp ) : '',
+            'end'       => '',
+            'label'     => $label,
+            'timestamp' => (int) $timestamp,
+            'status'    => $status,
+            'value'     => $value,
+        );
     }
 
     /**
-     * Determine slot-full status using WooCommerce Bookings native helper.
+     * Remove duplicate slots.
      *
-     * @param WC_Product $product Product object.
-     * @param int        $start   Slot start timestamp.
-     * @param int        $end     Slot end timestamp.
+     * @param array $slots Slots list.
      *
-     * @return bool
+     * @return array
      */
-    private function is_slot_full( $product, $start, $end ) {
-        if ( function_exists( 'wc_bookings_get_total_available_bookings_for_range' ) ) {
-            $available = wc_bookings_get_total_available_bookings_for_range( $product, $start, $end, null, 1 );
+    private function unique_slots( $slots ) {
+        $seen   = array();
+        $unique = array();
 
-            if ( is_wp_error( $available ) || false === $available ) {
-                return true;
+        foreach ( $slots as $slot ) {
+            $key = (string) ( $slot['value'] ?? '' ) . '|' . (string) ( $slot['label'] ?? '' );
+            if ( isset( $seen[ $key ] ) ) {
+                continue;
             }
-
-            if ( is_numeric( $available ) && (int) $available <= 0 ) {
-                return true;
-            }
-
-            if ( is_array( $available ) && empty( $available ) ) {
-                return true;
-            }
+            $seen[ $key ] = true;
+            $unique[]     = $slot;
         }
 
-        return false;
+        return $unique;
     }
 
     /**
@@ -625,7 +319,28 @@ class ZBP_Slot_Service {
     }
 
     /**
-     * Debug logger.
+     * Optional development debug dumps.
+     *
+     * @param string $label Debug label.
+     * @param mixed  $data  Debug payload.
+     *
+     * @return void
+     */
+    private function debug_pre_dump( $label, $data ) {
+        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+            return;
+        }
+
+        $debug_buffer  = '<pre>';
+        $debug_buffer .= $label . "\n";
+        $debug_buffer .= print_r( $data, true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+        $debug_buffer .= '</pre>';
+
+        error_log( wp_strip_all_tags( $debug_buffer ) );
+    }
+
+    /**
+     * Structured debug logger.
      *
      * @param array $payload Debug payload.
      *

@@ -141,7 +141,7 @@ console.log("cstslot", slots);
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="zbp-ended-btn" type="button">Class Ended</button>' +
+                        '<button class="zbp-join-btn" type="button">Join</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
