@@ -24,6 +24,15 @@ class ZBP_Slot_Service {
         $form_encoded = http_build_query( $form_payload, '', '&' );
 
         $this->debug_pre_dump( 'zbp_wc_native_payload', $form_payload );
+        echo '<pre>';
+        print_r(
+            array(
+                'debug_label' => 'zbp_wc_native_payload',
+                'product_id'  => (int) $product->get_id(),
+                'payload'     => $form_payload,
+            )
+        );
+        echo '</pre>';
 
         $slot_html = $this->request_native_woo_slots_html( $form_encoded );
         $this->debug_pre_dump( 'zbp_wc_native_html', $slot_html );
@@ -121,15 +130,111 @@ class ZBP_Slot_Service {
 
         if ( method_exists( $product, 'has_resources' ) && $product->has_resources() && method_exists( $product, 'is_resource_assignment_type' ) && $product->is_resource_assignment_type( 'customer' ) ) {
             $resources = method_exists( $product, 'get_resources' ) ? $product->get_resources() : array();
-            if ( is_array( $resources ) && 1 === count( $resources ) ) {
-                $resource = reset( $resources );
-                if ( is_object( $resource ) && isset( $resource->ID ) ) {
-                    $payload['wc_bookings_field_resource'] = (int) $resource->ID;
-                }
+            $resource_id = $this->resolve_first_valid_resource_id( $resources );
+
+            echo '<pre>';
+            print_r(
+                array(
+                    'debug_label'        => 'zbp_detected_resources',
+                    'product_id'         => (int) $product->get_id(),
+                    'resources_detected' => $this->format_resource_debug( $resources ),
+                    'selected_resource'  => $resource_id,
+                )
+            );
+            echo '</pre>';
+
+            if ( $resource_id > 0 ) {
+                $payload['wc_bookings_field_resource'] = $resource_id;
             }
         }
 
         return $payload;
+    }
+
+    /**
+     * Pick first valid resource ID from customer-selectable resources.
+     *
+     * @param array $resources Product resources.
+     *
+     * @return int
+     */
+    private function resolve_first_valid_resource_id( $resources ) {
+        if ( ! is_array( $resources ) || empty( $resources ) ) {
+            return 0;
+        }
+
+        $fallback_id = 0;
+
+        foreach ( $resources as $resource ) {
+            if ( ! is_object( $resource ) ) {
+                continue;
+            }
+
+            $resource_id = 0;
+            if ( isset( $resource->ID ) ) {
+                $resource_id = (int) $resource->ID;
+            } elseif ( method_exists( $resource, 'get_id' ) ) {
+                $resource_id = (int) $resource->get_id();
+            }
+
+            if ( $resource_id <= 0 ) {
+                continue;
+            }
+
+            if ( 0 === $fallback_id ) {
+                $fallback_id = $resource_id;
+            }
+
+            if ( method_exists( $resource, 'get_qty' ) ) {
+                $qty = (int) $resource->get_qty();
+                if ( $qty > 0 ) {
+                    return $resource_id;
+                }
+                continue;
+            }
+
+            return $resource_id;
+        }
+
+        return $fallback_id;
+    }
+
+    /**
+     * Compact resource debug formatter.
+     *
+     * @param array $resources Product resources.
+     *
+     * @return array
+     */
+    private function format_resource_debug( $resources ) {
+        if ( ! is_array( $resources ) ) {
+            return array();
+        }
+
+        $formatted = array();
+        foreach ( $resources as $resource ) {
+            if ( ! is_object( $resource ) ) {
+                continue;
+            }
+
+            $id = 0;
+            if ( isset( $resource->ID ) ) {
+                $id = (int) $resource->ID;
+            } elseif ( method_exists( $resource, 'get_id' ) ) {
+                $id = (int) $resource->get_id();
+            }
+
+            $name = method_exists( $resource, 'get_name' ) ? $resource->get_name() : '';
+            $qty  = method_exists( $resource, 'get_qty' ) ? (int) $resource->get_qty() : null;
+
+            $formatted[] = array(
+                'id'   => $id,
+                'name' => $name,
+                'qty'  => $qty,
+            );
+        }
+
+        return $formatted;
     }
 
     /**
