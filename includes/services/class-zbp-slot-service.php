@@ -24,12 +24,36 @@ class ZBP_Slot_Service {
         $form_encoded = http_build_query( $form_payload, '', '&' );
 
         $this->debug_pre_dump( 'zbp_wc_native_payload', $form_payload );
+        echo '<pre>';
+        print_r(
+            array(
+                'debug_label' => 'zbp_wc_native_payload',
+                'payload'     => $form_payload,
+            )
+        );
+        echo '</pre>';
 
         $slot_html = $this->request_native_woo_slots_html( $form_encoded );
         $this->debug_pre_dump( 'zbp_wc_native_html', $slot_html );
+        echo '<pre>';
+        print_r(
+            array(
+                'debug_label' => 'zbp_wc_native_html',
+                'html'        => $slot_html,
+            )
+        );
+        echo '</pre>';
 
         $slots = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
         $this->debug_pre_dump( 'zbp_wc_parsed_slots', $slots );
+        echo '<pre>';
+        print_r(
+            array(
+                'debug_label' => 'zbp_wc_parsed_slots',
+                'slots'       => $slots,
+            )
+        );
+        echo '</pre>';
 
         return $this->apply_mode_logic( $slots, $mode );
     }
