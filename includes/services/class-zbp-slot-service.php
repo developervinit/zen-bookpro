@@ -24,15 +24,6 @@ class ZBP_Slot_Service {
         $form_encoded = http_build_query( $form_payload, '', '&' );
 
         $this->debug_pre_dump( 'zbp_wc_native_payload', $form_payload );
-        echo '<pre>';
-        print_r(
-            array(
-                'debug_label' => 'zbp_wc_native_payload',
-                'product_id'  => (int) $product->get_id(),
-                'payload'     => $form_payload,
-            )
-        );
-        echo '</pre>';
 
         $slot_html = $this->request_native_woo_slots_html( $form_encoded );
         $this->debug_pre_dump( 'zbp_wc_native_html', $slot_html );
@@ -131,17 +122,6 @@ class ZBP_Slot_Service {
         if ( method_exists( $product, 'has_resources' ) && $product->has_resources() && method_exists( $product, 'is_resource_assignment_type' ) && $product->is_resource_assignment_type( 'customer' ) ) {
             $resources = method_exists( $product, 'get_resources' ) ? $product->get_resources() : array();
             $resource_id = $this->resolve_first_valid_resource_id( $resources );
-
-            echo '<pre>';
-            print_r(
-                array(
-                    'debug_label'        => 'zbp_detected_resources',
-                    'product_id'         => (int) $product->get_id(),
-                    'resources_detected' => $this->format_resource_debug( $resources ),
-                    'selected_resource'  => $resource_id,
-                )
-            );
-            echo '</pre>';
 
             if ( $resource_id > 0 ) {
                 $payload['wc_bookings_field_resource'] = $resource_id;
