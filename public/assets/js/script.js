@@ -61,23 +61,15 @@ console.log("ZBP Script Running");
                     console.log("cstslot", slots);
 
                     if (isSlotBased) {
-                        var options = slots.length
+                        var chips = slots.length
                             ? slots
                                   .map(function (slot) {
                                       var label = slotLabel(slot);
                                       var val = (slot && slot.value) ? slot.value : label;
-                                      return '<option value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</option>";
+                                      return '<button type="button" class="zbp-slot-chip" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
                                   })
                                   .join("")
-                            : '<option value="">No slots available</option>';
-
-                        var chips = slots.length
-                            ? slots
-                                  .map(function (slot) {
-                                      return "<span>" + escapeHtml(slotLabel(slot)) + "</span>";
-                                  })
-                                  .join("")
-                            : "<span>No slots</span>";
+                            : '<span class="zbp-no-slots">No slots available</span>';
 
                         return (
                             '<article class="zbp-product-card ' +
@@ -95,14 +87,17 @@ console.log("ZBP Script Running");
                             price +
                             "</span></div>" +
                             "</div>" +
-                            '<div class="zbp-select-wrap">' +
+                            '<div class="zbp-custom-dropdown">' +
                             "<label>Choose Slot</label>" +
-                            "<select>" +
-                            options +
-                            "</select>" +
-                            "</div>" +
-                            '<div class="zbp-slot-chips">' +
+                            '<button type="button" class="zbp-dropdown-toggle">' +
+                            '<span class="zbp-selected-slot-label">Select a slot</span>' +
+                            '<span class="zbp-chevron">&#9662;</span>' +
+                            '</button>' +
+                            '<div class="zbp-dropdown-menu" hidden>' +
+                            '<div class="zbp-slot-chips zbp-grid-view">' +
                             chips +
+                            "</div>" +
+                            "</div>" +
                             "</div>" +
                             '<div class="zbp-card-bottom">' +
                             '<div class="zbp-duration">' +
@@ -265,6 +260,57 @@ console.log("ZBP Script Running");
             if (confirmBtn) {
                 confirmBtn.addEventListener("click", closeModal);
             }
+
+            // Custom Dropdown Event Delegation
+            if (productList) {
+                productList.addEventListener("click", function (event) {
+                    var toggle = event.target.closest(".zbp-dropdown-toggle");
+                    var chip = event.target.closest(".zbp-slot-chip");
+
+                    if (toggle) {
+                        var dropdown = toggle.closest(".zbp-custom-dropdown");
+                        var menu = dropdown.querySelector(".zbp-dropdown-menu");
+
+                        // Close other menus
+                        productList.querySelectorAll(".zbp-dropdown-menu").forEach(function (m) {
+                            if (m !== menu) m.hidden = true;
+                        });
+
+                        if (menu) {
+                            menu.hidden = !menu.hidden;
+                        }
+                        return;
+                    }
+
+                    if (chip) {
+                        var dropdown = chip.closest(".zbp-custom-dropdown");
+                        if (!dropdown) return;
+                        
+                        var menu = dropdown.querySelector(".zbp-dropdown-menu");
+                        var label = dropdown.querySelector(".zbp-selected-slot-label");
+
+                        menu.querySelectorAll(".zbp-slot-chip").forEach(function (c) {
+                            c.classList.remove("is-selected");
+                        });
+                        chip.classList.add("is-selected");
+
+                        if (label) {
+                            label.textContent = chip.textContent;
+                        }
+                        if (menu) {
+                            menu.hidden = true;
+                        }
+                    }
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                if (!event.target.closest(".zbp-custom-dropdown") && productList) {
+                    productList.querySelectorAll(".zbp-dropdown-menu").forEach(function (m) {
+                        m.hidden = true;
+                    });
+                }
+            });
 
             var dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 

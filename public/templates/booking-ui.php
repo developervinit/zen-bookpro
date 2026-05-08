@@ -91,15 +91,17 @@ if ( ! defined( 'ABSPATH' ) ) {
                         </div>
 
                         <?php if ( $is_slot_based ) : ?>
-                            <div class="zbp-select-wrap">
+                            <div class="zbp-custom-dropdown">
                                 <label><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></label>
-                                <select>
-                                    <option><?php esc_html_e( 'Slot data coming in next step', 'zen-bookpro' ); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="zbp-slot-chips">
-                                <span><?php esc_html_e( 'Slot Placeholder', 'zen-bookpro' ); ?></span>
+                                <button type="button" class="zbp-dropdown-toggle">
+                                    <span class="zbp-selected-slot-label"><?php esc_html_e( 'Select a slot', 'zen-bookpro' ); ?></span>
+                                    <span class="zbp-chevron">&#9662;</span>
+                                </button>
+                                <div class="zbp-dropdown-menu" hidden>
+                                    <div class="zbp-slot-chips zbp-grid-view">
+                                        <button type="button" class="zbp-slot-chip" data-value=""><?php esc_html_e( 'Slot Placeholder', 'zen-bookpro' ); ?></button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="zbp-card-bottom">
