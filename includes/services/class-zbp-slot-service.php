@@ -283,7 +283,8 @@ class ZBP_Slot_Service {
             return array();
         }
 
-        $timestamp = strtotime( substr( $value, 0, 19 ) );
+        // Parse full ISO-8601 value from Woo (including timezone offset).
+        $timestamp = strtotime( $value );
         if ( false === $timestamp ) {
             $timestamp = strtotime( $target_date . ' ' . $label );
         }
@@ -292,6 +293,11 @@ class ZBP_Slot_Service {
         }
 
         $status = ( $timestamp > 0 && $timestamp < current_time( 'timestamp' ) ) ? 'expired' : 'available';
+
+        // Normalize displayed label from parsed timestamp for consistent timezone rendering.
+        if ( $timestamp > 0 ) {
+            $label = wp_date( wc_bookings_time_format(), $timestamp );
+        }
 
         return array(
             'start'     => $timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $timestamp ) : '',
