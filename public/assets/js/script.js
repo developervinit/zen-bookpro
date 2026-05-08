@@ -182,6 +182,15 @@ console.log("cstslot", slots);
                     }
 
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
+                    console.log("ZBP Debug: zbp_get_slots raw products", products);
+                    products.forEach(function (product) {
+                        console.log("ZBP Debug: product slots from zbp_get_slots", {
+                            product_id: product && product.id ? product.id : 0,
+                            product_name: product && product.name ? product.name : "",
+                            mode: product && product.mode ? product.mode : "",
+                            slots: product && Array.isArray(product.slots) ? product.slots : [],
+                        });
+                    });
                     renderProducts(productList, products);
                     wrapper.dispatchEvent(
                         new CustomEvent("zbp_slots_updated", {
