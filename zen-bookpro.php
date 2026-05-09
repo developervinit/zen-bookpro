@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'ZBP_VERSION', '1.0.0' );
+define( 'ZBP_VERSION', '1.0.1' );
 define( 'ZBP_PLUGIN_FILE', __FILE__ );
 define( 'ZBP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ZBP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
