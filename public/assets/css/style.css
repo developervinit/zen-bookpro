@@ -105,7 +105,6 @@
     border-radius: 16px;
     display: grid;
     grid-template-columns: 96px 1fr;
-    overflow: hidden;
 }
 
 .zbp-card-icon {
@@ -181,7 +180,7 @@
     background: #3b3b3d;
     border: 1px solid #7b7b7e;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     position: absolute;
     top: 100%;
     left: 0;
@@ -367,6 +366,7 @@
         flex-direction: column;
     }
 }
+
 .zbp-product-image {
     border-radius: 8px;
     height: 68px;
