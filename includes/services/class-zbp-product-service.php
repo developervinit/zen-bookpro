@@ -214,11 +214,17 @@ class ZBP_Product_Service {
             $booking_data = $this->get_booking_data( $product );
             $slots        = $this->slot_service->get_slots_for_product( $product, $selected_date, $mode );
 
+            $image_id  = $product->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
+            if ( ! $image_url ) {
+                $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
+            }
+
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
                 'mode'              => $mode,
-                'image'             => get_the_post_thumbnail_url( $product_id, 'medium' ),
+                'image'             => $image_url ? $image_url : '',
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
