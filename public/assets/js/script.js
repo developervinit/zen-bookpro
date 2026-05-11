@@ -181,6 +181,7 @@ console.log("ZBP Script Running");
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
                     console.log("ZBP Debug: zbp_get_slots raw products", products);
                     products.forEach(function (product) {
+                        console.log("ZBP Debug: product meta for " + (product ? product.name : "Unknown"), product ? product.debug_meta : {});
                         console.log("ZBP Debug: product slots from zbp_get_slots", {
                             product_id: product && product.id ? product.id : 0,
                             product_name: product && product.name ? product.name : "",

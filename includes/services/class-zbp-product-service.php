@@ -219,6 +219,8 @@ class ZBP_Product_Service {
             if ( ! $image_url ) {
                 $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
             }
+            
+            $all_meta = get_post_meta( $product_id );
 
             $mapped[] = array(
                 'id'                => $product_id,
@@ -231,6 +233,7 @@ class ZBP_Product_Service {
                 'has_booking_data'  => ! empty( $booking_data ),
                 'is_slot_based'     => 'free_flow' === $mode,
                 'slots'             => $slots,
+                'debug_meta'        => $all_meta,
             );
         }
 
