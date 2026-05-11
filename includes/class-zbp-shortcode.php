@@ -132,11 +132,11 @@ class ZBP_Shortcode {
                     'id'       => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
                     'name'     => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
                     'mode'     => $mode,
-                    'duration' => isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '',
+                    'duration' => ! empty( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : ( isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '' ),
+                    'zen_coins'=> isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
                     'image'    => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
                     'price'    => isset( $product['price_html'] ) ? wp_strip_all_tags( $product['price_html'] ) : '',
                     'slots'    => $slots,
-                    'debug_meta' => isset( $product['debug_meta'] ) ? $product['debug_meta'] : array(),
                 );
             },
             $products

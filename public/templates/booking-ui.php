@@ -87,7 +87,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <div class="zbp-card-content">
                         <div class="zbp-card-top">
                             <h4><?php echo esc_html( $product['title'] ); ?></h4>
-                            <div class="zbp-coins"><?php esc_html_e( 'Price:', 'zen-bookpro' ); ?> <span><?php echo wp_kses_post( wp_strip_all_tags( $product['price_html'] ? $product['price_html'] : __( 'N/A', 'zen-bookpro' ) ) ); ?></span></div>
+                            <div class="zbp-coins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <span><?php echo esc_html( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?></span></div>
                         </div>
 
                         <?php if ( $is_slot_based ) : ?>
@@ -105,7 +105,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                             </div>
 
                             <div class="zbp-card-bottom">
-                                <div class="zbp-duration"><?php echo esc_html( $product['duration'] ); ?></div>
+                                <div class="zbp-duration">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    (<?php echo esc_html( ! empty( $product['zen_duration'] ) ? $product['zen_duration'] : $product['duration'] ); ?>)
+                                </div>
                                 <button class="zbp-join-btn" type="button"><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
                             </div>
                         <?php else : ?>
