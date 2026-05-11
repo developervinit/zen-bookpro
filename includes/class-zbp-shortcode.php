@@ -40,20 +40,26 @@ class ZBP_Shortcode {
     public function register_assets() {
         error_log( '[ZBP Debug] register_assets() fired on wp_enqueue_scripts.' );
         $script_url = ZBP_PLUGIN_URL . 'public/assets/js/script.js';
+        $script_path = ZBP_PLUGIN_PATH . 'public/assets/js/script.js';
+        $style_url = ZBP_PLUGIN_URL . 'public/assets/css/style.css';
+        $style_path = ZBP_PLUGIN_PATH . 'public/assets/css/style.css';
         error_log( '[ZBP Debug] Script URL generated: ' . $script_url );
+
+        $script_ver = file_exists( $script_path ) ? filemtime( $script_path ) : ZBP_VERSION;
+        $style_ver  = file_exists( $style_path ) ? filemtime( $style_path ) : ZBP_VERSION;
 
         wp_register_style(
             'zbp-style',
-            ZBP_PLUGIN_URL . 'public/assets/css/style.css',
+            $style_url,
             array(),
-            ZBP_VERSION
+            $style_ver
         );
 
         wp_register_script(
             'zbp-script',
             $script_url,
             array(),
-            ZBP_VERSION,
+            $script_ver,
             true
         );
 

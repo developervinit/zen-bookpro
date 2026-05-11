@@ -56,19 +56,19 @@ console.log("ZBP Script Running");
                     if (Array.isArray(product.slots)) {
                         slots = product.slots;
                     } else if (product.slots && typeof product.slots === "object") {
-                        slots = Object.keys(product.slots).map(function(k) { return product.slots[k]; });
+                        slots = Object.keys(product.slots).map(function (k) { return product.slots[k]; });
                     }
                     console.log("cstslot", slots);
 
                     if (isSlotBased) {
                         var chips = slots.length
                             ? slots
-                                  .map(function (slot) {
-                                      var label = slotLabel(slot);
-                                      var val = (slot && slot.value) ? slot.value : label;
-                                      return '<button type="button" class="zbp-slot-chip" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
-                                  })
-                                  .join("")
+                                .map(function (slot) {
+                                    var label = slotLabel(slot);
+                                    var val = (slot && slot.value) ? slot.value : label;
+                                    return '<button type="button" class="zbp-slot-chip" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                                })
+                                .join("")
                             : '<span class="zbp-no-slots">No slots available</span>';
 
                         return (
@@ -181,7 +181,7 @@ console.log("ZBP Script Running");
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
                     console.log("ZBP Debug: zbp_get_slots raw products", products);
                     products.forEach(function (product) {
-                        console.log("exp-meta-fields: product meta for " + (product ? product.name : "Unknown"), product ? product.debug_meta : {});
+                        console.log("expirence-meta-fields: product meta for " + (product ? product.name : "Unknown"), product ? product.debug_meta : {});
                         console.log("ZBP Debug: product slots from zbp_get_slots", {
                             product_id: product && product.id ? product.id : 0,
                             product_name: product && product.name ? product.name : "",
@@ -286,7 +286,7 @@ console.log("ZBP Script Running");
                     if (chip) {
                         var dropdown = chip.closest(".zbp-custom-dropdown");
                         if (!dropdown) return;
-                        
+
                         var menu = dropdown.querySelector(".zbp-dropdown-menu");
                         var label = dropdown.querySelector(".zbp-selected-slot-label");
 
