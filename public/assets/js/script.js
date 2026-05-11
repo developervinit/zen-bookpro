@@ -125,9 +125,7 @@ console.log("ZBP Script Running");
                         "<h4>" +
                         escapeHtml(product.name) +
                         "</h4>" +
-                        '<div class="zbp-coins">Price: <span>' +
-                        price +
-                        "</span></div>" +
+                        '<div class="zbp-coins">Price: <span>0</span></div>' +
                         "</div>" +
                         '<div class="zbp-event-meta">' +
                         "<p>" +
