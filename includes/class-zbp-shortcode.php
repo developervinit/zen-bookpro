@@ -136,6 +136,7 @@ class ZBP_Shortcode {
                     'image'    => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
                     'price'    => isset( $product['price_html'] ) ? wp_strip_all_tags( $product['price_html'] ) : '',
                     'slots'    => $slots,
+                    'debug_meta' => isset( $product['debug_meta'] ) ? $product['debug_meta'] : array(),
                 );
             },
             $products
