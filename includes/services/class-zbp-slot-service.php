@@ -232,12 +232,7 @@ class ZBP_Slot_Service {
         );
 
         if ( is_wp_error( $response ) ) {
-            $this->debug_log(
-                array(
-                    'stage'   => 'native_woo_request_error',
-                    'message' => $response->get_error_message(),
-                )
-            );
+
             return '';
         }
 

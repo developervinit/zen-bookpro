@@ -44,13 +44,7 @@ class ZBP_Product_Mode {
             $mode       = $this->sanitize_mode( $saved_mode );
         }
 
-        $this->debug_log(
-            array(
-                'stage'      => 'load_product_mode',
-                'product_id' => $product_id,
-                'mode'       => $mode,
-            )
-        );
+
 
         echo '<div class="options_group show_if_booking">';
 
@@ -88,13 +82,7 @@ class ZBP_Product_Mode {
 
         $product->update_meta_data( self::META_KEY, $mode );
 
-        $this->debug_log(
-            array(
-                'stage'      => 'save_product_mode',
-                'product_id' => (int) $product->get_id(),
-                'mode'       => $mode,
-            )
-        );
+
     }
 
     /**

@@ -1,4 +1,3 @@
-console.log("ZBP Script Running");
 (function () {
     "use strict";
 
@@ -57,7 +56,6 @@ console.log("ZBP Script Running");
                     } else if (product.slots && typeof product.slots === "object") {
                         slots = Object.keys(product.slots).map(function (k) { return product.slots[k]; });
                     }
-                    console.log("cstslot", slots);
 
                     var instructorHtml = product.zen_instructor
                         ? '<span class="zbp-instructor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px; margin-left: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ' + escapeHtml(product.zen_instructor) + '</span>'
@@ -239,14 +237,7 @@ console.log("ZBP Script Running");
                     }
 
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
-                    products.forEach(function (product) {
-                        console.log("expirence-meta-fields: product meta for " + (product ? product.name : "Unknown"), product ? product.debug_meta : {});
-                            product_id: product && product.id ? product.id : 0,
-                            product_name: product && product.name ? product.name : "",
-                            mode: product && product.mode ? product.mode : "",
-                            slots: product && Array.isArray(product.slots) ? product.slots : [],
-                        });
-                    });
+
                     renderProducts(productList, products);
                     wrapper.dispatchEvent(
                         new CustomEvent("zbp_slots_updated", {
@@ -279,7 +270,6 @@ console.log("ZBP Script Running");
             }
 
             wrapper.addEventListener("zbp_date_selected", function (event) {
-                console.log("date_selected");
                 var selectedKey = event && event.detail ? event.detail.selected_date : "";
 
                 if (!selectedKey) {
@@ -429,9 +419,7 @@ console.log("ZBP Script Running");
                     })
                 );
 
-                    stage: "date_selected",
-                    selected_date: selectedKey,
-                });
+
             }
 
             function renderWeek() {

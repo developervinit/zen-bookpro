@@ -51,13 +51,7 @@ class ZBP_Product_Service {
             )
         );
 
-        $this->debug_log(
-            array(
-                'stage'          => 'initial_fetch',
-                'total_products' => count( $all_products ),
-                'product_ids'    => $this->collect_product_ids( $all_products ),
-            )
-        );
+
 
         $booking_products = array_values(
             array_filter(
@@ -66,13 +60,7 @@ class ZBP_Product_Service {
             )
         );
 
-        $this->debug_log(
-            array(
-                'stage'          => 'booking_filter',
-                'total_products' => count( $booking_products ),
-                'product_ids'    => $this->collect_product_ids( $booking_products ),
-            )
-        );
+
 
         $selected_ids = $this->get_selected_product_ids();
 
@@ -87,14 +75,7 @@ class ZBP_Product_Service {
             );
         }
 
-        $this->debug_log(
-            array(
-                'stage'          => 'admin_filter',
-                'selected_ids'   => $selected_ids,
-                'total_products' => count( $booking_products ),
-                'product_ids'    => $this->collect_product_ids( $booking_products ),
-            )
-        );
+
 
         $taxonomy_filtered = array_values(
             array_filter(
@@ -115,15 +96,7 @@ class ZBP_Product_Service {
             )
         );
 
-        $this->debug_log(
-            array(
-                'stage'            => 'taxonomy_filter',
-                'experience_terms' => $experience_category_id > 0 ? array( $experience_category_id ) : array(),
-                'activity_terms'   => $activity_type_id > 0 ? array( $activity_type_id ) : array(),
-                'total_products'   => count( $taxonomy_filtered ),
-                'product_ids'      => $this->collect_product_ids( $taxonomy_filtered ),
-            )
-        );
+
 
         return $this->map_products_for_template( $taxonomy_filtered, $selected_date );
     }
