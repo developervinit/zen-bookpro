@@ -224,9 +224,16 @@ class ZBP_Product_Service {
 
             $max_spots = 1;
             
+            $raw_qty = get_post_meta( $product_id, '_wc_booking_qty', true );
+            $raw_max_persons = get_post_meta( $product_id, '_wc_booking_max_persons_group', true );
+            
+            if ( $raw_qty !== '' ) {
+                $max_spots = (int) $raw_qty;
+            }
+            
             if ( class_exists( 'WC_Product_Booking' ) ) {
                 $booking_product = new WC_Product_Booking( $product_id );
-                if ( method_exists( $booking_product, 'get_qty' ) ) {
+                if ( method_exists( $booking_product, 'get_qty' ) && $max_spots <= 1 ) {
                     $max_spots = (int) $booking_product->get_qty();
                 }
                 
@@ -261,6 +268,8 @@ class ZBP_Product_Service {
                 'slots'             => $slots,
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
+                'debug_raw_qty'     => $raw_qty,
+                'debug_raw_max_per' => $raw_max_persons,
             );
         }
 
