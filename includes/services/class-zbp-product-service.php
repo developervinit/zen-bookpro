@@ -223,25 +223,37 @@ class ZBP_Product_Service {
             $all_meta = get_post_meta( $product_id );
 
             $max_spots = 1;
+            $booked_spots = 0;
             
-            $raw_qty = get_post_meta( $product_id, '_wc_booking_qty', true );
-            $raw_max_persons = get_post_meta( $product_id, '_wc_booking_max_persons_group', true );
-            
-            if ( $raw_qty !== '' ) {
-                $max_spots = (int) $raw_qty;
-            }
-            
-            if ( class_exists( 'WC_Product_Booking' ) ) {
+            if ( class_exists( 'WC_Product_Booking' ) && function_exists( 'wc_bookings_get_time_slots' ) ) {
                 $booking_product = new WC_Product_Booking( $product_id );
-                if ( method_exists( $booking_product, 'get_qty' ) && $max_spots <= 1 ) {
-                    $max_spots = (int) $booking_product->get_qty();
+                
+                // Extract timestamps from slots
+                $blocks_to_check = array();
+                if ( is_array( $slots ) && ! empty( $slots ) ) {
+                    foreach ( $slots as $slot ) {
+                        if ( ! empty( $slot['timestamp'] ) ) {
+                            $blocks_to_check[ $slot['timestamp'] ] = 0;
+                        }
+                    }
                 }
                 
-                // Fallback to max persons if it's configured higher
-                if ( method_exists( $booking_product, 'has_persons' ) && $booking_product->has_persons() ) {
-                    $max_persons = method_exists( $booking_product, 'get_max_persons' ) ? (int) $booking_product->get_max_persons() : 0;
-                    if ( $max_persons > $max_spots ) {
-                        $max_spots = $max_persons;
+                // Fetch native availability using the exact timestamps
+                if ( ! empty( $blocks_to_check ) ) {
+                    $available_slots = wc_bookings_get_time_slots( $booking_product, $blocks_to_check, array(), 0, 0, 0, true );
+                    
+                    // Since it's Event (Single Slot), we just look at the first slot's timestamp
+                    $first_timestamp = $slots[0]['timestamp'];
+                    
+                    if ( isset( $available_slots[ $first_timestamp ] ) ) {
+                        $booked_spots = (int) $available_slots[ $first_timestamp ]['booked'];
+                        $available = (int) $available_slots[ $first_timestamp ]['available'];
+                        $max_spots = $booked_spots + $available;
+                    }
+                } else {
+                    // Fallback to get_qty if no slots are parsed yet
+                    if ( method_exists( $booking_product, 'get_qty' ) ) {
+                        $max_spots = (int) $booking_product->get_qty();
                     }
                 }
             }
@@ -249,8 +261,6 @@ class ZBP_Product_Service {
             if ( $max_spots <= 0 ) {
                 $max_spots = 1;
             }
-
-            $booked_spots = $this->get_booked_volume( $product_id, $selected_date );
 
             $mapped[] = array(
                 'id'                => $product_id,
@@ -268,8 +278,6 @@ class ZBP_Product_Service {
                 'slots'             => $slots,
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
-                'debug_raw_qty'     => $raw_qty,
-                'debug_raw_max_per' => $raw_max_persons,
             );
         }
 
@@ -397,44 +405,5 @@ class ZBP_Product_Service {
         }
 
         error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
-    }
-
-    /**
-     * Get booked volume for a product on a specific date.
-     *
-     * @param int    $product_id Product ID.
-     * @param string $target_date Date string.
-     *
-     * @return int
-     */
-    private function get_booked_volume( $product_id, $target_date ) {
-        global $wpdb;
-
-        $target_date_ymd = wp_date( 'Ymd', strtotime( $target_date ) );
-        
-        $bookings = $wpdb->get_col( $wpdb->prepare( "
-            SELECT p.ID FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_booking_product_id'
-            INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_start'
-            WHERE p.post_type = 'wc_booking'
-            AND p.post_status IN ('paid', 'confirmed', 'complete', 'in-cart')
-            AND pm1.meta_value = %d
-            AND pm2.meta_value LIKE %s
-        ", $product_id, $target_date_ymd . '%' ) );
-
-        $booked_count = 0;
-
-        if ( ! empty( $bookings ) ) {
-            foreach ( $bookings as $booking_id ) {
-                $persons = get_post_meta( $booking_id, '_booking_persons', true );
-                if ( is_array( $persons ) ) {
-                    $booked_count += array_sum( $persons );
-                } else {
-                    $booked_count++;
-                }
-            }
-        }
-
-        return $booked_count;
     }
 }
