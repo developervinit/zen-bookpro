@@ -222,10 +222,23 @@ class ZBP_Product_Service {
             
             $all_meta = get_post_meta( $product_id );
 
-            $max_spots = (int) get_post_meta( $product_id, '_wc_booking_qty', true );
-            if ( $max_spots <= 0 && $product && method_exists( $product, 'get_qty' ) ) {
-                $max_spots = (int) $product->get_qty();
+            $max_spots = 1;
+            
+            if ( class_exists( 'WC_Product_Booking' ) ) {
+                $booking_product = new WC_Product_Booking( $product_id );
+                if ( method_exists( $booking_product, 'get_qty' ) ) {
+                    $max_spots = (int) $booking_product->get_qty();
+                }
+                
+                // Fallback to max persons if it's configured higher
+                if ( method_exists( $booking_product, 'has_persons' ) && $booking_product->has_persons() ) {
+                    $max_persons = method_exists( $booking_product, 'get_max_persons' ) ? (int) $booking_product->get_max_persons() : 0;
+                    if ( $max_persons > $max_spots ) {
+                        $max_spots = $max_persons;
+                    }
+                }
             }
+            
             if ( $max_spots <= 0 ) {
                 $max_spots = 1;
             }
