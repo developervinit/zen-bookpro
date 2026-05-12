@@ -50,7 +50,7 @@ console.log("ZBP Script Running");
                     var imageHtml = product.image
                         ? '<img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
                         : '<span class="zbp-image-placeholder">&#128247;</span>';
-                    var durationText = escapeHtml(product.duration || "Duration N/A");
+                    var durationText = escapeHtml(product.zen_duration || product.duration || "Duration N/A");
                     var zcoins = escapeHtml(product.zen_coins || "0");
                     var duration = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> (' + durationText + ')';
                     var slots = [];
@@ -60,6 +60,10 @@ console.log("ZBP Script Running");
                         slots = Object.keys(product.slots).map(function (k) { return product.slots[k]; });
                     }
                     console.log("cstslot", slots);
+
+                    var instructorHtml = product.zen_instructor
+                        ? '<span class="zbp-instructor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px; margin-left: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ' + escapeHtml(product.zen_instructor) + '</span>'
+                        : '';
 
                     if (isSlotBased) {
                         var chips = slots.length
@@ -103,6 +107,7 @@ console.log("ZBP Script Running");
                             '<div class="zbp-card-bottom">' +
                             '<div class="zbp-duration">' +
                             duration +
+                            (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
                             '<button class="zbp-join-btn" type="button">Join</button>' +
                             "</div>" +
@@ -125,7 +130,9 @@ console.log("ZBP Script Running");
                         "<h4>" +
                         escapeHtml(product.name) +
                         "</h4>" +
-                        '<div class="zbp-coins">Price: <span>0</span></div>' +
+                        '<div class="zbp-coins">ZENCOINS: <span>' +
+                        zcoins +
+                        "</span></div>" +
                         "</div>" +
                         '<div class="zbp-event-meta">' +
                         "<p>" +
@@ -134,6 +141,7 @@ console.log("ZBP Script Running");
                         "<p>" +
                         duration +
                         "</p>" +
+                        (instructorHtml ? "<p>" + instructorHtml + "</p>" : "") +
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +

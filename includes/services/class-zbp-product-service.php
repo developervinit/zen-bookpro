@@ -231,6 +231,7 @@ class ZBP_Product_Service {
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'zen_duration'      => get_post_meta( $product_id, '_zen_duration', true ),
                 'zen_coins'         => get_post_meta( $product_id, '_zen_coins', true ),
+                'zen_instructor'    => get_post_meta( $product_id, '_zen_instructor', true ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
                 'has_booking_data'  => ! empty( $booking_data ),
                 'is_slot_based'     => 'free_flow' === $mode,
