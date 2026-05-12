@@ -250,8 +250,6 @@ class ZBP_Product_Service {
                         $available = (int) $available_slots[ $first_timestamp ]['available'];
                         $max_spots = $booked_spots + $available;
                     }
-                    
-                    error_log( "ZBP Debug: Product ID: $product_id | Max: $max_spots | Booked: $booked_spots | Qty: " . $booking_product->get_qty() );
                 } else {
                     // Fallback to get_qty if no slots are parsed yet
                     if ( method_exists( $booking_product, 'get_qty' ) ) {
@@ -280,11 +278,6 @@ class ZBP_Product_Service {
                 'slots'             => $slots,
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
-                'debug_info'        => array(
-                    'qty' => isset($booking_product) ? $booking_product->get_qty() : 'N/A',
-                    'has_res' => isset($booking_product) ? $booking_product->has_resources() : 'N/A',
-                    'first_ts' => isset($first_timestamp) ? $first_timestamp : 'N/A',
-                )
             );
         }
 
@@ -399,18 +392,4 @@ class ZBP_Product_Service {
         return sprintf( '%d %s', $duration, $unit );
     }
 
-    /**
-     * Temporary debug logs to trace query behavior.
-     *
-     * @param array $payload Debug data.
-     *
-     * @return void
-     */
-    private function debug_log( $payload ) {
-        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-            return;
-        }
-
-        error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
-    }
 }

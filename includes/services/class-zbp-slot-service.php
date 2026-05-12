@@ -23,13 +23,8 @@ class ZBP_Slot_Service {
         $form_payload = $this->build_native_booking_form_payload( $product, $date_context );
         $form_encoded = http_build_query( $form_payload, '', '&' );
 
-        $this->debug_pre_dump( 'zbp_wc_native_payload', $form_payload );
-
         $slot_html = $this->request_native_woo_slots_html( $form_encoded );
-        $this->debug_pre_dump( 'zbp_wc_native_html', $slot_html );
-
-        $slots = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
-        $this->debug_pre_dump( 'zbp_wc_parsed_slots', $slots );
+        $slots     = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
 
         return $this->apply_mode_logic( $slots, $mode );
     }
@@ -404,39 +399,4 @@ class ZBP_Slot_Service {
         return $slots;
     }
 
-    /**
-     * Optional development debug dumps.
-     *
-     * @param string $label Debug label.
-     * @param mixed  $data  Debug payload.
-     *
-     * @return void
-     */
-    private function debug_pre_dump( $label, $data ) {
-        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-            return;
-        }
-
-        $debug_buffer  = '<pre>';
-        $debug_buffer .= $label . "\n";
-        $debug_buffer .= print_r( $data, true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-        $debug_buffer .= '</pre>';
-
-        error_log( wp_strip_all_tags( $debug_buffer ) );
-    }
-
-    /**
-     * Structured debug logger.
-     *
-     * @param array $payload Debug payload.
-     *
-     * @return void
-     */
-    private function debug_log( $payload ) {
-        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-            return;
-        }
-
-        error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
-    }
 }

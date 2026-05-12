@@ -114,18 +114,4 @@ class ZBP_Product_Mode {
         return $mode;
     }
 
-    /**
-     * Debug logger.
-     *
-     * @param array $payload Debug payload.
-     *
-     * @return void
-     */
-    private function debug_log( $payload ) {
-        if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-            return;
-        }
-
-        error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
-    }
 }

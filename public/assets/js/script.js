@@ -1,11 +1,9 @@
 console.log("ZBP Script Running");
 (function () {
     "use strict";
-    console.log("ZBP Debug: script loaded");
 
     document.addEventListener("DOMContentLoaded", function () {
         var wrappers = document.querySelectorAll(".zbp-booking-ui");
-        console.log("ZBP Debug: wrappers found:", wrappers.length);
 
         function escapeHtml(value) {
             return String(value || "")
@@ -168,9 +166,7 @@ console.log("ZBP Script Running");
                     var maxSpots = product.max_spots || 1;
                     var bookedSpots = product.booked_spots || 0;
 
-                    if (product.debug_info) {
-                        console.log("ZBP Debug for slot quantity " + product.id, product.debug_info);
-                    }
+
 
                     var volumeText = bookedSpots + "/" + maxSpots + " (Voll)";
                     var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px;">' +
@@ -217,7 +213,6 @@ console.log("ZBP Script Running");
 
         function fetchSlots(dateKey, wrapper, productList) {
             if (!window.zbpAjax || !zbpAjax.ajaxUrl) {
-                console.error("ZBP Debug: AJAX config missing");
                 return;
             }
 
@@ -239,16 +234,13 @@ console.log("ZBP Script Running");
                 })
                 .then(function (result) {
                     if (!result || !result.success) {
-                        console.error("ZBP Debug: slot fetch failed", result);
                         renderEmptyState(productList);
                         return;
                     }
 
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
-                    console.log("ZBP Debug: zbp_get_slots raw products", products);
                     products.forEach(function (product) {
                         console.log("expirence-meta-fields: product meta for " + (product ? product.name : "Unknown"), product ? product.debug_meta : {});
-                        console.log("ZBP Debug: product slots from zbp_get_slots", {
                             product_id: product && product.id ? product.id : 0,
                             product_name: product && product.name ? product.name : "",
                             mode: product && product.mode ? product.mode : "",
@@ -266,7 +258,6 @@ console.log("ZBP Script Running");
                     );
                 })
                 .catch(function (error) {
-                    console.error("ZBP Debug: ajax error", error);
                     renderEmptyState(productList);
                 });
         }
@@ -284,7 +275,6 @@ console.log("ZBP Script Running");
             var productList = wrapper.querySelector(".zbp-product-list");
 
             if (!dateRow || !weekRange || !productList) {
-                console.log("ZBP Debug: init aborted - missing date row, week range, or product list");
                 return;
             }
 
@@ -439,7 +429,6 @@ console.log("ZBP Script Running");
                     })
                 );
 
-                console.log("ZBP Debug:", {
                     stage: "date_selected",
                     selected_date: selectedKey,
                 });

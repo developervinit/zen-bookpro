@@ -38,12 +38,10 @@ class ZBP_Shortcode {
      * @return void
      */
     public function register_assets() {
-        error_log( '[ZBP Debug] register_assets() fired on wp_enqueue_scripts.' );
         $script_url = ZBP_PLUGIN_URL . 'public/assets/js/script.js';
         $script_path = ZBP_PLUGIN_PATH . 'public/assets/js/script.js';
         $style_url = ZBP_PLUGIN_URL . 'public/assets/css/style.css';
         $style_path = ZBP_PLUGIN_PATH . 'public/assets/css/style.css';
-        error_log( '[ZBP Debug] Script URL generated: ' . $script_url );
 
         $script_ver = file_exists( $script_path ) ? filemtime( $script_path ) : ZBP_VERSION;
         $style_ver  = file_exists( $style_path ) ? filemtime( $style_path ) : ZBP_VERSION;
@@ -102,14 +100,7 @@ class ZBP_Shortcode {
             );
         }
 
-        error_log(
-            'ZBP Debug: ' . wp_json_encode(
-                array(
-                    'stage' => 'ajax_request',
-                    'date'  => $date,
-                )
-            )
-        );
+
 
         $filters = array(
             'experience_category' => isset( $_POST['experience'] ) ? absint( wp_unslash( $_POST['experience'] ) ) : 0,
@@ -139,19 +130,9 @@ class ZBP_Shortcode {
                     'slots'       => $slots,
                     'max_spots'   => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
                     'booked_spots'=> isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
-                    'debug_info'  => isset( $product['debug_info'] ) ? $product['debug_info'] : array(),
                 );
             },
             $products
-        );
-
-        error_log(
-            'ZBP Debug: ' . wp_json_encode(
-                array(
-                    'stage'          => 'ajax_response',
-                    'products_count' => count( $response_products ),
-                )
-            )
         );
 
         wp_send_json_success(
@@ -180,7 +161,6 @@ class ZBP_Shortcode {
             'zen_bookpro'
         );
 
-        error_log( '[ZBP Debug] render_shortcode() called. Enqueuing zbp-style and zbp-script.' );
         wp_enqueue_style( 'zbp-style' );
         wp_enqueue_script( 'zbp-script' );
 
