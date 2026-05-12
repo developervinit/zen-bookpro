@@ -251,16 +251,7 @@ class ZBP_Product_Service {
                         $max_spots = $booked_spots + $available;
                     }
                     
-                    echo "<!-- ZBP Debug: Product ID: $product_id | Max: $max_spots | Booked: $booked_spots | Qty: " . $booking_product->get_qty() . " -->";
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        echo "<script>console.log('ZBP PHP Debug: Product $product_id', " . wp_json_encode([
-                            'max' => $max_spots,
-                            'booked' => $booked_spots,
-                            'qty' => $booking_product->get_qty(),
-                            'has_res' => $booking_product->has_resources(),
-                            'slots_count' => count($available_slots)
-                        ]) . ");</script>";
-                    }
+                    error_log( "ZBP Debug: Product ID: $product_id | Max: $max_spots | Booked: $booked_spots | Qty: " . $booking_product->get_qty() );
                 } else {
                     // Fallback to get_qty if no slots are parsed yet
                     if ( method_exists( $booking_product, 'get_qty' ) ) {
