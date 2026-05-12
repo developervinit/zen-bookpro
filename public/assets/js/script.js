@@ -165,6 +165,14 @@ console.log("ZBP Script Running");
                         }
                     }
 
+                    var maxSpots = product.max_spots || 1;
+                    var bookedSpots = product.booked_spots || 0;
+                    var volumeText = bookedSpots + "/" + maxSpots + " (Voll)";
+                    var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px;">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' +
+                        escapeHtml(volumeText) +
+                        "</p>";
+
                     return (
                         '<article class="zbp-product-card ' +
                         cardClass +
@@ -186,6 +194,7 @@ console.log("ZBP Script Running");
                         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' +
                         escapeHtml(formattedTimeBlock) +
                         "</p>" +
+                        volumeHtml +
                         (instructorHtml ? "<p>" + instructorHtml + "</p>" : "") +
                         "</div>" +
                         '<div class="zbp-card-bottom">' +

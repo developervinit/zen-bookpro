@@ -222,6 +222,16 @@ class ZBP_Product_Service {
             
             $all_meta = get_post_meta( $product_id );
 
+            $max_spots = (int) get_post_meta( $product_id, '_wc_booking_qty', true );
+            if ( $max_spots <= 0 && $product && method_exists( $product, 'get_qty' ) ) {
+                $max_spots = (int) $product->get_qty();
+            }
+            if ( $max_spots <= 0 ) {
+                $max_spots = 1;
+            }
+
+            $booked_spots = $this->get_booked_volume( $product_id, $selected_date );
+
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
@@ -236,6 +246,8 @@ class ZBP_Product_Service {
                 'has_booking_data'  => ! empty( $booking_data ),
                 'is_slot_based'     => 'free_flow' === $mode,
                 'slots'             => $slots,
+                'max_spots'         => $max_spots,
+                'booked_spots'      => $booked_spots,
             );
         }
 
@@ -363,5 +375,44 @@ class ZBP_Product_Service {
         }
 
         error_log( 'ZBP Debug: ' . wp_json_encode( $payload ) );
+    }
+
+    /**
+     * Get booked volume for a product on a specific date.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $target_date Date string.
+     *
+     * @return int
+     */
+    private function get_booked_volume( $product_id, $target_date ) {
+        global $wpdb;
+
+        $target_date_ymd = wp_date( 'Ymd', strtotime( $target_date ) );
+        
+        $bookings = $wpdb->get_col( $wpdb->prepare( "
+            SELECT p.ID FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_booking_product_id'
+            INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_start'
+            WHERE p.post_type = 'wc_booking'
+            AND p.post_status IN ('paid', 'confirmed', 'complete', 'in-cart')
+            AND pm1.meta_value = %d
+            AND pm2.meta_value LIKE %s
+        ", $product_id, $target_date_ymd . '%' ) );
+
+        $booked_count = 0;
+
+        if ( ! empty( $bookings ) ) {
+            foreach ( $bookings as $booking_id ) {
+                $persons = get_post_meta( $booking_id, '_booking_persons', true );
+                if ( is_array( $persons ) ) {
+                    $booked_count += array_sum( $persons );
+                } else {
+                    $booked_count++;
+                }
+            }
+        }
+
+        return $booked_count;
     }
 }
