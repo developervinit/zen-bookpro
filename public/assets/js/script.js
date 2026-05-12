@@ -116,7 +116,54 @@ console.log("ZBP Script Running");
                         );
                     }
 
-                    var firstSlot = slots.length ? slotLabel(slots[0]) : "No slot available";
+                    var firstSlotStr = slots.length ? slotLabel(slots[0]) : "No slot available";
+                    var formattedTimeBlock = firstSlotStr;
+
+                    if (slots.length && firstSlotStr !== "Unavailable") {
+                        var rawDur = product.zen_duration || product.duration || "";
+                        var durationMinutes = 60;
+                        var matchDur = rawDur.match(/[\d.]+/);
+                        if (matchDur) {
+                            var val = parseFloat(matchDur[0]);
+                            if (rawDur.toLowerCase().indexOf("hour") !== -1 || rawDur.toLowerCase().indexOf("hr") !== -1) {
+                                durationMinutes = Math.round(val * 60);
+                            } else {
+                                durationMinutes = Math.round(val);
+                            }
+                        }
+
+                        var match12 = firstSlotStr.match(/(\d+):(\d+)\s*(am|pm)/i);
+                        var match24 = firstSlotStr.match(/^(\d{1,2}):(\d{2})$/);
+                        var h, m;
+                        var parsed = false;
+                        
+                        if (match12) {
+                            h = parseInt(match12[1], 10);
+                            m = parseInt(match12[2], 10);
+                            var ampm = match12[3].toLowerCase();
+                            if (ampm === "pm" && h < 12) h += 12;
+                            if (ampm === "am" && h === 12) h = 0;
+                            parsed = true;
+                        } else if (match24) {
+                            h = parseInt(match24[1], 10);
+                            m = parseInt(match24[2], 10);
+                            parsed = true;
+                        }
+
+                        if (parsed) {
+                            var startTotalMins = h * 60 + m;
+                            var endTotalMins = startTotalMins + durationMinutes;
+                            var endH = Math.floor(endTotalMins / 60) % 24;
+                            var endM = endTotalMins % 60;
+                            
+                            var startHH = String(h).padStart(2, '0');
+                            var startMM = String(m).padStart(2, '0');
+                            var endHH = String(endH).padStart(2, '0');
+                            var endMM = String(endM).padStart(2, '0');
+                            
+                            formattedTimeBlock = startHH + ":" + startMM + "-" + endHH + ":" + endMM + " (" + durationMinutes + " min)";
+                        }
+                    }
 
                     return (
                         '<article class="zbp-product-card ' +
@@ -135,11 +182,9 @@ console.log("ZBP Script Running");
                         "</span></div>" +
                         "</div>" +
                         '<div class="zbp-event-meta">' +
-                        "<p>" +
-                        escapeHtml(firstSlot) +
-                        "</p>" +
-                        "<p>" +
-                        duration +
+                        '<p style="display: flex; align-items: center; gap: 4px;">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' +
+                        escapeHtml(formattedTimeBlock) +
                         "</p>" +
                         (instructorHtml ? "<p>" + instructorHtml + "</p>" : "") +
                         "</div>" +
