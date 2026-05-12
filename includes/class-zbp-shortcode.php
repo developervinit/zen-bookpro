@@ -129,14 +129,17 @@ class ZBP_Shortcode {
                 }
 
                 return array(
-                    'id'       => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
-                    'name'     => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
-                    'mode'     => $mode,
-                    'duration' => ! empty( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : ( isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '' ),
-                    'zen_coins'=> isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
-                    'image'    => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
-                    'price'    => isset( $product['price_html'] ) ? wp_strip_all_tags( $product['price_html'] ) : '',
-                    'slots'    => $slots,
+                    'id'          => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
+                    'name'        => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
+                    'mode'        => $mode,
+                    'duration'    => ! empty( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : ( isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '' ),
+                    'zen_coins'   => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
+                    'image'       => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
+                    'price'       => isset( $product['price_html'] ) ? wp_strip_all_tags( $product['price_html'] ) : '',
+                    'slots'       => $slots,
+                    'max_spots'   => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
+                    'booked_spots'=> isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
+                    'debug_info'  => isset( $product['debug_info'] ) ? $product['debug_info'] : array(),
                 );
             },
             $products
