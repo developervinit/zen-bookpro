@@ -238,6 +238,9 @@
 
                     var products = result.data && Array.isArray(result.data.products) ? result.data.products : [];
 
+                    products.forEach(function(p) {
+                        console.log("ZBP Meta Diagnostic for " + p.name, p.all_meta);
+                    });
                     renderProducts(productList, products);
                     wrapper.dispatchEvent(
                         new CustomEvent("zbp_slots_updated", {

@@ -242,9 +242,10 @@ class ZBP_Product_Service {
                 'image'             => $image_url ? $image_url : '',
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
-                'zen_duration'      => get_post_meta( $product_id, '_zen_duration', true ),
-                'zen_coins'         => get_post_meta( $product_id, '_zen_coins', true ),
-                'zen_instructor'    => get_post_meta( $product_id, '_zen_instructor', true ),
+                'zen_duration'      => $product->get_meta( '_zen_duration' ),
+                'zen_coins'         => $product->get_meta( '_zen_coins' ),
+                'zen_instructor'    => $product->get_meta( '_zen_instructor' ),
+                'all_meta_keys'     => array_keys( get_post_meta( $product_id ) ), // Diagnostic: see all available keys
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
                 'has_booking_data'  => ! empty( $booking_data ),
                 'is_slot_based'     => 'free_flow' === $mode,
