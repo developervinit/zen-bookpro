@@ -58,7 +58,7 @@
                     }
 
                     var instructorHtml = product.zen_instructor
-                        ? '<span class="zbp-instructor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px; margin-left: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ' + escapeHtml(product.zen_instructor) + '</span>'
+                        ? '<span class="zbp-instructor" style="color: #888; font-size: 13px; margin-top: 4px; display: block;">' + escapeHtml(product.zen_instructor) + '</span>'
                         : '';
 
                     if (isSlotBased) {
@@ -194,7 +194,7 @@
                         escapeHtml(formattedTimeBlock) +
                         "</p>" +
                         volumeHtml +
-                        (instructorHtml ? "<p>" + instructorHtml + "</p>" : "") +
+                        instructorHtml +
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
