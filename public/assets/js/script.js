@@ -136,7 +136,7 @@ console.log("ZBP Script Running");
                         var match24 = firstSlotStr.match(/^(\d{1,2}):(\d{2})$/);
                         var h, m;
                         var parsed = false;
-                        
+
                         if (match12) {
                             h = parseInt(match12[1], 10);
                             m = parseInt(match12[2], 10);
@@ -155,19 +155,23 @@ console.log("ZBP Script Running");
                             var endTotalMins = startTotalMins + durationMinutes;
                             var endH = Math.floor(endTotalMins / 60) % 24;
                             var endM = endTotalMins % 60;
-                            
+
                             var startHH = String(h).padStart(2, '0');
                             var startMM = String(m).padStart(2, '0');
                             var endHH = String(endH).padStart(2, '0');
                             var endMM = String(endM).padStart(2, '0');
-                            
+
                             formattedTimeBlock = startHH + ":" + startMM + "-" + endHH + ":" + endMM + " (" + durationMinutes + " min)";
                         }
                     }
 
                     var maxSpots = product.max_spots || 1;
                     var bookedSpots = product.booked_spots || 0;
-                    
+
+                    if (product.debug_info) {
+                        console.log("ZBP Debug for slot quantity " + product.id, product.debug_info);
+                    }
+
                     var volumeText = bookedSpots + "/" + maxSpots + " (Voll)";
                     var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px;">' +
                         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' +
