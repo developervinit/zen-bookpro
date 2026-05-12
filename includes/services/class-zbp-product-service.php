@@ -244,8 +244,7 @@ class ZBP_Product_Service {
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'zen_duration'      => $product->get_meta( '_zen_duration' ),
                 'zen_coins'         => $product->get_meta( '_zen_coins' ),
-                'zen_instructor'    => $product->get_meta( '_zen_instructor' ),
-                'all_meta_keys'     => array_keys( get_post_meta( $product_id ) ), // Diagnostic: see all available keys
+                'zen_instructor'    => $product->get_meta( '_zen_instructor_name' ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
                 'has_booking_data'  => ! empty( $booking_data ),
                 'is_slot_based'     => 'free_flow' === $mode,

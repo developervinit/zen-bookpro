@@ -131,7 +131,6 @@ class ZBP_Shortcode {
                     'max_spots'   => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
                     'booked_spots'=> isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
                     'zen_instructor'=> isset( $product['zen_instructor'] ) ? sanitize_text_field( $product['zen_instructor'] ) : '',
-                    'all_meta'    => isset( $product['all_meta_keys'] ) ? $product['all_meta_keys'] : array(),
                 );
             },
             $products
