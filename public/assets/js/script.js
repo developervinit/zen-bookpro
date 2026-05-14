@@ -42,6 +42,12 @@
 
             var html = products
                 .map(function (product) {
+                    console.log('Zen-BookPro Debug booked blocks:', {
+                        name: product.name,
+                        booked: product.booked_spots,
+                        max: product.max_spots,
+                        status: product.event_status
+                    });
                     var isSlotBased = product.mode !== "event";
                     var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
                     var imageHtml = product.image
