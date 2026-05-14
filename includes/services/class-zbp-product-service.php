@@ -98,25 +98,7 @@ class ZBP_Product_Service {
 
 
 
-        $mapped_products = $this->map_products_for_template( $taxonomy_filtered, $selected_date );
-
-        // Filter: Only return products that have either available slots OR existing bookings for the selected date.
-        return array_values(
-            array_filter(
-                $mapped_products,
-                function ( $product ) {
-                    // Show product if it has available slots
-                    if ( ! empty( $product['slots'] ) ) {
-                        return true;
-                    }
-                    // Show product if it's "Full" (has booked spots but no slots)
-                    if ( $product['booked_spots'] > 0 ) {
-                        return true;
-                    }
-                    return false;
-                }
-            )
-        );
+        return $this->map_products_for_template( $taxonomy_filtered, $selected_date );
     }
 
     /**
@@ -203,7 +185,9 @@ class ZBP_Product_Service {
             $product_id   = (int) $product->get_id();
             $mode         = $this->get_product_mode( $product_id );
             $booking_data = $this->get_booking_data( $product );
-            $slots        = $this->slot_service->get_slots_for_product( $product, $selected_date, $mode );
+            $slot_result  = $this->slot_service->get_slots_for_product( $product, $selected_date, $mode );
+            $slots        = isset( $slot_result['slots'] ) ? $slot_result['slots'] : array();
+            $slot_debug   = isset( $slot_result['debug'] ) ? $slot_result['debug'] : '';
 
             $image_id  = $product->get_image_id();
             $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
@@ -328,6 +312,7 @@ class ZBP_Product_Service {
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
                 'event_status'      => $event_status,
+                'slot_debug'        => $slot_debug,
             );
         }
 

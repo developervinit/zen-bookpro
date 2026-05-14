@@ -16,7 +16,7 @@ class ZBP_Slot_Service {
     public function get_slots_for_product( $product, $selected_date, $mode ) {
         $product = $this->get_booking_product( $product );
         if ( ! $product ) {
-            return array();
+            return array( 'slots' => array(), 'debug' => 'No product object' );
         }
 
         $date_context = $this->normalize_date( $selected_date );
@@ -26,7 +26,13 @@ class ZBP_Slot_Service {
         $slot_html = $this->request_native_woo_slots_html( $form_encoded );
         $slots     = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
 
-        return $this->apply_mode_logic( $slots, $mode );
+        return array(
+            'slots' => $this->apply_mode_logic( $slots, $mode ),
+            'debug' => array(
+                'payload' => $form_payload,
+                'html'    => substr($slot_html, 0, 500) . (strlen($slot_html) > 500 ? '...' : '')
+            )
+        );
     }
 
     /**
@@ -220,6 +226,7 @@ class ZBP_Slot_Service {
      * @return string
      */
     private function request_native_woo_slots_html( $encoded_form ) {
+        error_log( "ZBP Debug: Requesting slots with payload: " . $encoded_form );
         $response = wp_remote_post(
             admin_url( 'admin-ajax.php' ),
             array(
@@ -232,11 +239,15 @@ class ZBP_Slot_Service {
         );
 
         if ( is_wp_error( $response ) ) {
-
+            error_log( "ZBP Debug: Slot request failed: " . $response->get_error_message() );
             return '';
         }
 
         $body = wp_remote_retrieve_body( $response );
+        error_log( "ZBP Debug: Raw slot HTML response length: " . strlen( $body ) );
+        if ( strlen( $body ) < 500 ) {
+            error_log( "ZBP Debug: Raw slot HTML response: " . $body );
+        }
 
         return is_string( $body ) ? $body : '';
     }

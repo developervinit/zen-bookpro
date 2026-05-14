@@ -46,7 +46,8 @@
                         name: product.name,
                         booked: product.booked_spots,
                         max: product.max_spots,
-                        status: product.event_status
+                        status: product.event_status,
+                        debug: product.slot_debug
                     });
                     var isSlotBased = product.mode !== "event";
                     var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
