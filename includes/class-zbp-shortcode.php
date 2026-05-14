@@ -112,25 +112,20 @@ class ZBP_Shortcode {
 
         $response_products = array_map(
             function ( $product ) {
-                $slots = isset( $product['slots'] ) && is_array( $product['slots'] ) ? $product['slots'] : array();
-                $mode  = isset( $product['mode'] ) ? sanitize_key( $product['mode'] ) : 'free_flow';
-
-                if ( 'event' === $mode && ! empty( $slots ) ) {
-                    $slots = array( reset( $slots ) );
-                }
-
                 return array(
-                    'id'          => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
-                    'name'        => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
-                    'mode'        => $mode,
-                    'duration'    => ! empty( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : ( isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '' ),
-                    'zen_coins'   => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
-                    'image'       => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
-                    'price'       => isset( $product['price_html'] ) ? wp_strip_all_tags( $product['price_html'] ) : '',
-                    'slots'       => $slots,
-                    'max_spots'   => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
-                    'booked_spots'=> isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
-                    'zen_instructor'=> isset( $product['zen_instructor'] ) ? sanitize_text_field( $product['zen_instructor'] ) : '',
+                    'id'              => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
+                    'name'            => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
+                    'mode'            => isset( $product['mode'] ) ? sanitize_key( $product['mode'] ) : 'free_flow',
+                    'duration'        => isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '',
+                    'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',
+                    'zen_coins'       => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
+                    'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
+                    'price_html'      => isset( $product['price_html'] ) ? $product['price_html'] : '',
+                    'slots'           => isset( $product['slots'] ) ? $product['slots'] : array(),
+                    'max_spots'       => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
+                    'booked_spots'    => isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
+                    'event_status'    => isset( $product['event_status'] ) ? $product['event_status'] : 'join',
+                    'zen_instructor'  => isset( $product['zen_instructor'] ) ? sanitize_text_field( $product['zen_instructor'] ) : '',
                 );
             },
             $products

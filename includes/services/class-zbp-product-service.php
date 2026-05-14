@@ -98,7 +98,25 @@ class ZBP_Product_Service {
 
 
 
-        return $this->map_products_for_template( $taxonomy_filtered, $selected_date );
+        $mapped_products = $this->map_products_for_template( $taxonomy_filtered, $selected_date );
+
+        // Filter: Only return products that have either available slots OR existing bookings for the selected date.
+        return array_values(
+            array_filter(
+                $mapped_products,
+                function ( $product ) {
+                    // Show product if it has available slots
+                    if ( ! empty( $product['slots'] ) ) {
+                        return true;
+                    }
+                    // Show product if it's "Full" (has booked spots but no slots)
+                    if ( $product['booked_spots'] > 0 ) {
+                        return true;
+                    }
+                    return false;
+                }
+            )
+        );
     }
 
     /**
