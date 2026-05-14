@@ -234,12 +234,16 @@ class ZBP_Product_Service {
                     $start_of_day = strtotime( $selected_date . ' 00:00:00' );
                     $end_of_day   = strtotime( $selected_date . ' 23:59:59' );
 
-                    $existing_bookings = function_exists( 'wc_get_bookings' ) ? wc_get_bookings( array(
-                        'object_id' => $product_id,
-                        'status'    => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation' ),
-                        'date_from' => $start_of_day,
-                        'date_to'   => $end_of_day,
-                    ) ) : array();
+                    $booking_query_args = array(
+                        'product_id' => $product_id,
+                        'status'     => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation' ),
+                        'date_from'  => $start_of_day,
+                        'date_to'    => $end_of_day,
+                    );
+
+                    $existing_bookings = function_exists( 'wc_get_bookings' ) ? wc_get_bookings( $booking_query_args ) : array();
+
+                    error_log( "ZBP Debug: Product $product_id, Date $selected_date, Bookings found: " . count( $existing_bookings ) );
 
                     if ( ! empty( $existing_bookings ) ) {
                         $total_booked = 0;
@@ -249,7 +253,8 @@ class ZBP_Product_Service {
                         foreach ( $existing_bookings as $booking ) {
                             // Sum persons for occupancy
                             if ( method_exists( $booking, 'get_persons_total' ) ) {
-                                $total_booked += $booking->get_persons_total();
+                                $persons = $booking->get_persons_total();
+                                $total_booked += $persons;
                             } else {
                                 $total_booked++;
                             }
@@ -261,6 +266,7 @@ class ZBP_Product_Service {
                         }
 
                         $booked_spots = $total_booked;
+                        error_log( "ZBP Debug: Calculated total_booked: $total_booked" );
 
                         // Reconstruct slot if it was missing (because it was full)
                         if ( empty( $slots ) && $first_booking_time ) {
