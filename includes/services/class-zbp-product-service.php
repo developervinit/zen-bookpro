@@ -233,19 +233,18 @@ class ZBP_Product_Service {
                 // CRITICAL FIX: If slots are empty or booked_spots is 0 but it's an event, 
                 // fetch actual bookings to see if it's just full.
                 if ( 'event' === $mode && ( empty( $slots ) || $booked_spots === 0 ) ) {
-                    $start_of_day = strtotime( $selected_date . ' 00:00:00' );
-                    $end_of_day   = strtotime( $selected_date . ' 23:59:59' );
+                    // Use date strings for more reliable querying
+                    $date_from = $selected_date . ' 00:00:00';
+                    $date_to   = $selected_date . ' 23:59:59';
 
                     $booking_query_args = array(
                         'product_id' => $product_id,
-                        'status'     => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation' ),
-                        'date_from'  => $start_of_day,
-                        'date_to'    => $end_of_day,
+                        'status'     => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' ),
+                        'date_from'  => strtotime($date_from),
+                        'date_to'    => strtotime($date_to),
                     );
 
                     $existing_bookings = function_exists( 'wc_get_bookings' ) ? wc_get_bookings( $booking_query_args ) : array();
-
-                    error_log( "ZBP Debug: Product $product_id, Date $selected_date, Bookings found: " . count( $existing_bookings ) );
 
                     if ( ! empty( $existing_bookings ) ) {
                         $total_booked = 0;
@@ -253,13 +252,7 @@ class ZBP_Product_Service {
                         $first_booking_ts = 0;
 
                         foreach ( $existing_bookings as $booking ) {
-                            // Sum persons for occupancy
-                            if ( method_exists( $booking, 'get_persons_total' ) ) {
-                                $persons = $booking->get_persons_total();
-                                $total_booked += $persons;
-                            } else {
-                                $total_booked++;
-                            }
+                            $total_booked += method_exists( $booking, 'get_persons_total' ) ? $booking->get_persons_total() : 1;
 
                             if ( ! $first_booking_time && method_exists( $booking, 'get_start' ) ) {
                                 $first_booking_ts = $booking->get_start();
@@ -268,15 +261,14 @@ class ZBP_Product_Service {
                         }
 
                         $booked_spots = $total_booked;
-                        error_log( "ZBP Debug: Calculated total_booked: $total_booked" );
 
-                        // Reconstruct slot if it was missing (because it was full)
+                        // If slots are missing but we found bookings, reconstruct the slot
                         if ( empty( $slots ) && $first_booking_time ) {
                             $slots = array( array(
                                 'start'     => wp_date( 'Y-m-d H:i:s', $first_booking_ts ),
                                 'label'     => $first_booking_time,
                                 'timestamp' => $first_booking_ts,
-                                'status'    => 'available', // Label as available so UI renders it, but status logic below handles waitlist
+                                'status'    => 'available',
                                 'value'     => wp_date( 'c', $first_booking_ts ),
                             ) );
                         }

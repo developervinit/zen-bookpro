@@ -122,6 +122,7 @@ class ZBP_Shortcode {
                     'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
                     'price_html'      => isset( $product['price_html'] ) ? $product['price_html'] : '',
                     'slots'           => isset( $product['slots'] ) ? $product['slots'] : array(),
+                    'max_spots'       => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
                     'booked_spots'    => isset( $product['booked_spots'] ) ? (int) $product['booked_spots'] : 0,
                     'event_status'    => isset( $product['event_status'] ) ? $product['event_status'] : 'join',
                     'slot_debug'      => isset( $product['slot_debug'] ) ? $product['slot_debug'] : '',
