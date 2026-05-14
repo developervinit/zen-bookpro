@@ -198,35 +198,80 @@ class ZBP_Product_Service {
             $max_spots = 1;
             $booked_spots = 0;
             
-            if ( class_exists( 'WC_Product_Booking' ) && function_exists( 'wc_bookings_get_time_slots' ) ) {
+            if ( class_exists( 'WC_Product_Booking' ) ) {
                 $booking_product = new WC_Product_Booking( $product_id );
                 
-                // Extract timestamps from slots
-                $blocks_to_check = array();
-                if ( is_array( $slots ) && ! empty( $slots ) ) {
+                // Fallback: Always get theoretical max capacity from product
+                if ( method_exists( $booking_product, 'get_qty' ) ) {
+                    $max_spots = (int) $booking_product->get_qty();
+                }
+
+                // If we have available slots, get occupancy from them
+                if ( ! empty( $slots ) && function_exists( 'wc_bookings_get_time_slots' ) ) {
+                    $blocks_to_check = array();
                     foreach ( $slots as $slot ) {
                         if ( ! empty( $slot['timestamp'] ) ) {
                             $blocks_to_check[ $slot['timestamp'] ] = 0;
                         }
                     }
-                }
-                
-                // Fetch native availability using the exact timestamps
-                if ( ! empty( $blocks_to_check ) ) {
-                    $available_slots = wc_bookings_get_time_slots( $booking_product, $blocks_to_check, array(), 0, 0, 0, true );
-                    
-                    // Since it's Event (Single Slot), we just look at the first slot's timestamp
-                    $first_timestamp = $slots[0]['timestamp'];
-                    
-                    if ( isset( $available_slots[ $first_timestamp ] ) ) {
-                        $booked_spots = (int) $available_slots[ $first_timestamp ]['booked'];
-                        $available = (int) $available_slots[ $first_timestamp ]['available'];
-                        $max_spots = $booked_spots + $available;
+
+                    if ( ! empty( $blocks_to_check ) ) {
+                        $available_slots = wc_bookings_get_time_slots( $booking_product, $blocks_to_check, array(), 0, 0, 0, true );
+                        $first_timestamp = $slots[0]['timestamp'];
+
+                        if ( isset( $available_slots[ $first_timestamp ] ) ) {
+                            $booked_spots = (int) $available_slots[ $first_timestamp ]['booked'];
+                            // Update max_spots dynamically if it differs (e.g. resource based)
+                            $available_count = (int) $available_slots[ $first_timestamp ]['available'];
+                            $max_spots = $booked_spots + $available_count;
+                        }
                     }
-                } else {
-                    // Fallback to get_qty if no slots are parsed yet
-                    if ( method_exists( $booking_product, 'get_qty' ) ) {
-                        $max_spots = (int) $booking_product->get_qty();
+                } 
+                
+                // CRITICAL FIX: If slots are empty or booked_spots is 0 but it's an event, 
+                // fetch actual bookings to see if it's just full.
+                if ( 'event' === $mode && ( empty( $slots ) || $booked_spots === 0 ) ) {
+                    $start_of_day = strtotime( $selected_date . ' 00:00:00' );
+                    $end_of_day   = strtotime( $selected_date . ' 23:59:59' );
+
+                    $existing_bookings = function_exists( 'wc_get_bookings' ) ? wc_get_bookings( array(
+                        'object_id' => $product_id,
+                        'status'    => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation' ),
+                        'date_from' => $start_of_day,
+                        'date_to'   => $end_of_day,
+                    ) ) : array();
+
+                    if ( ! empty( $existing_bookings ) ) {
+                        $total_booked = 0;
+                        $first_booking_time = '';
+                        $first_booking_ts = 0;
+
+                        foreach ( $existing_bookings as $booking ) {
+                            // Sum persons for occupancy
+                            if ( method_exists( $booking, 'get_persons_total' ) ) {
+                                $total_booked += $booking->get_persons_total();
+                            } else {
+                                $total_booked++;
+                            }
+
+                            if ( ! $first_booking_time && method_exists( $booking, 'get_start' ) ) {
+                                $first_booking_ts = $booking->get_start();
+                                $first_booking_time = wp_date( 'H:i', $first_booking_ts );
+                            }
+                        }
+
+                        $booked_spots = $total_booked;
+
+                        // Reconstruct slot if it was missing (because it was full)
+                        if ( empty( $slots ) && $first_booking_time ) {
+                            $slots = array( array(
+                                'start'     => wp_date( 'Y-m-d H:i:s', $first_booking_ts ),
+                                'label'     => $first_booking_time,
+                                'timestamp' => $first_booking_ts,
+                                'status'    => 'available', // Label as available so UI renders it, but status logic below handles waitlist
+                                'value'     => wp_date( 'c', $first_booking_ts ),
+                            ) );
+                        }
                     }
                 }
             }
