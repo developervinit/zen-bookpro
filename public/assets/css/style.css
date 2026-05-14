@@ -245,6 +245,11 @@
     padding: 10px 26px;
 }
 
+.zbp-join-btn.is-waitlist {
+    background: #5a7d9a; /* Muted blue for waitlist */
+    color: #ffffff;
+}
+
 .zbp-ended-btn {
     background: #c5c5c5;
     border: 0;

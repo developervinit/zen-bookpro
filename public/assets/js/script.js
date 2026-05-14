@@ -172,6 +172,9 @@
                         escapeHtml(volumeText) +
                         "</p>";
 
+                    var btnText = (product.event_status === 'waitlist') ? 'Join Waitlist' : 'Join';
+                    var btnClass = (product.event_status === 'waitlist') ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn';
+
                     return (
                         '<article class="zbp-product-card ' +
                         cardClass +
@@ -198,7 +201,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="zbp-join-btn" type="button">Join</button>' +
+                        '<button class="' + btnClass + '" type="button">' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"

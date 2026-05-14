@@ -235,6 +235,13 @@ class ZBP_Product_Service {
                 $max_spots = 1;
             }
 
+            $event_status = 'join';
+            if ( 'event' === $mode ) {
+                if ( $booked_spots >= $max_spots ) {
+                    $event_status = 'waitlist';
+                }
+            }
+
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
@@ -251,6 +258,7 @@ class ZBP_Product_Service {
                 'slots'             => $slots,
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
+                'event_status'      => $event_status,
             );
         }
 
