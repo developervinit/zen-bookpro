@@ -20,6 +20,11 @@
             return "Unavailable";
         }
 
+        function toSafeInt(value, fallback) {
+            var parsed = parseInt(value, 10);
+            return Number.isFinite(parsed) ? parsed : fallback;
+        }
+
         function renderEmptyState(productList) {
             productList.innerHTML =
                 '<article class="zbp-product-card zbp-empty-state">' +
@@ -168,10 +173,17 @@
                         }
                     }
 
-                    var maxSpots = product.max_spots || 1;
-                    var bookedSpots = product.booked_spots || 0;
-
-
+                    var maxSpots = toSafeInt(product.max_spots, 1);
+                    var bookedSpots = toSafeInt(product.booked_spots, 0);
+                    if (maxSpots < 1) {
+                        maxSpots = 1;
+                    }
+                    if (bookedSpots < 0) {
+                        bookedSpots = 0;
+                    }
+                    if (bookedSpots > maxSpots) {
+                        maxSpots = bookedSpots;
+                    }
 
                     var volumeText = bookedSpots + "/" + maxSpots + " (Voll)";
                     var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px;">' +
