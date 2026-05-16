@@ -191,6 +191,28 @@
                         escapeHtml(volumeText) +
                         "</p>";
 
+                    var slotsDebugText = "";
+                    try {
+                        slotsDebugText = JSON.stringify(product.slots || [], null, 2);
+                    } catch (e) {
+                        slotsDebugText = "Unable to stringify product.slots";
+                    }
+
+                    var slotDebugText = "";
+                    try {
+                        slotDebugText = JSON.stringify(product.slot_debug || {}, null, 2);
+                    } catch (e) {
+                        slotDebugText = "Unable to stringify product.slot_debug";
+                    }
+
+                    var debugHtml =
+                        '<div class="zbp-event-debug" style="margin-top:8px;padding:8px;border:1px dashed #888;border-radius:6px;font-size:12px;color:#ddd;">' +
+                        '<div><strong>AJAX slots:</strong></div>' +
+                        '<pre style="white-space:pre-wrap;word-break:break-word;margin:4px 0 8px;">' + escapeHtml(slotsDebugText) + '</pre>' +
+                        '<div><strong>slot_debug:</strong></div>' +
+                        '<pre style="white-space:pre-wrap;word-break:break-word;margin:4px 0 0;">' + escapeHtml(slotDebugText) + '</pre>' +
+                        '</div>';
+
                     var isEnded = product.event_status === 'ended';
                     var isWaitlist = !isEnded && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
                     var btnText = isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join');
@@ -218,6 +240,7 @@
                         escapeHtml(formattedTimeBlock) +
                         "</p>" +
                         volumeHtml +
+                        debugHtml +
                         instructorHtml +
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
