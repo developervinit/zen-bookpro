@@ -250,6 +250,12 @@
     color: #ffffff;
 }
 
+.zbp-join-btn.is-ended {
+    background: #c5c5c5;
+    color: #4a4a4a;
+    cursor: default;
+}
+
 .zbp-ended-btn {
     background: #c5c5c5;
     border: 0;

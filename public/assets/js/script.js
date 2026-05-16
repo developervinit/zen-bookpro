@@ -191,9 +191,10 @@
                         escapeHtml(volumeText) +
                         "</p>";
 
-                    var isWaitlist = product.event_status === 'waitlist' || bookedSpots >= maxSpots;
-                    var btnText = isWaitlist ? 'Join Waitlist' : 'Join';
-                    var btnClass = isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn';
+                    var isEnded = product.event_status === 'ended';
+                    var isWaitlist = !isEnded && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
+                    var btnText = isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join');
+                    var btnClass = isEnded ? 'zbp-join-btn is-ended' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn');
 
                     return (
                         '<article class="zbp-product-card ' +

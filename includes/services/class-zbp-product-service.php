@@ -297,7 +297,18 @@ class ZBP_Product_Service {
 
             $event_status = 'join';
             if ( 'event' === $mode ) {
-                if ( $booked_spots >= $max_spots ) {
+                $event_has_ended  = false;
+                $duration_seconds = $this->get_duration_seconds( $booking_data );
+                $slot_timestamp   = ! empty( $slots[0]['timestamp'] ) ? (int) $slots[0]['timestamp'] : 0;
+
+                if ( $slot_timestamp > 0 && $duration_seconds > 0 ) {
+                    $slot_end_timestamp = $slot_timestamp + $duration_seconds;
+                    $event_has_ended    = current_time( 'timestamp' ) > $slot_end_timestamp;
+                }
+
+                if ( $event_has_ended ) {
+                    $event_status = 'ended';
+                } elseif ( $booked_spots >= $max_spots ) {
                     $event_status = 'waitlist';
                 }
             }
@@ -432,6 +443,32 @@ class ZBP_Product_Service {
         $unit     = ! empty( $booking_data['duration_unit'] ) ? sanitize_text_field( $booking_data['duration_unit'] ) : __( 'minute', 'zen-bookpro' );
 
         return sprintf( '%d %s', $duration, $unit );
+    }
+
+    /**
+     * Convert booking duration metadata into seconds.
+     *
+     * @param array $booking_data Booking metadata.
+     *
+     * @return int
+     */
+    private function get_duration_seconds( $booking_data ) {
+        $duration = isset( $booking_data['duration'] ) ? absint( $booking_data['duration'] ) : 0;
+        if ( $duration <= 0 ) {
+            return 0;
+        }
+
+        $unit = isset( $booking_data['duration_unit'] ) ? sanitize_key( $booking_data['duration_unit'] ) : 'minute';
+
+        switch ( $unit ) {
+            case 'hour':
+                return $duration * HOUR_IN_SECONDS;
+            case 'day':
+                return $duration * DAY_IN_SECONDS;
+            case 'minute':
+            default:
+                return $duration * MINUTE_IN_SECONDS;
+        }
     }
 
 }
