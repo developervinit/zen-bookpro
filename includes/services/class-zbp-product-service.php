@@ -315,6 +315,8 @@ class ZBP_Product_Service {
 
                 if ( ! wp_doing_ajax() ) {
                     $first_slot = ! empty( $slots[0] ) ? $slots[0] : array();
+                    $slot_start_timestamp = ! empty( $first_slot['timestamp'] ) ? (int) $first_slot['timestamp'] : 0;
+                    $derived_end_timestamp = ( $slot_start_timestamp > 0 && $duration_seconds > 0 ) ? ( $slot_start_timestamp + $duration_seconds ) : 0;
                     echo '<pre>';
                     echo esc_html( 'ZBP Event Time Debug' ) . "\n";
                     echo esc_html( 'Product ID: ' . $product_id ) . "\n";
@@ -322,6 +324,10 @@ class ZBP_Product_Service {
                     echo esc_html( 'Now Timestamp: ' . $now_timestamp ) . "\n";
                     echo esc_html( 'Now DateTime: ' . wp_date( 'Y-m-d H:i:s', $now_timestamp ) ) . "\n";
                     echo esc_html( 'Duration Seconds: ' . $duration_seconds ) . "\n";
+                    echo esc_html( 'Slot Start Timestamp: ' . $slot_start_timestamp ) . "\n";
+                    echo esc_html( 'Slot Start DateTime: ' . ( $slot_start_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_start_timestamp ) : 'N/A' ) ) . "\n";
+                    echo esc_html( 'Derived End Timestamp (start+duration): ' . $derived_end_timestamp ) . "\n";
+                    echo esc_html( 'Derived End DateTime (start+duration): ' . ( $derived_end_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $derived_end_timestamp ) : 'N/A' ) ) . "\n";
                     echo esc_html( 'Slot End Timestamp: ' . $slot_end_timestamp ) . "\n";
                     echo esc_html( 'Slot End DateTime: ' . ( $slot_end_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_end_timestamp ) : 'N/A' ) ) . "\n";
                     echo esc_html( 'Event Has Ended: ' . ( $event_has_ended ? 'yes' : 'no' ) ) . "\n";
