@@ -258,12 +258,16 @@ class ZBP_Product_Service {
                     }
 
                     if ( ! empty( $existing_bookings ) ) {
+                        // Event mode requires seat usage as booking count, not persons sum.
                         $total_booked = 0;
                         $first_booking_time = '';
                         $first_booking_ts = 0;
 
                         foreach ( $existing_bookings as $booking ) {
-                            $total_booked += method_exists( $booking, 'get_persons_total' ) ? $booking->get_persons_total() : 1;
+                            if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+                                continue;
+                            }
+                            $total_booked += 1;
 
                             if ( ! $first_booking_time && method_exists( $booking, 'get_start' ) ) {
                                 $first_booking_ts = $booking->get_start();
@@ -295,21 +299,6 @@ class ZBP_Product_Service {
             if ( 'event' === $mode ) {
                 if ( $booked_spots >= $max_spots ) {
                     $event_status = 'waitlist';
-                }
-            }
-
-            // Debug output for current-date event occupancy checks.
-            if ( 'event' === $mode && '2026-05-16' === $selected_date ) {
-                $debug_line = sprintf(
-                    'ZBP Event Debug %d on 2026-05-16 => booked: %d, total: %d, status: %s',
-                    $product_id,
-                    $booked_spots,
-                    $max_spots,
-                    $event_status
-                );
-
-                if ( ! wp_doing_ajax() ) {
-                    echo '<pre>' . esc_html( $debug_line ) . '</pre>';
                 }
             }
 
