@@ -200,9 +200,18 @@ class ZBP_Product_Service {
 
             $max_spots = 1;
             $booked_spots = 0;
+            $woo_duration_value = 0;
+            $woo_duration_unit  = '';
             
             if ( class_exists( 'WC_Product_Booking' ) ) {
                 $booking_product = new WC_Product_Booking( $product_id );
+
+                if ( method_exists( $booking_product, 'get_duration' ) ) {
+                    $woo_duration_value = (int) $booking_product->get_duration();
+                }
+                if ( method_exists( $booking_product, 'get_duration_unit' ) ) {
+                    $woo_duration_unit = (string) $booking_product->get_duration_unit();
+                }
                 
                 // Fallback: Always get theoretical max capacity from product
                 if ( method_exists( $booking_product, 'get_qty' ) ) {
@@ -324,6 +333,9 @@ class ZBP_Product_Service {
                     echo esc_html( 'Now Timestamp: ' . $now_timestamp ) . "\n";
                     echo esc_html( 'Now DateTime: ' . wp_date( 'Y-m-d H:i:s', $now_timestamp ) ) . "\n";
                     echo esc_html( 'Duration Seconds: ' . $duration_seconds ) . "\n";
+                    echo esc_html( 'Woo Duration Value (get_duration): ' . $woo_duration_value ) . "\n";
+                    echo esc_html( 'Woo Duration Unit (get_duration_unit): ' . $woo_duration_unit ) . "\n";
+                    echo esc_html( 'Zen Duration Meta (_zen_duration): ' . $zen_duration ) . "\n";
                     echo esc_html( 'Slot Start Timestamp: ' . $slot_start_timestamp ) . "\n";
                     echo esc_html( 'Slot Start DateTime: ' . ( $slot_start_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_start_timestamp ) : 'N/A' ) ) . "\n";
                     echo esc_html( 'Derived End Timestamp (start+duration): ' . $derived_end_timestamp ) . "\n";
