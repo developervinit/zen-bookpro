@@ -195,6 +195,7 @@
                     var isWaitlist = !isEnded && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
                     var btnText = isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join');
                     var btnClass = isEnded ? 'zbp-join-btn is-ended' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn');
+                    var btnDisabledAttr = isEnded ? ' disabled aria-disabled="true"' : '';
 
                     return (
                         '<article class="zbp-product-card ' +
@@ -222,7 +223,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button">' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
