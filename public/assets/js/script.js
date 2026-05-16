@@ -191,8 +191,9 @@
                         escapeHtml(volumeText) +
                         "</p>";
 
-                    var btnText = (product.event_status === 'waitlist') ? 'Join Waitlist' : 'Join';
-                    var btnClass = (product.event_status === 'waitlist') ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn';
+                    var isWaitlist = product.event_status === 'waitlist' || bookedSpots >= maxSpots;
+                    var btnText = isWaitlist ? 'Join Waitlist' : 'Join';
+                    var btnClass = isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn';
 
                     return (
                         '<article class="zbp-product-card ' +
