@@ -237,14 +237,25 @@ class ZBP_Product_Service {
                     $date_from = $selected_date . ' 00:00:00';
                     $date_to   = $selected_date . ' 23:59:59';
 
-                    $booking_query_args = array(
-                        'product_id' => $product_id,
-                        'status'     => array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' ),
-                        'date_from'  => strtotime($date_from),
-                        'date_to'    => strtotime($date_to),
-                    );
+                    $status_filter = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' );
+                    $existing_bookings = array();
 
-                    $existing_bookings = function_exists( 'wc_get_bookings' ) ? wc_get_bookings( $booking_query_args ) : array();
+                    if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_bookings_for_objects' ) ) {
+                        $existing_bookings = WC_Booking_Data_Store::get_bookings_for_objects(
+                            array( $product_id ),
+                            $status_filter,
+                            strtotime( $date_from ),
+                            strtotime( $date_to )
+                        );
+                    } elseif ( class_exists( 'WC_Bookings_Controller' ) && method_exists( 'WC_Bookings_Controller', 'get_bookings_for_objects' ) ) {
+                        // Backward-compatible fallback for older bookings versions.
+                        $existing_bookings = WC_Bookings_Controller::get_bookings_for_objects(
+                            array( $product_id ),
+                            $status_filter,
+                            strtotime( $date_from ),
+                            strtotime( $date_to )
+                        );
+                    }
 
                     if ( ! empty( $existing_bookings ) ) {
                         $total_booked = 0;
