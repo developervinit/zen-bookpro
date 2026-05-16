@@ -185,6 +185,7 @@ class ZBP_Product_Service {
             $product_id   = (int) $product->get_id();
             $mode         = $this->get_product_mode( $product_id );
             $booking_data = $this->get_booking_data( $product );
+            $zen_duration = (string) $product->get_meta( '_zen_duration' );
             $slot_result  = $this->slot_service->get_slots_for_product( $product, $selected_date, $mode );
             $slots        = isset( $slot_result['slots'] ) ? $slot_result['slots'] : array();
             $slot_debug   = isset( $slot_result['debug'] ) ? $slot_result['debug'] : '';
@@ -298,12 +299,11 @@ class ZBP_Product_Service {
             $event_status = 'join';
             if ( 'event' === $mode ) {
                 $event_has_ended  = false;
-                $duration_seconds = $this->get_duration_seconds( $booking_data );
-                $slot_timestamp   = ! empty( $slots[0]['timestamp'] ) ? (int) $slots[0]['timestamp'] : 0;
+                $duration_seconds = $this->get_duration_seconds( $booking_data, $zen_duration );
+                $slot_end_timestamp = $this->resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds );
 
-                if ( $slot_timestamp > 0 && $duration_seconds > 0 ) {
-                    $slot_end_timestamp = $slot_timestamp + $duration_seconds;
-                    $event_has_ended    = current_time( 'timestamp' ) > $slot_end_timestamp;
+                if ( $slot_end_timestamp > 0 ) {
+                    $event_has_ended = time() > $slot_end_timestamp;
                 }
 
                 if ( $event_has_ended ) {
@@ -320,7 +320,7 @@ class ZBP_Product_Service {
                 'image'             => $image_url ? $image_url : '',
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
-                'zen_duration'      => $product->get_meta( '_zen_duration' ),
+                'zen_duration'      => $zen_duration,
                 'zen_coins'         => $product->get_meta( '_zen_coins' ),
                 'zen_instructor'    => $product->get_meta( '_zen_instructor_name' ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
@@ -452,7 +452,20 @@ class ZBP_Product_Service {
      *
      * @return int
      */
-    private function get_duration_seconds( $booking_data ) {
+    private function get_duration_seconds( $booking_data, $zen_duration = '' ) {
+        $zen_duration = strtolower( trim( (string) $zen_duration ) );
+        if ( '' !== $zen_duration && preg_match( '/(\d+(?:\.\d+)?)/', $zen_duration, $match ) ) {
+            $value = (float) $match[1];
+            if ( $value > 0 ) {
+                if ( false !== strpos( $zen_duration, 'hour' ) || false !== strpos( $zen_duration, 'hr' ) ) {
+                    return (int) round( $value * HOUR_IN_SECONDS );
+                }
+                if ( false !== strpos( $zen_duration, 'min' ) ) {
+                    return (int) round( $value * MINUTE_IN_SECONDS );
+                }
+            }
+        }
+
         $duration = isset( $booking_data['duration'] ) ? absint( $booking_data['duration'] ) : 0;
         if ( $duration <= 0 ) {
             return 0;
@@ -469,6 +482,71 @@ class ZBP_Product_Service {
             default:
                 return $duration * MINUTE_IN_SECONDS;
         }
+    }
+
+    /**
+     * Resolve event slot end timestamp from slot label/time range or fallback duration.
+     *
+     * @param array  $slots            Slots payload.
+     * @param string $selected_date    Date in Y-m-d.
+     * @param int    $duration_seconds Duration fallback.
+     *
+     * @return int
+     */
+    private function resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds ) {
+        if ( empty( $slots ) || empty( $slots[0] ) || ! is_array( $slots[0] ) ) {
+            return 0;
+        }
+
+        $slot = $slots[0];
+
+        if ( ! empty( $slot['label'] ) && preg_match( '/([0-9]{1,2}:[0-9]{2}(?:\s*[ap]m)?)\s*-\s*([0-9]{1,2}:[0-9]{2}(?:\s*[ap]m)?)/i', (string) $slot['label'], $m ) ) {
+            $start_ts = $this->parse_time_on_date( $selected_date, $m[1] );
+            $end_ts   = $this->parse_time_on_date( $selected_date, $m[2] );
+            if ( $start_ts > 0 && $end_ts > 0 ) {
+                if ( $end_ts <= $start_ts ) {
+                    $end_ts += DAY_IN_SECONDS;
+                }
+                return $end_ts;
+            }
+        }
+
+        $slot_timestamp = ! empty( $slot['timestamp'] ) ? (int) $slot['timestamp'] : 0;
+        if ( $slot_timestamp > 0 && $duration_seconds > 0 ) {
+            return $slot_timestamp + $duration_seconds;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Parse a time value for a specific date into timestamp using WP timezone.
+     *
+     * @param string $date Date in Y-m-d.
+     * @param string $time Time string.
+     *
+     * @return int
+     */
+    private function parse_time_on_date( $date, $time ) {
+        $date = sanitize_text_field( (string) $date );
+        $time = strtolower( trim( (string) $time ) );
+        $time = preg_replace( '/\s+/', '', $time );
+
+        if ( '' === $date || '' === $time ) {
+            return 0;
+        }
+
+        $timezone = wp_timezone();
+        $formats  = array( 'Y-m-d g:ia', 'Y-m-d H:i' );
+
+        foreach ( $formats as $format ) {
+            $dt = DateTimeImmutable::createFromFormat( $format, $date . ' ' . $time, $timezone );
+            if ( $dt instanceof DateTimeImmutable ) {
+                return $dt->getTimestamp();
+            }
+        }
+
+        return 0;
     }
 
 }
