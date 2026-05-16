@@ -301,15 +301,33 @@ class ZBP_Product_Service {
                 $event_has_ended  = false;
                 $duration_seconds = $this->get_duration_seconds( $booking_data, $zen_duration );
                 $slot_end_timestamp = $this->resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds );
+                $now_timestamp = time();
 
                 if ( $slot_end_timestamp > 0 ) {
-                    $event_has_ended = time() > $slot_end_timestamp;
+                    $event_has_ended = $now_timestamp > $slot_end_timestamp;
                 }
 
                 if ( $event_has_ended ) {
                     $event_status = 'ended';
                 } elseif ( $booked_spots >= $max_spots ) {
                     $event_status = 'waitlist';
+                }
+
+                if ( ! wp_doing_ajax() ) {
+                    $first_slot = ! empty( $slots[0] ) ? $slots[0] : array();
+                    echo '<pre>';
+                    echo esc_html( 'ZBP Event Time Debug' ) . "\n";
+                    echo esc_html( 'Product ID: ' . $product_id ) . "\n";
+                    echo esc_html( 'Selected Date: ' . $selected_date ) . "\n";
+                    echo esc_html( 'Now Timestamp: ' . $now_timestamp ) . "\n";
+                    echo esc_html( 'Now DateTime: ' . wp_date( 'Y-m-d H:i:s', $now_timestamp ) ) . "\n";
+                    echo esc_html( 'Duration Seconds: ' . $duration_seconds ) . "\n";
+                    echo esc_html( 'Slot End Timestamp: ' . $slot_end_timestamp ) . "\n";
+                    echo esc_html( 'Slot End DateTime: ' . ( $slot_end_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_end_timestamp ) : 'N/A' ) ) . "\n";
+                    echo esc_html( 'Event Has Ended: ' . ( $event_has_ended ? 'yes' : 'no' ) ) . "\n";
+                    echo esc_html( 'Event Status: ' . $event_status ) . "\n";
+                    echo esc_html( 'First Slot Raw: ' . wp_json_encode( $first_slot ) ) . "\n";
+                    echo '</pre>';
                 }
             }
 
