@@ -298,6 +298,21 @@ class ZBP_Product_Service {
                 }
             }
 
+            // Debug output for current-date event occupancy checks.
+            if ( 'event' === $mode && '2026-05-16' === $selected_date ) {
+                $debug_line = sprintf(
+                    'ZBP Event Debug %d on 2026-05-16 => booked: %d, total: %d, status: %s',
+                    $product_id,
+                    $booked_spots,
+                    $max_spots,
+                    $event_status
+                );
+
+                if ( ! wp_doing_ajax() ) {
+                    echo '<pre>' . esc_html( $debug_line ) . '</pre>';
+                }
+            }
+
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
