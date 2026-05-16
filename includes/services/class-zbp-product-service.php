@@ -311,6 +311,9 @@ class ZBP_Product_Service {
                 $duration_seconds = $this->get_duration_seconds( $booking_data, $zen_duration, $woo_duration_value, $woo_duration_unit );
                 $slot_end_timestamp = $this->resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds );
                 $now_timestamp = time();
+                $first_slot = ! empty( $slots[0] ) ? $slots[0] : array();
+                $slot_start_timestamp = ! empty( $first_slot['timestamp'] ) ? (int) $first_slot['timestamp'] : 0;
+                $derived_end_timestamp = ( $slot_start_timestamp > 0 && $duration_seconds > 0 ) ? ( $slot_start_timestamp + $duration_seconds ) : 0;
 
                 if ( $slot_end_timestamp > 0 ) {
                     $event_has_ended = $now_timestamp > $slot_end_timestamp;
@@ -320,6 +323,28 @@ class ZBP_Product_Service {
                     $event_status = 'ended';
                 } elseif ( $booked_spots >= $max_spots ) {
                     $event_status = 'waitlist';
+                }
+
+                if ( ! wp_doing_ajax() ) {
+                    echo '<pre>';
+                    echo esc_html( 'ZBP Event Status Debug' ) . "\n";
+                    echo esc_html( 'Product ID: ' . $product_id ) . "\n";
+                    echo esc_html( 'Selected Date: ' . $selected_date ) . "\n";
+                    echo esc_html( 'Now Timestamp: ' . $now_timestamp ) . "\n";
+                    echo esc_html( 'Now DateTime: ' . wp_date( 'Y-m-d H:i:s', $now_timestamp ) ) . "\n";
+                    echo esc_html( 'Woo Duration Value: ' . $woo_duration_value ) . "\n";
+                    echo esc_html( 'Woo Duration Unit: ' . $woo_duration_unit ) . "\n";
+                    echo esc_html( 'Duration Seconds Used: ' . $duration_seconds ) . "\n";
+                    echo esc_html( 'Slot Start Timestamp: ' . $slot_start_timestamp ) . "\n";
+                    echo esc_html( 'Slot Start DateTime: ' . ( $slot_start_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_start_timestamp ) : 'N/A' ) ) . "\n";
+                    echo esc_html( 'Derived End Timestamp (start+duration): ' . $derived_end_timestamp ) . "\n";
+                    echo esc_html( 'Derived End DateTime (start+duration): ' . ( $derived_end_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $derived_end_timestamp ) : 'N/A' ) ) . "\n";
+                    echo esc_html( 'Resolved Slot End Timestamp: ' . $slot_end_timestamp ) . "\n";
+                    echo esc_html( 'Resolved Slot End DateTime: ' . ( $slot_end_timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $slot_end_timestamp ) : 'N/A' ) ) . "\n";
+                    echo esc_html( 'Time Passed? (now > end): ' . ( $event_has_ended ? 'yes' : 'no' ) ) . "\n";
+                    echo esc_html( 'Final Event Status: ' . $event_status ) . "\n";
+                    echo esc_html( 'First Slot Raw: ' . wp_json_encode( $first_slot ) ) . "\n";
+                    echo '</pre>';
                 }
             }
 
