@@ -120,6 +120,7 @@ class ZBP_Shortcode {
                     'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',
                     'zen_coins'       => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
                     'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
+                    'gallery'         => isset( $product['gallery'] ) ? $product['gallery'] : array(),
                     'price_html'      => isset( $product['price_html'] ) ? $product['price_html'] : '',
                     'slots'           => isset( $product['slots'] ) ? $product['slots'] : array(),
                     'max_spots'       => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
