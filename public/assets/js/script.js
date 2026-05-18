@@ -284,6 +284,9 @@
             var overlay = wrapper.querySelector(".zbp-overlay");
             var closeBtn = wrapper.querySelector(".zbp-modal-close");
             var confirmBtn = wrapper.querySelector(".zbp-confirm-btn");
+            var joinModal = wrapper.querySelector(".zbp-join-modal");
+            var joinOverlay = wrapper.querySelector(".zbp-join-overlay");
+            var joinModalCloseBtn = wrapper.querySelector(".zbp-join-modal-close");
             var weekRange = wrapper.querySelector(".zbp-week-range");
             var dateRow = wrapper.querySelector(".zbp-date-row");
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
@@ -320,6 +323,22 @@
                 overlay.hidden = true;
             }
 
+            function openJoinModal() {
+                if (!joinModal || !joinOverlay) {
+                    return;
+                }
+                joinModal.hidden = false;
+                joinOverlay.hidden = false;
+            }
+
+            function closeJoinModal() {
+                if (!joinModal || !joinOverlay) {
+                    return;
+                }
+                joinModal.hidden = true;
+                joinOverlay.hidden = true;
+            }
+
             if (filterToggle) {
                 filterToggle.addEventListener("click", openModal);
             }
@@ -338,6 +357,7 @@
                 productList.addEventListener("click", function (event) {
                     var toggle = event.target.closest(".zbp-dropdown-toggle");
                     var chip = event.target.closest(".zbp-slot-chip");
+                    var joinBtn = event.target.closest(".zbp-join-btn");
 
                     if (toggle) {
                         var dropdown = toggle.closest(".zbp-custom-dropdown");
@@ -372,9 +392,29 @@
                         if (menu) {
                             menu.hidden = true;
                         }
+                        return;
+                    }
+
+                    if (joinBtn) {
+                        if (joinBtn.disabled || joinBtn.classList.contains("is-ended")) {
+                            return;
+                        }
+                        openJoinModal();
                     }
                 });
             }
+
+            if (joinModalCloseBtn) {
+                joinModalCloseBtn.addEventListener("click", closeJoinModal);
+            }
+            if (joinOverlay) {
+                joinOverlay.addEventListener("click", closeJoinModal);
+            }
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeJoinModal();
+                }
+            });
 
             document.addEventListener("click", function (event) {
                 if (!event.target.closest(".zbp-custom-dropdown") && productList) {

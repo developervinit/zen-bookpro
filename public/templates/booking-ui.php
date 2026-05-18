@@ -72,6 +72,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
         <button class="zbp-confirm-btn" type="button">Confirm</button>
     </div>
+    <div class="zbp-join-overlay" hidden></div>
+    <div class="zbp-join-modal" hidden role="dialog" aria-modal="true" aria-labelledby="zbp-join-modal-title">
+        <button class="zbp-join-modal-close" type="button" aria-label="Close join popup">&#10005;</button>
+        <h3 id="zbp-join-modal-title"><?php esc_html_e( 'Join Session', 'zen-bookpro' ); ?></h3>
+        <p><?php esc_html_e( 'Popup opened. We will show booking details here next.', 'zen-bookpro' ); ?></p>
+    </div>
 
     <div class="zbp-product-list">
         <?php if ( ! empty( $products ) ) : ?>
