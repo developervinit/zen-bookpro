@@ -82,6 +82,18 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="zbp-join-title-wrap">
             <h3 id="zbp-join-modal-title" class="zbp-join-product-title"><?php esc_html_e( 'Product Name', 'zen-bookpro' ); ?></h3>
         </div>
+        <div class="zbp-join-slot-wrap" hidden>
+            <div class="zbp-select-wrap zbp-custom-dropdown">
+                <label><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></label>
+                <button type="button" class="zbp-dropdown-toggle zbp-join-slot-toggle">
+                    <span class="zbp-selected-slot-label zbp-join-selected-slot-label"><?php esc_html_e( 'Select a slot', 'zen-bookpro' ); ?></span>
+                    <span class="zbp-chevron">&#9662;</span>
+                </button>
+                <div class="zbp-dropdown-menu zbp-join-slot-menu" hidden>
+                    <div class="zbp-slot-chips zbp-grid-view zbp-join-slot-chips"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="zbp-product-list">
@@ -136,6 +148,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
                                     data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
+                                    data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
+                                    data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
                                 ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
                             </div>

@@ -142,7 +142,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -248,7 +248,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -316,6 +316,11 @@
             var joinModalImagePlaceholder = wrapper.querySelector(".zbp-join-media-placeholder");
             var joinModalZencoin = wrapper.querySelector(".zbp-join-zencoins strong");
             var joinModalTitle = wrapper.querySelector(".zbp-join-product-title");
+            var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
+            var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
+            var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
+            var joinSlotChips = wrapper.querySelector(".zbp-join-slot-chips");
+            var joinSelectedSlotLabel = wrapper.querySelector(".zbp-join-selected-slot-label");
             var weekRange = wrapper.querySelector(".zbp-week-range");
             var dateRow = wrapper.querySelector(".zbp-date-row");
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
@@ -352,6 +357,31 @@
                 overlay.hidden = true;
             }
 
+            function renderJoinSlots(slots) {
+                if (!joinSlotChips) {
+                    return;
+                }
+
+                if (!Array.isArray(slots) || slots.length === 0) {
+                    joinSlotChips.innerHTML = '<span class="zbp-no-slots">No slots available</span>';
+                    if (joinSelectedSlotLabel) {
+                        joinSelectedSlotLabel.textContent = "No slots available";
+                    }
+                    return;
+                }
+
+                var chips = slots.map(function (slot) {
+                    var label = slotLabel(slot);
+                    var val = (slot && slot.value) ? slot.value : label;
+                    return '<button type="button" class="zbp-slot-chip zbp-join-slot-chip" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                }).join("");
+
+                joinSlotChips.innerHTML = chips;
+                if (joinSelectedSlotLabel) {
+                    joinSelectedSlotLabel.textContent = "Select a slot";
+                }
+            }
+
             function openJoinModal(joinBtn) {
                 if (!joinModal || !joinOverlay) {
                     return;
@@ -360,6 +390,14 @@
                 var productName = joinBtn ? (joinBtn.getAttribute("data-product-name") || "") : "";
                 var productCoins = joinBtn ? (joinBtn.getAttribute("data-product-zencoins") || "0") : "0";
                 var productImage = joinBtn ? (joinBtn.getAttribute("data-product-image") || "") : "";
+                var productMode = joinBtn ? (joinBtn.getAttribute("data-product-mode") || "") : "";
+                var productSlotsRaw = joinBtn ? (joinBtn.getAttribute("data-product-slots") || "[]") : "[]";
+                var productSlots = [];
+                try {
+                    productSlots = JSON.parse(productSlotsRaw);
+                } catch (e) {
+                    productSlots = [];
+                }
 
                 if (joinModalTitle) {
                     joinModalTitle.textContent = productName || "Product";
@@ -385,6 +423,18 @@
                     }
                 }
 
+                if (joinSlotWrap) {
+                    if (productMode === "free_flow") {
+                        joinSlotWrap.hidden = false;
+                        renderJoinSlots(productSlots);
+                    } else {
+                        joinSlotWrap.hidden = true;
+                    }
+                }
+                if (joinSlotMenu) {
+                    joinSlotMenu.hidden = true;
+                }
+
                 joinModal.hidden = false;
                 joinOverlay.hidden = false;
             }
@@ -395,6 +445,9 @@
                 }
                 joinModal.hidden = true;
                 joinOverlay.hidden = true;
+                if (joinSlotMenu) {
+                    joinSlotMenu.hidden = true;
+                }
             }
 
             if (filterToggle) {
@@ -479,6 +532,34 @@
             if (joinOverlay) {
                 joinOverlay.addEventListener("click", closeJoinModal);
             }
+            if (joinSlotToggle) {
+                joinSlotToggle.addEventListener("click", function () {
+                    if (!joinSlotMenu) {
+                        return;
+                    }
+                    joinSlotMenu.hidden = !joinSlotMenu.hidden;
+                });
+            }
+            if (joinSlotChips) {
+                joinSlotChips.addEventListener("click", function (event) {
+                    var chip = event.target.closest(".zbp-join-slot-chip");
+                    if (!chip) {
+                        return;
+                    }
+
+                    joinSlotChips.querySelectorAll(".zbp-join-slot-chip").forEach(function (c) {
+                        c.classList.remove("is-selected");
+                    });
+                    chip.classList.add("is-selected");
+
+                    if (joinSelectedSlotLabel) {
+                        joinSelectedSlotLabel.textContent = chip.textContent;
+                    }
+                    if (joinSlotMenu) {
+                        joinSlotMenu.hidden = true;
+                    }
+                });
+            }
             document.addEventListener("keydown", function (event) {
                 if (event.key === "Escape") {
                     closeJoinModal();
@@ -490,6 +571,9 @@
                     productList.querySelectorAll(".zbp-dropdown-menu").forEach(function (m) {
                         m.hidden = true;
                     });
+                }
+                if (joinSlotMenu && !event.target.closest(".zbp-join-slot-wrap")) {
+                    joinSlotMenu.hidden = true;
                 }
             });
 

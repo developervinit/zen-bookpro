@@ -370,6 +370,11 @@
     border-top: 1px solid #4b4b4f;
 }
 
+.zbp-join-slot-wrap {
+    padding: 0 20px 18px;
+    background: #3f3f42;
+}
+
 .zbp-join-modal-close {
     align-items: center;
     background: rgba(0, 0, 0, 0.45);
@@ -410,6 +415,10 @@
 
     .zbp-join-title-wrap {
         padding: 12px 14px 14px;
+    }
+
+    .zbp-join-slot-wrap {
+        padding: 0 14px 14px;
     }
 }
 
