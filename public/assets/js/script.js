@@ -45,7 +45,7 @@
                 return firstPath ? firstPath.trim() : "";
             }
 
-            return product.image || "";
+            return "";
         }
 
         function renderEmptyState(productList) {
