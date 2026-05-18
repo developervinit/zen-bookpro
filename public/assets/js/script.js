@@ -417,6 +417,7 @@
                 var productCoins = joinBtn ? (joinBtn.getAttribute("data-product-zencoins") || "0") : "0";
                 var productImage = joinBtn ? (joinBtn.getAttribute("data-product-image") || "") : "";
                 var productMode = joinBtn ? (joinBtn.getAttribute("data-product-mode") || "") : "";
+                productMode = String(productMode).toLowerCase().trim();
                 var productDuration = joinBtn ? (joinBtn.getAttribute("data-product-duration") || "") : "";
                 var productSlotsRaw = joinBtn ? (joinBtn.getAttribute("data-product-slots") || "[]") : "[]";
                 var productSlots = [];
@@ -454,19 +455,17 @@
                 }
 
                 if (joinSlotWrap) {
+                    joinSlotWrap.hidden = true;
                     if (productMode === "free_flow") {
                         joinSlotWrap.hidden = false;
                         renderJoinSlots(productSlots);
-                    } else {
-                        joinSlotWrap.hidden = true;
                     }
                 }
                 if (joinDurationRow && joinDurationValue) {
+                    joinDurationRow.hidden = true;
                     if (productMode === "free_flow") {
                         joinDurationValue.textContent = durationToMinutes(productDuration) + "min";
                         joinDurationRow.hidden = false;
-                    } else {
-                        joinDurationRow.hidden = true;
                     }
                 }
                 if (joinSlotMenu) {
