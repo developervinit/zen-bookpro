@@ -463,10 +463,12 @@
                 }
                 if (joinDurationRow && joinDurationValue) {
                     joinDurationRow.hidden = true;
+                    console.log("product _debug", productMode)
                     if (productMode === "free_flow") {
                         joinDurationValue.textContent = durationToMinutes(productDuration) + "min";
                         joinDurationRow.hidden = false;
                     }
+                    console.log("product _debug_out", joinDurationRow.hidden)
                 }
                 if (joinSlotMenu) {
                     joinSlotMenu.hidden = true;
