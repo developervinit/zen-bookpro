@@ -8,6 +8,8 @@ class ZBP_Product_Mode {
      * Meta key for product mode.
      */
     const META_KEY = '_zbp_product_mode';
+    const META_KEY_CANCELLATION_POLICY = '_zbp_cancellation_policy';
+    const META_KEY_LOCATION = '_zbp_location';
 
     /**
      * Allowed mode values.
@@ -62,6 +64,26 @@ class ZBP_Product_Mode {
             )
         );
 
+        woocommerce_wp_text_input(
+            array(
+                'id'          => self::META_KEY_CANCELLATION_POLICY,
+                'label'       => __( 'Cancelation policy', 'zen-bookpro' ),
+                'description' => __( 'Enter cancellation policy for this booking product.', 'zen-bookpro' ),
+                'desc_tip'    => true,
+                'value'       => $product_id > 0 ? (string) get_post_meta( $product_id, self::META_KEY_CANCELLATION_POLICY, true ) : '',
+            )
+        );
+
+        woocommerce_wp_text_input(
+            array(
+                'id'          => self::META_KEY_LOCATION,
+                'label'       => __( 'Location', 'zen-bookpro' ),
+                'description' => __( 'Enter location for this booking product.', 'zen-bookpro' ),
+                'desc_tip'    => true,
+                'value'       => $product_id > 0 ? (string) get_post_meta( $product_id, self::META_KEY_LOCATION, true ) : '',
+            )
+        );
+
         echo '</div>';
     }
 
@@ -81,6 +103,12 @@ class ZBP_Product_Mode {
         $mode     = $this->sanitize_mode( $raw_mode );
 
         $product->update_meta_data( self::META_KEY, $mode );
+
+        $raw_cancellation_policy = isset( $_POST[ self::META_KEY_CANCELLATION_POLICY ] ) ? wp_unslash( $_POST[ self::META_KEY_CANCELLATION_POLICY ] ) : '';
+        $raw_location            = isset( $_POST[ self::META_KEY_LOCATION ] ) ? wp_unslash( $_POST[ self::META_KEY_LOCATION ] ) : '';
+
+        $product->update_meta_data( self::META_KEY_CANCELLATION_POLICY, sanitize_text_field( $raw_cancellation_policy ) );
+        $product->update_meta_data( self::META_KEY_LOCATION, sanitize_text_field( $raw_location ) );
 
 
     }
