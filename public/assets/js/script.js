@@ -547,6 +547,7 @@
                         if (joinBtn.disabled || joinBtn.classList.contains("is-ended")) {
                             return;
                         }
+                        console.log("ZBP Booking Mode Debug:", joinBtn.getAttribute("data-product-mode") || "");
                         var productGalleryRaw = joinBtn.getAttribute("data-product-gallery") || "[]";
                         var productGallery = [];
                         try {
