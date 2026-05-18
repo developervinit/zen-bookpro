@@ -102,10 +102,18 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <span class="zbp-join-date-value">18.05.2026</span>
             </div>
             <div class="zbp-join-duration-row" hidden>
-                <span class="zbp-join-duration-icon" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.261 10.261 0 0 0 12 1.75Zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.259 8.259 0 0 1 12 20.25Zm.75-12.5a1 1 0 0 0-2 0V12a1 1 0 0 0 .5.866l3.5 2a1 1 0 0 0 1-1.732l-3-1.714Z"/></svg>
+                <span class="zbp-join-duration-left">
+                    <span class="zbp-join-duration-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.261 10.261 0 0 0 12 1.75Zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.259 8.259 0 0 1 12 20.25Zm.75-12.5a1 1 0 0 0-2 0V12a1 1 0 0 0 .5.866l3.5 2a1 1 0 0 0 1-1.732l-3-1.714Z"/></svg>
+                    </span>
+                    <span class="zbp-join-duration-value">(60 min)</span>
                 </span>
-                <span class="zbp-join-duration-value">60min</span>
+                <span class="zbp-join-category-right">
+                    <span class="zbp-join-category-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5V3Zm2 0v18h7a2 2 0 0 0 2-2V8.414a2 2 0 0 0-.586-1.414l-3.414-3.414A2 2 0 0 0 15.586 3H12Z"/></svg>
+                    </span>
+                    <span class="zbp-join-category-value"><?php esc_html_e( 'Experience Category', 'zen-bookpro' ); ?></span>
+                </span>
             </div>
         </div>
     </div>
@@ -164,6 +172,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
                                     data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
                                     data-product-duration-minutes="<?php echo esc_attr( isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0 ); ?>"
+                                    data-product-experience-category="<?php echo esc_attr( isset( $product['experience_category'] ) ? $product['experience_category'] : '' ); ?>"
                                     data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
                                 ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>

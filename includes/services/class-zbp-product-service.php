@@ -325,6 +325,7 @@ class ZBP_Product_Service {
             }
 
             $booking_duration_minutes = $this->get_booking_duration_minutes( $woo_duration_value, $woo_duration_unit, $booking_data );
+            $experience_category      = $this->get_term_names_for_product( $product_id, 'experience_category' );
 
             $mapped[] = array(
                 'id'                => $product_id,
@@ -336,6 +337,7 @@ class ZBP_Product_Service {
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'zen_duration'      => $zen_duration,
                 'booking_duration_minutes' => $booking_duration_minutes,
+                'experience_category' => $experience_category,
                 'zen_coins'         => $product->get_meta( '_zen_coins' ),
                 'zen_instructor'    => $product->get_meta( '_zen_instructor_name' ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),

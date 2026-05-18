@@ -387,12 +387,32 @@
 .zbp-join-duration-row {
     align-items: center;
     color: #cfcfd2;
+    display: flex;
     font-size: 22px;
     gap: 8px;
+    justify-content: space-between;
     margin-top: 10px;
+    width: 100%;
+}
+
+.zbp-join-duration-row[hidden] {
+    display: none !important;
+}
+
+.zbp-join-duration-left,
+.zbp-join-category-right {
+    align-items: center;
+    display: inline-flex;
+    gap: 8px;
 }
 
 .zbp-join-duration-icon {
+    color: var(--zbp-accent);
+    display: inline-flex;
+    line-height: 1;
+}
+
+.zbp-join-category-icon {
     color: var(--zbp-accent);
     display: inline-flex;
     line-height: 1;
