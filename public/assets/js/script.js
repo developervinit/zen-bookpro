@@ -92,7 +92,7 @@
                     var imageHtml = primaryImage
                         ? '<img src="' + escapeHtml(primaryImage) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
                         : '<span class="zbp-image-placeholder">&#128247;</span>';
-                    var durationText = escapeHtml(product.zen_duration || product.duration || "Duration N/A");
+                    var durationText = escapeHtml(product.duration || "Duration N/A");
                     var zcoins = escapeHtml(product.zen_coins || "0");
                     var duration = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> (' + durationText + ')';
                     var slots = [];

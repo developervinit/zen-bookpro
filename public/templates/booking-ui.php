@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <div class="zbp-card-bottom">
                                 <div class="zbp-duration">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                    (<?php echo esc_html( ! empty( $product['zen_duration'] ) ? $product['zen_duration'] : $product['duration'] ); ?>)
+                                    (<?php echo esc_html( ! empty( $product['duration'] ) ? $product['duration'] : __( 'Duration N/A', 'zen-bookpro' ) ); ?>)
                                 </div>
                                 <button
                                     class="zbp-join-btn"
