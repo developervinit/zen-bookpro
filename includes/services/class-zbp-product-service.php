@@ -408,14 +408,18 @@ class ZBP_Product_Service {
      * @return string
      */
     private function get_product_mode( $product_id ) {
-        $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
-        $mode = sanitize_key( $mode );
+        $raw_mode = (string) get_post_meta( $product_id, '_zbp_product_mode', true );
+        $mode     = sanitize_key( $raw_mode );
 
-        if ( ! in_array( $mode, array( 'free_flow', 'event' ), true ) ) {
+        if ( in_array( $mode, array( 'event', 'event_single_slot', 'single_slot_event' ), true ) ) {
+            return 'event';
+        }
+
+        if ( in_array( $mode, array( 'free_flow', 'freeflow' ), true ) ) {
             return 'free_flow';
         }
 
-        return $mode;
+        return 'free_flow';
     }
 
     /**
