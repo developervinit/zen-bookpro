@@ -97,6 +97,9 @@ if ( ! defined( 'ABSPATH' ) ) {
                         $product_image = ! empty( $first_gallery_item['url'] ) ? $first_gallery_item['url'] : ( ! empty( $first_gallery_item['src'] ) ? $first_gallery_item['src'] : '' );
                     }
                 }
+                if ( empty( $product_image ) && ! empty( $product['image'] ) ) {
+                    $product_image = $product['image'];
+                }
                 $image_html    = ! empty( $product_image )
                     ? '<img src="' . esc_url( $product_image ) . '" alt="' . esc_attr( $product['title'] ) . '" class="zbp-product-image" />'
                     : '<span class="zbp-image-placeholder">&#128247;</span>';
