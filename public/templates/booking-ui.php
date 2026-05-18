@@ -80,7 +80,9 @@ if ( ! defined( 'ABSPATH' ) ) {
             <span class="zbp-join-media-placeholder" hidden><?php esc_html_e( 'No image available', 'zen-bookpro' ); ?></span>
             <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong>0</strong></span>
         </div>
-        <h3 id="zbp-join-modal-title" class="zbp-join-product-title"><?php esc_html_e( 'Product Name', 'zen-bookpro' ); ?></h3>
+        <div class="zbp-join-title-wrap">
+            <h3 id="zbp-join-modal-title" class="zbp-join-product-title"><?php esc_html_e( 'Product Name', 'zen-bookpro' ); ?></h3>
+        </div>
     </div>
 
     <div class="zbp-product-list">

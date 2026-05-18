@@ -361,7 +361,13 @@
     font-size: 30px;
     line-height: 1.25;
     margin: 0;
-    padding: 16px 20px;
+    padding: 0;
+}
+
+.zbp-join-title-wrap {
+    padding: 12px 20px 16px;
+    background: #3f3f42;
+    border-top: 1px solid #4b4b4f;
 }
 
 .zbp-join-modal-close {
@@ -400,7 +406,10 @@
 
     .zbp-join-product-title {
         font-size: 23px;
-        padding: 14px 14px 16px;
+    }
+
+    .zbp-join-title-wrap {
+        padding: 12px 14px 14px;
     }
 }
 
