@@ -160,6 +160,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <button class="zbp-ended-btn" type="button"><?php esc_html_e( 'Class Ended', 'zen-bookpro' ); ?></button>
                             </div>
                         <?php endif; ?>
+
+                        <pre class="zbp-gallery-debug"><?php echo esc_html( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?></pre>
                     </div>
                 </article>
             <?php endforeach; ?>
