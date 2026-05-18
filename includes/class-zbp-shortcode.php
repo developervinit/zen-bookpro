@@ -118,6 +118,7 @@ class ZBP_Shortcode {
                     'mode'            => isset( $product['mode'] ) ? sanitize_key( $product['mode'] ) : 'free_flow',
                     'duration'        => isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '',
                     'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',
+                    'booking_duration_minutes' => isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0,
                     'zen_coins'       => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
                     'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
                     'gallery'         => isset( $product['gallery'] ) ? $product['gallery'] : array(),

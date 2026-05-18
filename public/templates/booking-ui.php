@@ -163,7 +163,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
                                     data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
-                                    data-product-duration="<?php echo esc_attr( ! empty( $product['zen_duration'] ) ? $product['zen_duration'] : $product['duration'] ); ?>"
+                                    data-product-duration-minutes="<?php echo esc_attr( isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0 ); ?>"
                                     data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
                                 ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>

@@ -324,6 +324,8 @@ class ZBP_Product_Service {
                 }
             }
 
+            $booking_duration_minutes = $this->get_booking_duration_minutes( $woo_duration_value, $woo_duration_unit, $booking_data );
+
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
@@ -333,6 +335,7 @@ class ZBP_Product_Service {
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'zen_duration'      => $zen_duration,
+                'booking_duration_minutes' => $booking_duration_minutes,
                 'zen_coins'         => $product->get_meta( '_zen_coins' ),
                 'zen_instructor'    => $product->get_meta( '_zen_instructor_name' ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
@@ -381,6 +384,39 @@ class ZBP_Product_Service {
         }
 
         return array_values( array_unique( $urls ) );
+    }
+
+    /**
+     * Get booking duration in minutes from WooCommerce booking duration fields.
+     *
+     * @param int   $woo_duration_value Booking duration value.
+     * @param string $woo_duration_unit Booking duration unit.
+     * @param array $booking_data Booking data fallback.
+     *
+     * @return int
+     */
+    private function get_booking_duration_minutes( $woo_duration_value, $woo_duration_unit, $booking_data ) {
+        $value = absint( $woo_duration_value );
+        $unit  = sanitize_key( (string) $woo_duration_unit );
+
+        if ( $value <= 0 ) {
+            $value = isset( $booking_data['duration'] ) ? absint( $booking_data['duration'] ) : 0;
+            $unit  = isset( $booking_data['duration_unit'] ) ? sanitize_key( (string) $booking_data['duration_unit'] ) : $unit;
+        }
+
+        if ( $value <= 0 ) {
+            return 0;
+        }
+
+        switch ( $unit ) {
+            case 'hour':
+                return $value * 60;
+            case 'day':
+                return $value * 1440;
+            case 'minute':
+            default:
+                return $value;
+        }
     }
 
     /**
