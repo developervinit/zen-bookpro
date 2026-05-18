@@ -48,6 +48,29 @@
             return product.image || "";
         }
 
+        function getPopupGalleryImage(product) {
+            if (!product || typeof product !== "object") {
+                return "";
+            }
+
+            if (Array.isArray(product.gallery) && product.gallery.length > 0) {
+                var first = product.gallery[0];
+                if (typeof first === "string") {
+                    return first;
+                }
+                if (first && typeof first === "object") {
+                    return first.url || first.src || first.image || "";
+                }
+            }
+
+            if (typeof product.gallery === "string" && product.gallery.trim() !== "") {
+                var firstPath = product.gallery.split(",")[0];
+                return firstPath ? firstPath.trim() : "";
+            }
+
+            return "";
+        }
+
         function renderEmptyState(productList) {
             productList.innerHTML =
                 '<article class="zbp-product-card zbp-empty-state">' +
@@ -80,6 +103,7 @@
                     var isSlotBased = product.mode !== "event";
                     var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
                     var primaryImage = getFirstGalleryImage(product);
+                    var popupImage = getPopupGalleryImage(product);
                     var imageHtml = primaryImage
                         ? '<img src="' + escapeHtml(primaryImage) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
                         : '<span class="zbp-image-placeholder">&#128247;</span>';
@@ -141,7 +165,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(primaryImage || "") + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -247,7 +271,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(primaryImage || "") + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
