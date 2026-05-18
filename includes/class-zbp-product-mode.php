@@ -64,7 +64,7 @@ class ZBP_Product_Mode {
             )
         );
 
-        woocommerce_wp_text_input(
+        woocommerce_wp_textarea_input(
             array(
                 'id'          => self::META_KEY_CANCELLATION_POLICY,
                 'label'       => __( 'Cancelation policy', 'zen-bookpro' ),
@@ -74,7 +74,7 @@ class ZBP_Product_Mode {
             )
         );
 
-        woocommerce_wp_text_input(
+        woocommerce_wp_textarea_input(
             array(
                 'id'          => self::META_KEY_LOCATION,
                 'label'       => __( 'Location', 'zen-bookpro' ),
