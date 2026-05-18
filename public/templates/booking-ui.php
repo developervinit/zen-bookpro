@@ -75,8 +75,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="zbp-join-overlay" hidden></div>
     <div class="zbp-join-modal" hidden role="dialog" aria-modal="true" aria-labelledby="zbp-join-modal-title">
         <button class="zbp-join-modal-close" type="button" aria-label="Close join popup">&#10005;</button>
-        <h3 id="zbp-join-modal-title"><?php esc_html_e( 'Join Session', 'zen-bookpro' ); ?></h3>
-        <p><?php esc_html_e( 'Popup opened. We will show booking details here next.', 'zen-bookpro' ); ?></p>
+        <div class="zbp-join-media-wrap">
+            <img class="zbp-join-media" src="" alt="" hidden />
+            <span class="zbp-join-media-placeholder" hidden><?php esc_html_e( 'No image available', 'zen-bookpro' ); ?></span>
+            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong>0</strong></span>
+        </div>
+        <h3 id="zbp-join-modal-title" class="zbp-join-product-title"><?php esc_html_e( 'Product Name', 'zen-bookpro' ); ?></h3>
     </div>
 
     <div class="zbp-product-list">
@@ -84,8 +88,20 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php foreach ( $products as $product ) : ?>
                 <?php
                 $is_slot_based = ! empty( $product['is_slot_based'] );
-                $image_html    = ! empty( $product['image'] )
-                    ? '<img src="' . esc_url( $product['image'] ) . '" alt="' . esc_attr( $product['title'] ) . '" class="zbp-product-image" />'
+                $product_image = '';
+                if ( ! empty( $product['gallery'] ) && is_array( $product['gallery'] ) ) {
+                    $first_gallery_item = reset( $product['gallery'] );
+                    if ( is_string( $first_gallery_item ) ) {
+                        $product_image = $first_gallery_item;
+                    } elseif ( is_array( $first_gallery_item ) ) {
+                        $product_image = ! empty( $first_gallery_item['url'] ) ? $first_gallery_item['url'] : ( ! empty( $first_gallery_item['src'] ) ? $first_gallery_item['src'] : '' );
+                    }
+                }
+                if ( empty( $product_image ) && ! empty( $product['image'] ) ) {
+                    $product_image = $product['image'];
+                }
+                $image_html    = ! empty( $product_image )
+                    ? '<img src="' . esc_url( $product_image ) . '" alt="' . esc_attr( $product['title'] ) . '" class="zbp-product-image" />'
                     : '<span class="zbp-image-placeholder">&#128247;</span>';
                 ?>
                 <article class="zbp-product-card <?php echo $is_slot_based ? 'zbp-slot-card' : 'zbp-event-card'; ?>">
@@ -115,7 +131,13 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     (<?php echo esc_html( ! empty( $product['zen_duration'] ) ? $product['zen_duration'] : $product['duration'] ); ?>)
                                 </div>
-                                <button class="zbp-join-btn" type="button"><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
+                                <button
+                                    class="zbp-join-btn"
+                                    type="button"
+                                    data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
+                                    data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
+                                    data-product-image="<?php echo esc_url( $product_image ); ?>"
+                                ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
                             </div>
                         <?php else : ?>
                             <div class="zbp-event-meta">

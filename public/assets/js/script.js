@@ -25,6 +25,29 @@
             return Number.isFinite(parsed) ? parsed : fallback;
         }
 
+        function getFirstGalleryImage(product) {
+            if (!product || typeof product !== "object") {
+                return "";
+            }
+
+            if (Array.isArray(product.gallery) && product.gallery.length > 0) {
+                var first = product.gallery[0];
+                if (typeof first === "string") {
+                    return first;
+                }
+                if (first && typeof first === "object") {
+                    return first.url || first.src || first.image || "";
+                }
+            }
+
+            if (typeof product.gallery === "string" && product.gallery.trim() !== "") {
+                var firstPath = product.gallery.split(",")[0];
+                return firstPath ? firstPath.trim() : "";
+            }
+
+            return product.image || "";
+        }
+
         function renderEmptyState(productList) {
             productList.innerHTML =
                 '<article class="zbp-product-card zbp-empty-state">' +
@@ -56,8 +79,9 @@
                     });
                     var isSlotBased = product.mode !== "event";
                     var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
-                    var imageHtml = product.image
-                        ? '<img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
+                    var primaryImage = getFirstGalleryImage(product);
+                    var imageHtml = primaryImage
+                        ? '<img src="' + escapeHtml(primaryImage) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
                         : '<span class="zbp-image-placeholder">&#128247;</span>';
                     var durationText = escapeHtml(product.zen_duration || product.duration || "Duration N/A");
                     var zcoins = escapeHtml(product.zen_coins || "0");
@@ -117,7 +141,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(primaryImage || "") + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -223,7 +247,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(primaryImage || "") + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -287,6 +311,10 @@
             var joinModal = wrapper.querySelector(".zbp-join-modal");
             var joinOverlay = wrapper.querySelector(".zbp-join-overlay");
             var joinModalCloseBtn = wrapper.querySelector(".zbp-join-modal-close");
+            var joinModalImage = wrapper.querySelector(".zbp-join-media");
+            var joinModalImagePlaceholder = wrapper.querySelector(".zbp-join-media-placeholder");
+            var joinModalZencoin = wrapper.querySelector(".zbp-join-zencoins strong");
+            var joinModalTitle = wrapper.querySelector(".zbp-join-product-title");
             var weekRange = wrapper.querySelector(".zbp-week-range");
             var dateRow = wrapper.querySelector(".zbp-date-row");
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
@@ -323,10 +351,39 @@
                 overlay.hidden = true;
             }
 
-            function openJoinModal() {
+            function openJoinModal(joinBtn) {
                 if (!joinModal || !joinOverlay) {
                     return;
                 }
+
+                var productName = joinBtn ? (joinBtn.getAttribute("data-product-name") || "") : "";
+                var productCoins = joinBtn ? (joinBtn.getAttribute("data-product-zencoins") || "0") : "0";
+                var productImage = joinBtn ? (joinBtn.getAttribute("data-product-image") || "") : "";
+
+                if (joinModalTitle) {
+                    joinModalTitle.textContent = productName || "Product";
+                }
+                if (joinModalZencoin) {
+                    joinModalZencoin.textContent = productCoins || "0";
+                }
+                if (joinModalImage) {
+                    if (productImage) {
+                        joinModalImage.src = productImage;
+                        joinModalImage.alt = productName || "Product";
+                        joinModalImage.hidden = false;
+                        if (joinModalImagePlaceholder) {
+                            joinModalImagePlaceholder.hidden = true;
+                        }
+                    } else {
+                        joinModalImage.removeAttribute("src");
+                        joinModalImage.alt = "";
+                        joinModalImage.hidden = true;
+                        if (joinModalImagePlaceholder) {
+                            joinModalImagePlaceholder.hidden = false;
+                        }
+                    }
+                }
+
                 joinModal.hidden = false;
                 joinOverlay.hidden = false;
             }
@@ -399,7 +456,7 @@
                         if (joinBtn.disabled || joinBtn.classList.contains("is-ended")) {
                             return;
                         }
-                        openJoinModal();
+                        openJoinModal(joinBtn);
                     }
                 });
             }

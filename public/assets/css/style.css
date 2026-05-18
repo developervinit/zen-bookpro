@@ -292,41 +292,116 @@
 }
 
 .zbp-join-modal {
-    background: #565658;
-    border: 1px solid #7f7f82;
-    border-radius: 14px;
+    background: #3f3f42;
+    border: 1px solid #5b5b5f;
+    border-radius: 12px;
     color: #efefef;
     left: 50%;
-    max-width: 440px;
-    padding: 22px 20px;
+    max-width: 760px;
+    padding: 0;
     position: fixed;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: calc(100% - 28px);
+    width: calc(100% - 32px);
+    overflow: hidden;
     z-index: 1001;
 }
 
-.zbp-join-modal h3 {
-    color: var(--zbp-accent);
-    margin: 0 0 10px;
-    text-align: center;
+.zbp-join-media-wrap {
+    position: relative;
+    width: 100%;
+    background: #2f2f31;
+    min-height: 220px;
 }
 
-.zbp-join-modal p {
-    color: #d7d7d8;
+.zbp-join-media {
+    display: block;
+    width: 100%;
+    height: 270px;
+    object-fit: cover;
+}
+
+.zbp-join-media-placeholder {
+    align-items: center;
+    color: #cfcfd2;
+    display: flex;
+    height: 270px;
+    justify-content: center;
+    width: 100%;
+}
+
+.zbp-join-zencoins {
+    align-items: center;
+    background: rgba(45, 45, 47, 0.86);
+    border: 1px solid rgba(216, 181, 74, 0.7);
+    border-radius: 999px;
+    color: var(--zbp-accent);
+    display: inline-flex;
+    font-size: 20px;
+    font-weight: 700;
+    gap: 8px;
+    padding: 8px 14px;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+}
+
+.zbp-join-zencoins strong {
+    align-items: center;
+    border: 2px solid var(--zbp-accent);
+    border-radius: 50%;
+    display: inline-flex;
+    height: 32px;
+    justify-content: center;
+    min-width: 32px;
+}
+
+.zbp-join-product-title {
+    color: #f2f2f3;
+    font-size: 30px;
+    line-height: 1.25;
     margin: 0;
-    text-align: center;
+    padding: 16px 20px;
 }
 
 .zbp-join-modal-close {
-    background: transparent;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.45);
     border: 0;
+    border-radius: 50%;
     color: #efefef;
     cursor: pointer;
+    display: inline-flex;
     font-size: 20px;
+    height: 32px;
+    justify-content: center;
     position: absolute;
-    right: 10px;
-    top: 8px;
+    right: 12px;
+    top: 54px;
+    width: 32px;
+    z-index: 2;
+}
+
+@media (max-width: 640px) {
+    .zbp-join-media,
+    .zbp-join-media-placeholder {
+        height: 200px;
+    }
+
+    .zbp-join-zencoins {
+        font-size: 16px;
+        padding: 6px 10px;
+    }
+
+    .zbp-join-zencoins strong {
+        height: 28px;
+        min-width: 28px;
+    }
+
+    .zbp-join-product-title {
+        font-size: 23px;
+        padding: 14px 14px 16px;
+    }
 }
 
 .zbp-filter-modal h3 {
