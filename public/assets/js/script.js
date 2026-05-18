@@ -13,6 +13,12 @@
                 .replace(/'/g, "&#039;");
         }
 
+        function decodeHtmlEntities(value) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = String(value || "");
+            return txt.value;
+        }
+
         function slotLabel(slot) {
             if (!slot) return "Unavailable";
             if (typeof slot === "string") return slot;
@@ -454,7 +460,7 @@
                     if (productMode === "free_flow") {
                         joinDurationValue.textContent = "(" + toDurationMinutes(productDurationMinutes) + " min)";
                         if (joinCategoryValue) {
-                            joinCategoryValue.textContent = productExperienceCategory || "None";
+                            joinCategoryValue.textContent = decodeHtmlEntities(productExperienceCategory || "None");
                         }
                         joinDurationRow.hidden = false;
                     }
