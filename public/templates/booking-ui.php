@@ -77,7 +77,6 @@ if ( ! defined( 'ABSPATH' ) ) {
         <button class="zbp-join-modal-close" type="button" aria-label="Close join popup">&#10005;</button>
         <div class="zbp-join-media-wrap">
             <img class="zbp-join-media" src="" alt="" hidden />
-            <span class="zbp-join-media-placeholder" hidden><?php esc_html_e( 'No image available', 'zen-bookpro' ); ?></span>
             <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong>0</strong></span>
         </div>
         <div class="zbp-join-title-wrap">
