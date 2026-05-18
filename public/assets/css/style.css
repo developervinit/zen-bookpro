@@ -389,6 +389,11 @@
     background: #3f3f42;
 }
 
+.zbp-join-date-wrap {
+    padding: 0 20px 16px;
+    background: #3f3f42;
+}
+
 .zbp-join-modal-close {
     align-items: center;
     background: rgba(0, 0, 0, 0.45);
@@ -436,6 +441,10 @@
     }
 
     .zbp-join-slot-wrap {
+        padding: 0 14px 14px;
+    }
+
+    .zbp-join-date-wrap {
         padding: 0 14px 14px;
     }
 }
