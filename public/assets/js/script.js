@@ -316,6 +316,7 @@
             var joinModalImagePlaceholder = wrapper.querySelector(".zbp-join-media-placeholder");
             var joinModalZencoin = wrapper.querySelector(".zbp-join-zencoins strong");
             var joinModalTitle = wrapper.querySelector(".zbp-join-product-title");
+            var joinDateValue = wrapper.querySelector(".zbp-join-date-value");
             var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
             var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
             var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
@@ -401,6 +402,9 @@
 
                 if (joinModalTitle) {
                     joinModalTitle.textContent = productName || "Product";
+                }
+                if (joinDateValue) {
+                    joinDateValue.textContent = formatDateDisplay(selectedDate);
                 }
                 if (joinModalZencoin) {
                     joinModalZencoin.textContent = productCoins || "0";
@@ -596,6 +600,13 @@
                 var m = String(date.getMonth() + 1).padStart(2, "0");
                 var d = String(date.getDate()).padStart(2, "0");
                 return y + "-" + m + "-" + d;
+            }
+
+            function formatDateDisplay(date) {
+                var d = String(date.getDate()).padStart(2, "0");
+                var m = String(date.getMonth() + 1).padStart(2, "0");
+                var y = date.getFullYear();
+                return d + "." + m + "." + y;
             }
 
             function parseDateKeyLocal(dateKey) {
