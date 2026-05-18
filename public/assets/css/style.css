@@ -387,7 +387,6 @@
 .zbp-join-duration-row {
     align-items: center;
     color: #cfcfd2;
-    display: flex;
     font-size: 22px;
     gap: 8px;
     margin-top: 10px;
