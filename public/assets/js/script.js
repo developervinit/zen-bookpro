@@ -165,7 +165,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -271,7 +271,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -480,6 +480,17 @@
                         if (joinBtn.disabled || joinBtn.classList.contains("is-ended")) {
                             return;
                         }
+                        var productGalleryRaw = joinBtn.getAttribute("data-product-gallery") || "[]";
+                        var productGallery = [];
+                        try {
+                            productGallery = JSON.parse(productGalleryRaw);
+                        } catch (e) {
+                            productGallery = productGalleryRaw;
+                        }
+                        console.log("ZBP Join Click Gallery Debug:", {
+                            name: joinBtn.getAttribute("data-product-name") || "",
+                            gallery: productGallery,
+                        });
                         openJoinModal(joinBtn);
                     }
                 });

@@ -146,6 +146,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
                                     data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
+                                    data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
                                 ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
                             </div>
                         <?php else : ?>
