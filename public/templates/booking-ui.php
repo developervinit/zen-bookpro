@@ -97,18 +97,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         $popup_image = ! empty( $first_gallery_item['url'] ) ? $first_gallery_item['url'] : ( ! empty( $first_gallery_item['src'] ) ? $first_gallery_item['src'] : '' );
                     }
                 }
-                $product_image = '';
-                if ( ! empty( $product['gallery'] ) && is_array( $product['gallery'] ) ) {
-                    $first_gallery_item = reset( $product['gallery'] );
-                    if ( is_string( $first_gallery_item ) ) {
-                        $product_image = $first_gallery_item;
-                    } elseif ( is_array( $first_gallery_item ) ) {
-                        $product_image = ! empty( $first_gallery_item['url'] ) ? $first_gallery_item['url'] : ( ! empty( $first_gallery_item['src'] ) ? $first_gallery_item['src'] : '' );
-                    }
-                }
-                if ( empty( $product_image ) && ! empty( $product['image'] ) ) {
-                    $product_image = $product['image'];
-                }
+                $product_image = ! empty( $product['image'] ) ? $product['image'] : '';
                 $image_html    = ! empty( $product_image )
                     ? '<img src="' . esc_url( $product_image ) . '" alt="' . esc_attr( $product['title'] ) . '" class="zbp-product-image" />'
                     : '<span class="zbp-image-placeholder">&#128247;</span>';

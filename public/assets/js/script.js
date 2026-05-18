@@ -25,29 +25,6 @@
             return Number.isFinite(parsed) ? parsed : fallback;
         }
 
-        function getFirstGalleryImage(product) {
-            if (!product || typeof product !== "object") {
-                return "";
-            }
-
-            if (Array.isArray(product.gallery) && product.gallery.length > 0) {
-                var first = product.gallery[0];
-                if (typeof first === "string") {
-                    return first;
-                }
-                if (first && typeof first === "object") {
-                    return first.url || first.src || first.image || "";
-                }
-            }
-
-            if (typeof product.gallery === "string" && product.gallery.trim() !== "") {
-                var firstPath = product.gallery.split(",")[0];
-                return firstPath ? firstPath.trim() : "";
-            }
-
-            return product.image || "";
-        }
-
         function getPopupGalleryImage(product) {
             if (!product || typeof product !== "object") {
                 return "";
@@ -102,7 +79,7 @@
                     });
                     var isSlotBased = product.mode !== "event";
                     var cardClass = isSlotBased ? "zbp-slot-card" : "zbp-event-card";
-                    var primaryImage = getFirstGalleryImage(product);
+                    var primaryImage = product.image || "";
                     var popupImage = getPopupGalleryImage(product);
                     var imageHtml = primaryImage
                         ? '<img src="' + escapeHtml(primaryImage) + '" alt="' + escapeHtml(product.name) + '" class="zbp-product-image" />'
