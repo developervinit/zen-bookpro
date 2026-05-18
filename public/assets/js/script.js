@@ -25,6 +25,29 @@
             return Number.isFinite(parsed) ? parsed : fallback;
         }
 
+        function durationToMinutes(durationRaw) {
+            var raw = String(durationRaw || "").toLowerCase().trim();
+            if (!raw) {
+                return 60;
+            }
+
+            var match = raw.match(/[\d.]+/);
+            if (!match) {
+                return 60;
+            }
+
+            var value = parseFloat(match[0]);
+            if (!Number.isFinite(value)) {
+                return 60;
+            }
+
+            if (raw.indexOf("hour") !== -1 || raw.indexOf("hr") !== -1 || raw.indexOf("stunden") !== -1 || raw.indexOf("stunde") !== -1) {
+                return Math.round(value * 60);
+            }
+
+            return Math.round(value);
+        }
+
         function getPopupGalleryImage(product) {
             if (!product || typeof product !== "object") {
                 return "";
@@ -142,7 +165,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration="' + escapeHtml(product.zen_duration || product.duration || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -248,7 +271,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration="' + escapeHtml(product.zen_duration || product.duration || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -317,6 +340,8 @@
             var joinModalZencoin = wrapper.querySelector(".zbp-join-zencoins strong");
             var joinModalTitle = wrapper.querySelector(".zbp-join-product-title");
             var joinDateValue = wrapper.querySelector(".zbp-join-date-value");
+            var joinDurationRow = wrapper.querySelector(".zbp-join-duration-row");
+            var joinDurationValue = wrapper.querySelector(".zbp-join-duration-value");
             var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
             var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
             var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
@@ -392,6 +417,7 @@
                 var productCoins = joinBtn ? (joinBtn.getAttribute("data-product-zencoins") || "0") : "0";
                 var productImage = joinBtn ? (joinBtn.getAttribute("data-product-image") || "") : "";
                 var productMode = joinBtn ? (joinBtn.getAttribute("data-product-mode") || "") : "";
+                var productDuration = joinBtn ? (joinBtn.getAttribute("data-product-duration") || "") : "";
                 var productSlotsRaw = joinBtn ? (joinBtn.getAttribute("data-product-slots") || "[]") : "[]";
                 var productSlots = [];
                 try {
@@ -433,6 +459,14 @@
                         renderJoinSlots(productSlots);
                     } else {
                         joinSlotWrap.hidden = true;
+                    }
+                }
+                if (joinDurationRow && joinDurationValue) {
+                    if (productMode === "free_flow") {
+                        joinDurationValue.textContent = durationToMinutes(productDuration) + "min";
+                        joinDurationRow.hidden = false;
+                    } else {
+                        joinDurationRow.hidden = true;
                     }
                 }
                 if (joinSlotMenu) {

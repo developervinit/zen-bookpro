@@ -101,6 +101,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </span>
                 <span class="zbp-join-date-value">18.05.2026</span>
             </div>
+            <div class="zbp-join-duration-row" hidden>
+                <span class="zbp-join-duration-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.261 10.261 0 0 0 12 1.75Zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.259 8.259 0 0 1 12 20.25Zm.75-12.5a1 1 0 0 0-2 0V12a1 1 0 0 0 .5.866l3.5 2a1 1 0 0 0 1-1.732l-3-1.714Z"/></svg>
+                </span>
+                <span class="zbp-join-duration-value">60min</span>
+            </div>
         </div>
     </div>
 
@@ -157,6 +163,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
                                     data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
+                                    data-product-duration="<?php echo esc_attr( ! empty( $product['zen_duration'] ) ? $product['zen_duration'] : $product['duration'] ); ?>"
                                     data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
                                 ><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>

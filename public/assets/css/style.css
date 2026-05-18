@@ -384,6 +384,21 @@
     line-height: 1;
 }
 
+.zbp-join-duration-row {
+    align-items: center;
+    color: #cfcfd2;
+    display: inline-flex;
+    font-size: 22px;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.zbp-join-duration-icon {
+    color: var(--zbp-accent);
+    display: inline-flex;
+    line-height: 1;
+}
+
 .zbp-join-slot-wrap {
     padding: 0 20px 18px;
     background: #3f3f42;
@@ -437,6 +452,10 @@
     }
 
     .zbp-join-date-row {
+        font-size: 18px;
+    }
+
+    .zbp-join-duration-row {
         font-size: 18px;
     }
 
