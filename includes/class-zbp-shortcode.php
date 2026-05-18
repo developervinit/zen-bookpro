@@ -112,11 +112,6 @@ class ZBP_Shortcode {
 
         $response_products = array_map(
             function ( $product ) {
-                $gallery_value = isset( $product['gallery'] ) ? $product['gallery'] : array();
-                ob_start();
-                var_dump( $gallery_value );
-                $gallery_dump = ob_get_clean();
-
                 return array(
                     'id'              => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
                     'name'            => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
@@ -125,8 +120,7 @@ class ZBP_Shortcode {
                     'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',
                     'zen_coins'       => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
                     'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
-                    'gallery'         => $gallery_value,
-                    'gallery_dump'    => $gallery_dump,
+                    'gallery'         => isset( $product['gallery'] ) ? $product['gallery'] : array(),
                     'price_html'      => isset( $product['price_html'] ) ? $product['price_html'] : '',
                     'slots'           => isset( $product['slots'] ) ? $product['slots'] : array(),
                     'max_spots'       => isset( $product['max_spots'] ) ? (int) $product['max_spots'] : 1,
@@ -193,3 +187,4 @@ class ZBP_Shortcode {
         return ob_get_clean();
     }
 }
+
