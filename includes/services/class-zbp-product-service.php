@@ -195,6 +195,7 @@ class ZBP_Product_Service {
             if ( ! $image_url ) {
                 $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
             }
+            $gallery_urls = $this->get_product_gallery_urls( $product );
             
             $all_meta = get_post_meta( $product_id );
 
@@ -328,6 +329,7 @@ class ZBP_Product_Service {
                 'title'             => $product->get_name(),
                 'mode'              => $mode,
                 'image'             => $image_url ? $image_url : '',
+                'gallery'           => $gallery_urls,
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),
                 'zen_duration'      => $zen_duration,
@@ -345,6 +347,40 @@ class ZBP_Product_Service {
         }
 
         return $mapped;
+    }
+
+    /**
+     * Get product gallery image URLs from WooCommerce gallery IDs.
+     *
+     * @param WC_Product $product Product object.
+     *
+     * @return array
+     */
+    private function get_product_gallery_urls( $product ) {
+        if ( ! $product || ! method_exists( $product, 'get_gallery_image_ids' ) ) {
+            return array();
+        }
+
+        $gallery_ids = $product->get_gallery_image_ids();
+
+        if ( empty( $gallery_ids ) || ! is_array( $gallery_ids ) ) {
+            return array();
+        }
+
+        $urls = array();
+        foreach ( $gallery_ids as $attachment_id ) {
+            $attachment_id = absint( $attachment_id );
+            if ( $attachment_id <= 0 ) {
+                continue;
+            }
+
+            $url = wp_get_attachment_image_url( $attachment_id, 'large' );
+            if ( $url ) {
+                $urls[] = $url;
+            }
+        }
+
+        return array_values( array_unique( $urls ) );
     }
 
     /**
