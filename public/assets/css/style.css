@@ -369,16 +369,19 @@
     border-top: 1px solid #4b4b4f;
 }
 
-.zbp-join-date-row {
+.zbp-join-date-row,
+.zbp-join-time-row {
     align-items: center;
     color: #cfcfd2;
-    display: inline-flex;
+    display: flex;
     font-size: 22px;
-    gap: 8px;
+    gap: 12px;
     margin-top: 8px;
+    width: 100%;
 }
 
-.zbp-join-date-icon {
+.zbp-join-date-icon,
+.zbp-join-time-icon {
     color: var(--zbp-accent);
     display: inline-flex;
     line-height: 1;
@@ -609,7 +612,8 @@
         padding: 12px 14px 14px;
     }
 
-    .zbp-join-date-row {
+    .zbp-join-date-row,
+    .zbp-join-time-row {
         font-size: 18px;
     }
 

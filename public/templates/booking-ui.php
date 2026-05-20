@@ -101,6 +101,15 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </span>
                 <span class="zbp-join-date-value">18.05.2026</span>
             </div>
+            <div class="zbp-join-time-row" hidden>
+                <span class="zbp-join-time-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align: middle;">
+                        <circle cx="12" cy="12" r="11" fill="var(--zbp-accent)" />
+                        <path d="M12 7v5h5" stroke="#3f3f42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    </svg>
+                </span>
+                <span class="zbp-join-time-value"></span>
+            </div>
             <div class="zbp-join-duration-row" hidden>
                 <span class="zbp-join-duration-left">
                     <span class="zbp-join-duration-icon" aria-hidden="true">
