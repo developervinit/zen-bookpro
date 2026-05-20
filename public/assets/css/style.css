@@ -479,13 +479,22 @@
     color: var(--zbp-accent);
     display: inline-flex;
     line-height: 1;
+    flex: 0 0 auto;
+}
+
+.zbp-join-location-icon svg {
+    display: block;
+    width: 22px;
+    height: 22px;
 }
 
 .zbp-join-location-value {
-    font-size: 30px;
+    color: #cfcfd2;
+    font-size: 34px;
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.25;
     margin: 0;
+    letter-spacing: 0;
 }
 
 .zbp-join-duration-left,
@@ -589,6 +598,7 @@
 
     .zbp-join-location-value {
         font-size: 20px;
+        line-height: 1.35;
     }
 
     .zbp-join-slot-wrap {
