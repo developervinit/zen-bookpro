@@ -443,6 +443,26 @@
     margin: 0;
 }
 
+.zbp-join-instructor-row {
+    color: #cfcfd2;
+    margin-top: 14px;
+}
+
+.zbp-join-instructor-row[hidden] {
+    display: none !important;
+}
+
+.zbp-join-instructor-label {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.zbp-join-instructor-value {
+    font-weight: 500;
+}
+
 .zbp-join-duration-left,
 .zbp-join-category-right {
     align-items: center;
@@ -536,6 +556,10 @@
 
     .zbp-join-cancellation-value {
         font-size: 16px;
+    }
+
+    .zbp-join-instructor-label {
+        font-size: 20px;
     }
 
     .zbp-join-slot-wrap {

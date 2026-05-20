@@ -157,7 +157,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -263,7 +263,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -339,6 +339,8 @@
             var joinDescriptionValue = wrapper.querySelector(".zbp-join-description-value");
             var joinCancellationRow = wrapper.querySelector(".zbp-join-cancellation-row");
             var joinCancellationValue = wrapper.querySelector(".zbp-join-cancellation-value");
+            var joinInstructorRow = wrapper.querySelector(".zbp-join-instructor-row");
+            var joinInstructorValue = wrapper.querySelector(".zbp-join-instructor-value");
             var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
             var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
             var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
@@ -418,6 +420,7 @@
                 var productDurationMinutes = joinBtn ? (joinBtn.getAttribute("data-product-duration-minutes") || "0") : "0";
                 var productDescription = joinBtn ? (joinBtn.getAttribute("data-product-description") || "") : "";
                 var productCancellationPolicy = joinBtn ? (joinBtn.getAttribute("data-product-cancellation-policy") || "") : "";
+                var productInstructor = joinBtn ? (joinBtn.getAttribute("data-product-instructor") || "") : "";
                 var productExperienceCategory = joinBtn ? (joinBtn.getAttribute("data-product-experience-category") || "") : "";
                 var productSlotsRaw = joinBtn ? (joinBtn.getAttribute("data-product-slots") || "[]") : "[]";
                 var productSlots = [];
@@ -490,6 +493,17 @@
                         if (cancellationText) {
                             joinCancellationValue.textContent = cancellationText;
                             joinCancellationRow.hidden = false;
+                        }
+                    }
+                }
+                if (joinInstructorRow && joinInstructorValue) {
+                    joinInstructorRow.hidden = true;
+                    joinInstructorValue.textContent = "";
+                    if (productMode === "free_flow") {
+                        var instructorText = decodeHtmlEntities(productInstructor || "").trim();
+                        if (instructorText) {
+                            joinInstructorValue.textContent = instructorText;
+                            joinInstructorRow.hidden = false;
                         }
                     }
                 }
