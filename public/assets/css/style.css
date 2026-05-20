@@ -421,6 +421,28 @@
     margin: 0;
 }
 
+.zbp-join-cancellation-row {
+    color: #cfcfd2;
+    margin-top: 14px;
+}
+
+.zbp-join-cancellation-row[hidden] {
+    display: none !important;
+}
+
+.zbp-join-cancellation-label {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 8px;
+}
+
+.zbp-join-cancellation-value {
+    font-size: 18px;
+    line-height: 1.5;
+    margin: 0;
+}
+
 .zbp-join-duration-left,
 .zbp-join-category-right {
     align-items: center;
@@ -505,6 +527,14 @@
     }
 
     .zbp-join-description-value {
+        font-size: 16px;
+    }
+
+    .zbp-join-cancellation-label {
+        font-size: 20px;
+    }
+
+    .zbp-join-cancellation-value {
         font-size: 16px;
     }
 

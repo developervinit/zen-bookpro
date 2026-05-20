@@ -116,6 +116,7 @@ class ZBP_Shortcode {
                     'id'              => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
                     'name'            => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
                     'description'     => isset( $product['description'] ) ? sanitize_textarea_field( $product['description'] ) : '',
+                    'cancellation_policy' => isset( $product['cancellation_policy'] ) ? sanitize_textarea_field( $product['cancellation_policy'] ) : '',
                     'mode'            => isset( $product['mode'] ) ? sanitize_key( $product['mode'] ) : 'free_flow',
                     'duration'        => isset( $product['duration'] ) ? sanitize_text_field( $product['duration'] ) : '',
                     'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',

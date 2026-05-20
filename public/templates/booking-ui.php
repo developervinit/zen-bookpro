@@ -119,6 +119,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <p class="zbp-join-description-label"><?php esc_html_e( 'Description:', 'zen-bookpro' ); ?></p>
                 <p class="zbp-join-description-value"></p>
             </div>
+            <div class="zbp-join-cancellation-row" hidden>
+                <p class="zbp-join-cancellation-label"><?php esc_html_e( 'Cancellation policy:', 'zen-bookpro' ); ?></p>
+                <p class="zbp-join-cancellation-value"></p>
+            </div>
         </div>
     </div>
 
@@ -177,6 +181,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
                                     data-product-duration-minutes="<?php echo esc_attr( isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0 ); ?>"
                                     data-product-description="<?php echo esc_attr( isset( $product['description'] ) ? $product['description'] : '' ); ?>"
+                                    data-product-cancellation-policy="<?php echo esc_attr( isset( $product['cancellation_policy'] ) ? $product['cancellation_policy'] : '' ); ?>"
                                     data-product-experience-category="<?php echo esc_attr( isset( $product['experience_category'] ) ? $product['experience_category'] : '' ); ?>"
                                     data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"

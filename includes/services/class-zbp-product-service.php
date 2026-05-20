@@ -331,6 +331,7 @@ class ZBP_Product_Service {
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
                 'description'       => wp_strip_all_tags( (string) $product->get_description() ),
+                'cancellation_policy' => sanitize_text_field( (string) get_post_meta( $product_id, '_zbp_cancellation_policy', true ) ),
                 'mode'              => $mode,
                 'image'             => $image_url ? $image_url : '',
                 'gallery'           => $gallery_urls,
