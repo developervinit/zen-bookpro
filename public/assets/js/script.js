@@ -336,6 +336,8 @@
             var joinTimeValue = wrapper.querySelector(".zbp-join-time-value");
             var joinVolumeRow = wrapper.querySelector(".zbp-join-volume-row");
             var joinVolumeValue = wrapper.querySelector(".zbp-join-volume-value");
+            var joinEventCategoryWrap = wrapper.querySelector(".zbp-join-event-category-wrap");
+            var joinEventCategoryValue = wrapper.querySelector(".zbp-join-event-category-value");
             var joinDurationRow = wrapper.querySelector(".zbp-join-duration-row");
             var joinDurationValue = wrapper.querySelector(".zbp-join-duration-value");
             var joinCategoryValue = wrapper.querySelector(".zbp-join-category-value");
@@ -485,11 +487,21 @@
 
                 if (joinVolumeRow && joinVolumeValue) {
                     joinVolumeRow.hidden = true;
+                    if (joinEventCategoryWrap) {
+                        joinEventCategoryWrap.hidden = true;
+                    }
                     if (productMode === "event") {
                         var volumeVal = joinBtn ? (joinBtn.getAttribute("data-product-volume") || "") : "";
                         if (volumeVal) {
                             joinVolumeValue.textContent = volumeVal;
                             joinVolumeRow.hidden = false;
+                        }
+                        if (joinEventCategoryWrap && joinEventCategoryValue) {
+                            var eventCategoryText = decodeHtmlEntities(productExperienceCategory || "").trim();
+                            if (eventCategoryText) {
+                                joinEventCategoryValue.textContent = eventCategoryText;
+                                joinEventCategoryWrap.hidden = false;
+                            }
                         }
                     }
                 }

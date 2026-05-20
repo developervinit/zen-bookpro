@@ -381,6 +381,10 @@
     width: 100%;
 }
 
+.zbp-join-volume-row {
+    justify-content: space-between;
+}
+
 .zbp-join-date-icon,
 .zbp-join-time-icon,
 .zbp-join-volume-icon {
@@ -505,7 +509,8 @@
 }
 
 .zbp-join-duration-left,
-.zbp-join-category-right {
+.zbp-join-category-right,
+.zbp-join-volume-left {
     align-items: center;
     display: inline-flex;
     gap: 8px;
