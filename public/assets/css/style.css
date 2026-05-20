@@ -399,6 +399,28 @@
     display: none !important;
 }
 
+.zbp-join-description-row {
+    color: #cfcfd2;
+    margin-top: 12px;
+}
+
+.zbp-join-description-row[hidden] {
+    display: none !important;
+}
+
+.zbp-join-description-label {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 8px;
+}
+
+.zbp-join-description-value {
+    font-size: 18px;
+    line-height: 1.5;
+    margin: 0;
+}
+
 .zbp-join-duration-left,
 .zbp-join-category-right {
     align-items: center;
@@ -476,6 +498,14 @@
 
     .zbp-join-duration-row {
         font-size: 18px;
+    }
+
+    .zbp-join-description-label {
+        font-size: 20px;
+    }
+
+    .zbp-join-description-value {
+        font-size: 16px;
     }
 
     .zbp-join-slot-wrap {

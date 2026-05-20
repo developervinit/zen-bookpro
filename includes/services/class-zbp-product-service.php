@@ -330,6 +330,7 @@ class ZBP_Product_Service {
             $mapped[] = array(
                 'id'                => $product_id,
                 'title'             => $product->get_name(),
+                'description'       => wp_strip_all_tags( (string) $product->get_description() ),
                 'mode'              => $mode,
                 'image'             => $image_url ? $image_url : '',
                 'gallery'           => $gallery_urls,
