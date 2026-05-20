@@ -463,6 +463,31 @@
     font-weight: 500;
 }
 
+.zbp-join-location-row {
+    align-items: center;
+    color: #cfcfd2;
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.zbp-join-location-row[hidden] {
+    display: none !important;
+}
+
+.zbp-join-location-icon {
+    color: var(--zbp-accent);
+    display: inline-flex;
+    line-height: 1;
+}
+
+.zbp-join-location-value {
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.35;
+    margin: 0;
+}
+
 .zbp-join-duration-left,
 .zbp-join-category-right {
     align-items: center;
@@ -559,6 +584,10 @@
     }
 
     .zbp-join-instructor-label {
+        font-size: 20px;
+    }
+
+    .zbp-join-location-value {
         font-size: 20px;
     }
 

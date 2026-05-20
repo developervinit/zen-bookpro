@@ -157,7 +157,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -263,7 +263,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -341,6 +341,8 @@
             var joinCancellationValue = wrapper.querySelector(".zbp-join-cancellation-value");
             var joinInstructorRow = wrapper.querySelector(".zbp-join-instructor-row");
             var joinInstructorValue = wrapper.querySelector(".zbp-join-instructor-value");
+            var joinLocationRow = wrapper.querySelector(".zbp-join-location-row");
+            var joinLocationValue = wrapper.querySelector(".zbp-join-location-value");
             var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
             var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
             var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
@@ -421,6 +423,7 @@
                 var productDescription = joinBtn ? (joinBtn.getAttribute("data-product-description") || "") : "";
                 var productCancellationPolicy = joinBtn ? (joinBtn.getAttribute("data-product-cancellation-policy") || "") : "";
                 var productInstructor = joinBtn ? (joinBtn.getAttribute("data-product-instructor") || "") : "";
+                var productLocation = joinBtn ? (joinBtn.getAttribute("data-product-location") || "") : "";
                 var productExperienceCategory = joinBtn ? (joinBtn.getAttribute("data-product-experience-category") || "") : "";
                 var productSlotsRaw = joinBtn ? (joinBtn.getAttribute("data-product-slots") || "[]") : "[]";
                 var productSlots = [];
@@ -504,6 +507,17 @@
                         if (instructorText) {
                             joinInstructorValue.textContent = instructorText;
                             joinInstructorRow.hidden = false;
+                        }
+                    }
+                }
+                if (joinLocationRow && joinLocationValue) {
+                    joinLocationRow.hidden = true;
+                    joinLocationValue.textContent = "";
+                    if (productMode === "free_flow") {
+                        var locationText = decodeHtmlEntities(productLocation || "").trim();
+                        if (locationText) {
+                            joinLocationValue.textContent = locationText;
+                            joinLocationRow.hidden = false;
                         }
                     }
                 }

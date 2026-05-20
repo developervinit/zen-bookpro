@@ -126,6 +126,12 @@ if ( ! defined( 'ABSPATH' ) ) {
             <div class="zbp-join-instructor-row" hidden>
                 <p class="zbp-join-instructor-label"><?php esc_html_e( 'Instructor:', 'zen-bookpro' ); ?> <span class="zbp-join-instructor-value"></span></p>
             </div>
+            <div class="zbp-join-location-row" hidden>
+                <span class="zbp-join-location-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 6.12 12.14 6.38 12.43a1 1 0 0 0 1.49 0C12.88 21.14 19 14.25 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 14.5 9 2.5 2.5 0 0 1 12 11.5Z"/></svg>
+                </span>
+                <p class="zbp-join-location-value"></p>
+            </div>
         </div>
     </div>
 
@@ -186,6 +192,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     data-product-description="<?php echo esc_attr( isset( $product['description'] ) ? $product['description'] : '' ); ?>"
                                     data-product-cancellation-policy="<?php echo esc_attr( isset( $product['cancellation_policy'] ) ? $product['cancellation_policy'] : '' ); ?>"
                                     data-product-instructor="<?php echo esc_attr( isset( $product['zen_instructor'] ) ? $product['zen_instructor'] : '' ); ?>"
+                                    data-product-location="<?php echo esc_attr( isset( $product['location'] ) ? $product['location'] : '' ); ?>"
                                     data-product-experience-category="<?php echo esc_attr( isset( $product['experience_category'] ) ? $product['experience_category'] : '' ); ?>"
                                     data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
                                     data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
