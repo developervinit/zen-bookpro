@@ -157,7 +157,7 @@
                             duration +
                             (instructorHtml ? ' ' + instructorHtml : '') +
                             "</div>" +
-                            '<button class="zbp-join-btn" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
                             "</div>" +
                             "</div>" +
                             "</article>"
@@ -263,7 +263,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -343,6 +343,9 @@
             var joinInstructorValue = wrapper.querySelector(".zbp-join-instructor-value");
             var joinLocationRow = wrapper.querySelector(".zbp-join-location-row");
             var joinLocationValue = wrapper.querySelector(".zbp-join-location-value");
+            var joinActions = wrapper.querySelector(".zbp-join-actions");
+            var joinActionClose = wrapper.querySelector(".zbp-join-action-close");
+            var joinActionSubmit = wrapper.querySelector(".zbp-join-action-submit");
             var joinSlotWrap = wrapper.querySelector(".zbp-join-slot-wrap");
             var joinSlotToggle = wrapper.querySelector(".zbp-join-slot-toggle");
             var joinSlotMenu = wrapper.querySelector(".zbp-join-slot-menu");
@@ -353,6 +356,8 @@
             var prevBtn = wrapper.querySelector(".zbp-nav-prev");
             var nextBtn = wrapper.querySelector(".zbp-nav-next");
             var productList = wrapper.querySelector(".zbp-product-list");
+            var joinModalProductId = 0;
+            var joinModalProductMode = "";
 
             if (!dateRow || !weekRange || !productList) {
                 return;
@@ -415,10 +420,13 @@
                 }
 
                 var productName = joinBtn ? (joinBtn.getAttribute("data-product-name") || "") : "";
+                var productId = joinBtn ? (joinBtn.getAttribute("data-product-id") || "0") : "0";
                 var productCoins = joinBtn ? (joinBtn.getAttribute("data-product-zencoins") || "0") : "0";
                 var productImage = joinBtn ? (joinBtn.getAttribute("data-product-image") || "") : "";
                 var productMode = joinBtn ? (joinBtn.getAttribute("data-product-mode") || "") : "";
                 productMode = String(productMode).toLowerCase().trim();
+                joinModalProductId = toSafeInt(productId, 0);
+                joinModalProductMode = productMode;
                 var productDurationMinutes = joinBtn ? (joinBtn.getAttribute("data-product-duration-minutes") || "0") : "0";
                 var productDescription = joinBtn ? (joinBtn.getAttribute("data-product-description") || "") : "";
                 var productCancellationPolicy = joinBtn ? (joinBtn.getAttribute("data-product-cancellation-policy") || "") : "";
@@ -524,6 +532,9 @@
                 if (joinSlotMenu) {
                     joinSlotMenu.hidden = true;
                 }
+                if (joinActions) {
+                    joinActions.hidden = productMode !== "free_flow";
+                }
 
                 joinModal.hidden = false;
                 joinOverlay.hidden = false;
@@ -538,6 +549,33 @@
                 if (joinSlotMenu) {
                     joinSlotMenu.hidden = true;
                 }
+                if (joinActions) {
+                    joinActions.hidden = true;
+                }
+            }
+
+            function buildAddToCartUrl(productId, selectedSlotValue) {
+                var baseUrl = (window.zbpAjax && zbpAjax.cartUrl) ? zbpAjax.cartUrl : window.location.href;
+                var url = new URL(baseUrl, window.location.origin);
+                var slotDate = selectedSlotValue ? new Date(selectedSlotValue) : null;
+                var useDate = slotDate && !Number.isNaN(slotDate.getTime()) ? slotDate : selectedDate;
+                var y = String(useDate.getFullYear());
+                var m = String(useDate.getMonth() + 1);
+                var d = String(useDate.getDate());
+
+                url.searchParams.set("add-to-cart", String(productId));
+                url.searchParams.set("wc_bookings_field_start_date_year", y);
+                url.searchParams.set("wc_bookings_field_start_date_month", m);
+                url.searchParams.set("wc_bookings_field_start_date_day", d);
+                url.searchParams.set("wc_bookings_field_duration", "1");
+                url.searchParams.set("wc_bookings_field_qty", "1");
+                url.searchParams.set("wc_bookings_field_persons", "1");
+
+                if (selectedSlotValue) {
+                    url.searchParams.set("wc_bookings_field_start_date_time", selectedSlotValue);
+                }
+
+                return url.toString();
             }
 
             if (filterToggle) {
@@ -619,6 +657,21 @@
 
             if (joinModalCloseBtn) {
                 joinModalCloseBtn.addEventListener("click", closeJoinModal);
+            }
+            if (joinActionClose) {
+                joinActionClose.addEventListener("click", closeJoinModal);
+            }
+            if (joinActionSubmit) {
+                joinActionSubmit.addEventListener("click", function () {
+                    if (joinModalProductMode !== "free_flow" || joinModalProductId <= 0) {
+                        return;
+                    }
+
+                    var selectedChip = joinSlotChips ? joinSlotChips.querySelector(".zbp-join-slot-chip.is-selected") : null;
+                    var selectedSlotValue = selectedChip ? (selectedChip.getAttribute("data-value") || "") : "";
+                    var addToCartUrl = buildAddToCartUrl(joinModalProductId, selectedSlotValue);
+                    window.location.href = addToCartUrl;
+                });
             }
             if (joinOverlay) {
                 joinOverlay.addEventListener("click", closeJoinModal);

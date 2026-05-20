@@ -133,6 +133,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <p class="zbp-join-location-value"></p>
             </div>
         </div>
+        <div class="zbp-join-actions" hidden>
+            <button type="button" class="zbp-join-action-close"><?php esc_html_e( 'Close', 'zen-bookpro' ); ?></button>
+            <button type="button" class="zbp-join-action-submit"><?php esc_html_e( 'Join', 'zen-bookpro' ); ?></button>
+        </div>
     </div>
 
     <div class="zbp-product-list">
@@ -184,6 +188,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <button
                                     class="zbp-join-btn"
                                     type="button"
+                                    data-product-id="<?php echo esc_attr( $product['id'] ); ?>"
                                     data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
                                     data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"

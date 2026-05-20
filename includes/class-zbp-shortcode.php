@@ -67,6 +67,7 @@ class ZBP_Shortcode {
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'zbp_get_slots' ),
+                'cartUrl' => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' ),
             )
         );
     }
