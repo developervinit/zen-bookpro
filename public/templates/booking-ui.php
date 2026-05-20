@@ -110,6 +110,19 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </span>
                 <span class="zbp-join-time-value"></span>
             </div>
+            <div class="zbp-join-volume-row" hidden>
+                <span class="zbp-join-volume-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--zbp-accent)" style="vertical-align: middle;">
+                        <circle cx="6.5" cy="10" r="3" />
+                        <path d="M6.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z" />
+                        <circle cx="17.5" cy="10" r="3" />
+                        <path d="M17.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z" />
+                        <circle cx="12" cy="8.5" r="3.5" />
+                        <path d="M12 13c-2.2 0-6 .9-6 2.5V18h12v-2.5c0-1.6-3.8-2.5-6-2.5z" />
+                    </svg>
+                </span>
+                <span class="zbp-join-volume-value"></span>
+            </div>
             <div class="zbp-join-duration-row" hidden>
                 <span class="zbp-join-duration-left">
                     <span class="zbp-join-duration-icon" aria-hidden="true">

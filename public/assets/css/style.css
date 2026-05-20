@@ -370,7 +370,8 @@
 }
 
 .zbp-join-date-row,
-.zbp-join-time-row {
+.zbp-join-time-row,
+.zbp-join-volume-row {
     align-items: center;
     color: #cfcfd2;
     display: flex;
@@ -381,7 +382,8 @@
 }
 
 .zbp-join-date-icon,
-.zbp-join-time-icon {
+.zbp-join-time-icon,
+.zbp-join-volume-icon {
     color: var(--zbp-accent);
     display: inline-flex;
     line-height: 1;
@@ -399,7 +401,8 @@
 }
 
 .zbp-join-duration-row[hidden],
-.zbp-join-time-row[hidden] {
+.zbp-join-time-row[hidden],
+.zbp-join-volume-row[hidden] {
     display: none !important;
 }
 
@@ -614,7 +617,8 @@
     }
 
     .zbp-join-date-row,
-    .zbp-join-time-row {
+    .zbp-join-time-row,
+    .zbp-join-volume-row {
         font-size: 18px;
     }
 

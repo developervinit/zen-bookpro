@@ -263,7 +263,7 @@
                         "</div>" +
                         '<div class="zbp-card-bottom">' +
                         "<div></div>" +
-                        '<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '" data-product-formatted-slot="' + escapeHtml(formattedTimeBlock) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+                        '<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '" data-product-formatted-slot="' + escapeHtml(formattedTimeBlock) + '" data-product-volume="' + escapeHtml(bookedSpots + "/" + maxSpots) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
                         "</div>" +
                         "</div>" +
                         "</article>"
@@ -334,6 +334,8 @@
             var joinDateValue = wrapper.querySelector(".zbp-join-date-value");
             var joinTimeRow = wrapper.querySelector(".zbp-join-time-row");
             var joinTimeValue = wrapper.querySelector(".zbp-join-time-value");
+            var joinVolumeRow = wrapper.querySelector(".zbp-join-volume-row");
+            var joinVolumeValue = wrapper.querySelector(".zbp-join-volume-value");
             var joinDurationRow = wrapper.querySelector(".zbp-join-duration-row");
             var joinDurationValue = wrapper.querySelector(".zbp-join-duration-value");
             var joinCategoryValue = wrapper.querySelector(".zbp-join-category-value");
@@ -477,6 +479,17 @@
                         if (formattedSlot) {
                             joinTimeValue.textContent = formattedSlot;
                             joinTimeRow.hidden = false;
+                        }
+                    }
+                }
+
+                if (joinVolumeRow && joinVolumeValue) {
+                    joinVolumeRow.hidden = true;
+                    if (productMode === "event") {
+                        var volumeVal = joinBtn ? (joinBtn.getAttribute("data-product-volume") || "") : "";
+                        if (volumeVal) {
+                            joinVolumeValue.textContent = volumeVal;
+                            joinVolumeRow.hidden = false;
                         }
                     }
                 }
