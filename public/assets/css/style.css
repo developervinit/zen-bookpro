@@ -398,7 +398,8 @@
     width: 100%;
 }
 
-.zbp-join-duration-row[hidden] {
+.zbp-join-duration-row[hidden],
+.zbp-join-time-row[hidden] {
     display: none !important;
 }
 
