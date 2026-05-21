@@ -537,7 +537,7 @@
                 if (joinCancellationRow && joinCancellationValue) {
                     joinCancellationRow.hidden = true;
                     joinCancellationValue.textContent = "";
-                    if (productMode === "free_flow") {
+                    if (productMode === "free_flow" || productMode === "event") {
                         var cancellationText = decodeHtmlEntities(productCancellationPolicy || "").trim();
                         if (cancellationText) {
                             joinCancellationValue.textContent = cancellationText;
