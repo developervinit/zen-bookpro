@@ -559,7 +559,7 @@
                 if (joinLocationRow && joinLocationValue) {
                     joinLocationRow.hidden = true;
                     joinLocationValue.textContent = "";
-                    if (productMode === "free_flow") {
+                    if (productMode === "free_flow" || productMode === "event") {
                         var locationText = decodeHtmlEntities(productLocation || "").trim();
                         if (locationText) {
                             joinLocationValue.textContent = locationText;
