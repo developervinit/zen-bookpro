@@ -387,7 +387,8 @@
 
 .zbp-join-date-icon,
 .zbp-join-time-icon,
-.zbp-join-volume-icon {
+.zbp-join-volume-icon,
+.zbp-join-event-category-icon {
     color: var(--zbp-accent);
     display: inline-flex;
     line-height: 1;
@@ -406,7 +407,8 @@
 
 .zbp-join-duration-row[hidden],
 .zbp-join-time-row[hidden],
-.zbp-join-volume-row[hidden] {
+.zbp-join-volume-row[hidden],
+.zbp-join-event-category-wrap[hidden] {
     display: none !important;
 }
 
@@ -510,7 +512,8 @@
 
 .zbp-join-duration-left,
 .zbp-join-category-right,
-.zbp-join-volume-left {
+.zbp-join-volume-left,
+.zbp-join-event-category-wrap {
     align-items: center;
     display: inline-flex;
     gap: 8px;
