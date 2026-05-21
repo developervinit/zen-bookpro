@@ -526,7 +526,7 @@
                 if (joinDescriptionRow && joinDescriptionValue) {
                     joinDescriptionRow.hidden = true;
                     joinDescriptionValue.textContent = "";
-                    if (productMode === "free_flow") {
+                    if (productMode === "free_flow" || productMode === "event") {
                         var descriptionText = decodeHtmlEntities(productDescription || "").trim();
                         if (descriptionText) {
                             joinDescriptionValue.textContent = descriptionText;
