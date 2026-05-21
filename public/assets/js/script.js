@@ -748,17 +748,6 @@
                     }
 
                     var addToCartUrl = buildAddToCartUrl(joinModalProductId, selectedSlotValue);
-                    
-                    console.log("=== ZBP JOIN BUTTON DEBUG ===");
-                    console.log("Product ID:", joinModalProductId);
-                    console.log("Product Mode:", joinModalProductMode);
-                    console.log("Selected Slot Value:", selectedSlotValue);
-                    console.log("Slots List:", joinModalProductSlots);
-                    console.log("Redirect URL:", addToCartUrl);
-                    console.log("=============================");
-
-                    alert("ZBP Debug: Sending to Cart\n\nProduct ID: " + joinModalProductId + "\nProduct Mode: " + joinModalProductMode + "\nSelected Slot Value: " + selectedSlotValue + "\n\nGenerated Add-to-Cart URL:\n" + addToCartUrl);
-
                     window.location.href = addToCartUrl;
                 });
             }
