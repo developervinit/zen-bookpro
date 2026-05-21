@@ -602,8 +602,8 @@
                 var url = new URL(baseUrl, window.location.origin);
                 
                 var y = String(selectedDate.getFullYear());
-                var m = String(selectedDate.getMonth() + 1);
-                var d = String(selectedDate.getDate());
+                var m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                var d = String(selectedDate.getDate()).padStart(2, '0');
                 var timePart = "";
 
                 if (selectedSlotValue) {
@@ -613,8 +613,8 @@
                         var dateParts = parts[0].split('-');
                         if (dateParts.length === 3) {
                             y = String(parseInt(dateParts[0], 10));
-                            m = String(parseInt(dateParts[1], 10));
-                            d = String(parseInt(dateParts[2], 10));
+                            m = String(parseInt(dateParts[1], 10)).padStart(2, '0');
+                            d = String(parseInt(dateParts[2], 10)).padStart(2, '0');
                             
                             var timeParts = parts[1].split(':');
                             if (timeParts.length >= 2) {
@@ -631,14 +631,15 @@
 
                 url.searchParams.set("add-to-cart", String(productId));
                 url.searchParams.set("wc_bookings_field_start_date_year", y);
-                url.searchParams.set("wc_bookings_field_start_date_month", m);
-                url.searchParams.set("wc_bookings_field_start_date_day", d);
+                url.searchParams.set("wc_bookings_field_start_date_month", String(parseInt(m, 10)));
+                url.searchParams.set("wc_bookings_field_start_date_day", String(parseInt(d, 10)));
                 url.searchParams.set("wc_bookings_field_duration", "1");
                 url.searchParams.set("wc_bookings_field_qty", "1");
                 url.searchParams.set("wc_bookings_field_persons", "1");
 
                 if (timePart) {
-                    url.searchParams.set("wc_bookings_field_start_date_time", timePart);
+                    var fullDateTime = y + "-" + m + "-" + d + " " + timePart + ":00";
+                    url.searchParams.set("wc_bookings_field_start_date_time", fullDateTime);
                 }
 
                 return url.toString();
