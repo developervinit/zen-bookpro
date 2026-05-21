@@ -721,6 +721,12 @@
     min-height: 64px;
 }
 
+.zbp-category-grid button.is-active {
+    border-color: var(--zbp-accent);
+    color: var(--zbp-accent);
+    background: #5d5d5f;
+}
+
 .zbp-chip-wrap {
     display: flex;
     flex-wrap: wrap;

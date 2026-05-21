@@ -275,6 +275,14 @@
         }
 
         function fetchSlots(dateKey, wrapper, productList) {
+            var expId = "0";
+            var actId = "0";
+            if (wrapper) {
+                var activeExpBtn = wrapper.querySelector(".zbp-category-grid button.is-active");
+                var activeActBtn = wrapper.querySelector(".zbp-chip-wrap button.is-active");
+                expId = activeExpBtn ? (activeExpBtn.getAttribute("data-term-id") || "0") : "0";
+                actId = activeActBtn ? (activeActBtn.getAttribute("data-term-id") || "0") : "0";
+            }
             if (!window.zbpAjax || !zbpAjax.ajaxUrl) {
                 return;
             }
@@ -282,6 +290,8 @@
             var payload = new URLSearchParams();
             payload.append("action", "zbp_get_slots");
             payload.append("date", dateKey);
+            payload.append("experience", expId);
+            payload.append("activity", actId);
             payload.append("nonce", zbpAjax.nonce || "");
 
             fetch(zbpAjax.ajaxUrl, {
@@ -670,7 +680,45 @@
                 overlay.addEventListener("click", closeModal);
             }
             if (confirmBtn) {
-                confirmBtn.addEventListener("click", closeModal);
+                confirmBtn.addEventListener("click", function () {
+                    closeModal();
+                    var dateKey = formatDateKey(selectedDate);
+                    fetchSlots(dateKey, wrapper, productList);
+                });
+
+                // Click handling for term selection in filter grid/chips
+                var categoryGrid = wrapper.querySelector(".zbp-category-grid");
+                var chipWrap = wrapper.querySelector(".zbp-chip-wrap");
+
+                if (categoryGrid) {
+                    categoryGrid.addEventListener("click", function (event) {
+                        var btn = event.target.closest("button");
+                        if (!btn) return;
+
+                        var wasActive = btn.classList.contains("is-active");
+                        categoryGrid.querySelectorAll("button").forEach(function (b) {
+                            b.classList.remove("is-active");
+                        });
+                        if (!wasActive) {
+                            btn.classList.add("is-active");
+                        }
+                    });
+                }
+
+                if (chipWrap) {
+                    chipWrap.addEventListener("click", function (event) {
+                        var btn = event.target.closest("button");
+                        if (!btn) return;
+
+                        var wasActive = btn.classList.contains("is-active");
+                        chipWrap.querySelectorAll("button").forEach(function (b) {
+                            b.classList.remove("is-active");
+                        });
+                        if (!wasActive) {
+                            btn.classList.add("is-active");
+                        }
+                    });
+                }
             }
 
             // Custom Dropdown Event Delegation
