@@ -548,7 +548,7 @@
                 if (joinInstructorRow && joinInstructorValue) {
                     joinInstructorRow.hidden = true;
                     joinInstructorValue.textContent = "";
-                    if (productMode === "free_flow") {
+                    if (productMode === "free_flow" || productMode === "event") {
                         var instructorText = decodeHtmlEntities(productInstructor || "").trim();
                         if (instructorText) {
                             joinInstructorValue.textContent = instructorText;
