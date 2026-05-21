@@ -600,11 +600,34 @@
             function buildAddToCartUrl(productId, selectedSlotValue) {
                 var baseUrl = (window.zbpAjax && zbpAjax.cartUrl) ? zbpAjax.cartUrl : window.location.href;
                 var url = new URL(baseUrl, window.location.origin);
-                var slotDate = selectedSlotValue ? new Date(selectedSlotValue) : null;
-                var useDate = slotDate && !Number.isNaN(slotDate.getTime()) ? slotDate : selectedDate;
-                var y = String(useDate.getFullYear());
-                var m = String(useDate.getMonth() + 1);
-                var d = String(useDate.getDate());
+                
+                var y = String(selectedDate.getFullYear());
+                var m = String(selectedDate.getMonth() + 1);
+                var d = String(selectedDate.getDate());
+                var timePart = "";
+
+                if (selectedSlotValue) {
+                    var clean = selectedSlotValue.replace('T', ' ').split('+')[0].split('Z')[0].trim();
+                    var parts = clean.split(' ');
+                    if (parts.length >= 2 && parts[0].indexOf('-') !== -1) {
+                        var dateParts = parts[0].split('-');
+                        if (dateParts.length === 3) {
+                            y = String(parseInt(dateParts[0], 10));
+                            m = String(parseInt(dateParts[1], 10));
+                            d = String(parseInt(dateParts[2], 10));
+                            
+                            var timeParts = parts[1].split(':');
+                            if (timeParts.length >= 2) {
+                                timePart = String(timeParts[0]).padStart(2, '0') + ":" + String(timeParts[1]).padStart(2, '0');
+                            }
+                        }
+                    } else if (selectedSlotValue.indexOf(':') !== -1) {
+                        var timeParts = selectedSlotValue.split(':');
+                        if (timeParts.length >= 2) {
+                            timePart = String(timeParts[0]).padStart(2, '0') + ":" + String(timeParts[1]).padStart(2, '0');
+                        }
+                    }
+                }
 
                 url.searchParams.set("add-to-cart", String(productId));
                 url.searchParams.set("wc_bookings_field_start_date_year", y);
@@ -614,8 +637,8 @@
                 url.searchParams.set("wc_bookings_field_qty", "1");
                 url.searchParams.set("wc_bookings_field_persons", "1");
 
-                if (selectedSlotValue) {
-                    url.searchParams.set("wc_bookings_field_start_date_time", selectedSlotValue);
+                if (timePart) {
+                    url.searchParams.set("wc_bookings_field_start_date_time", timePart);
                 }
 
                 return url.toString();
