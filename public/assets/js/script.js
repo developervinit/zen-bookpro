@@ -364,6 +364,7 @@
             var productList = wrapper.querySelector(".zbp-product-list");
             var joinModalProductId = 0;
             var joinModalProductMode = "";
+            var joinModalProductSlots = [];
 
             if (!dateRow || !weekRange || !productList) {
                 return;
@@ -445,6 +446,10 @@
                     productSlots = JSON.parse(productSlotsRaw);
                 } catch (e) {
                     productSlots = [];
+                }
+                joinModalProductSlots = productSlots;
+                if (joinModalCloseBtn) {
+                    joinModalCloseBtn.hidden = (productMode === "event");
                 }
 
                 if (joinModalTitle) {
@@ -571,7 +576,7 @@
                     joinSlotMenu.hidden = true;
                 }
                 if (joinActions) {
-                    joinActions.hidden = productMode !== "free_flow";
+                    joinActions.hidden = (productMode !== "free_flow" && productMode !== "event");
                 }
 
                 joinModal.hidden = false;
@@ -701,12 +706,21 @@
             }
             if (joinActionSubmit) {
                 joinActionSubmit.addEventListener("click", function () {
-                    if (joinModalProductMode !== "free_flow" || joinModalProductId <= 0) {
+                    if (joinModalProductId <= 0) {
+                        return;
+                    }
+                    if (joinModalProductMode !== "free_flow" && joinModalProductMode !== "event") {
                         return;
                     }
 
-                    var selectedChip = joinSlotChips ? joinSlotChips.querySelector(".zbp-join-slot-chip.is-selected") : null;
-                    var selectedSlotValue = selectedChip ? (selectedChip.getAttribute("data-value") || "") : "";
+                    var selectedSlotValue = "";
+                    if (joinModalProductMode === "free_flow") {
+                        var selectedChip = joinSlotChips ? joinSlotChips.querySelector(".zbp-join-slot-chip.is-selected") : null;
+                        selectedSlotValue = selectedChip ? (selectedChip.getAttribute("data-value") || "") : "";
+                    } else if (joinModalProductMode === "event") {
+                        selectedSlotValue = (joinModalProductSlots && joinModalProductSlots.length > 0) ? (joinModalProductSlots[0].value || "") : "";
+                    }
+
                     var addToCartUrl = buildAddToCartUrl(joinModalProductId, selectedSlotValue);
                     window.location.href = addToCartUrl;
                 });

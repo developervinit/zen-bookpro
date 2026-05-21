@@ -559,6 +559,10 @@
     z-index: 2;
 }
 
+.zbp-join-modal-close[hidden] {
+    display: none !important;
+}
+
 .zbp-join-actions {
     align-items: center;
     display: flex;
