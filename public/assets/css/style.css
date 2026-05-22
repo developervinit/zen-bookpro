@@ -237,6 +237,12 @@
     gap: 4px;
 }
 
+.zbp-duration svg,
+.zbp-join-duration-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
 .zbp-event-meta p {
     color: #cecece;
     margin: 0 0 6px;
