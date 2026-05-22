@@ -1,7 +1,7 @@
 .zbp-booking-ui {
     --zbp-bg: #3f3f42;
     --zbp-card: #444447;
-    --zbp-border: #8a8a8c;
+    --zbp-border: #9A9A9A;
     --zbp-text: #f1f1f1;
     --zbp-muted: #bbbbbb;
     --zbp-accent: #d8b54a;
@@ -17,7 +17,7 @@
 
 .zbp-week-header {
     align-items: center;
-    border: 1px solid #666;
+    border: 2px solid #9A9A9A;
     border-radius: 999px;
     display: flex;
     gap: 10px;
@@ -33,7 +33,7 @@
 
 .zbp-nav-btn {
     background: transparent;
-    border: 1px solid #6d6d70;
+    border: 2px solid #9A9A9A;
     border-radius: 50%;
     color: var(--zbp-text);
     cursor: pointer;
@@ -50,7 +50,7 @@
 
 .zbp-date-item {
     background: #454548;
-    border: 1px solid #707074;
+    border: 2px solid #9A9A9A;
     border-radius: 10px;
     color: var(--zbp-text);
     cursor: pointer;
@@ -73,8 +73,9 @@
 }
 
 .zbp-date-day {
-    font-size: 15px;
+    font-size: 16px;
     margin-top: 4px;
+    color: #9A9A9A;
 }
 
 .zbp-filter-row {
@@ -85,7 +86,7 @@
 
 .zbp-filter-toggle {
     background: transparent;
-    border: 1px solid #7f7f82;
+    border: 2px solid #9A9A9A;
     border-radius: 10px;
     color: var(--zbp-text);
     cursor: pointer;
@@ -101,7 +102,7 @@
 
 .zbp-product-card {
     background: var(--zbp-card);
-    border: 1px solid var(--zbp-border);
+    border: 2px solid var(--zbp-border);
     border-radius: 16px;
     display: grid;
     grid-template-columns: 96px 1fr;
@@ -163,7 +164,7 @@
 
 .zbp-dropdown-toggle {
     background: #3b3b3d;
-    border: 1px solid #7b7b7e;
+    border: 2px solid #9A9A9A;
     border-radius: 8px;
     color: var(--zbp-text);
     cursor: pointer;
@@ -246,7 +247,8 @@
 }
 
 .zbp-join-btn.is-waitlist {
-    background: #5a7d9a; /* Muted blue for waitlist */
+    background: #5a7d9a;
+    /* Muted blue for waitlist */
     color: #ffffff;
 }
 
@@ -605,6 +607,7 @@
 }
 
 @media (max-width: 640px) {
+
     .zbp-join-media,
     .zbp-join-media-placeholder {
         height: 200px;
