@@ -239,8 +239,8 @@
 
 .zbp-duration svg,
 .zbp-join-duration-icon svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
 }
 
 .zbp-event-meta p {
@@ -249,8 +249,8 @@
 }
 
 .zbp-event-meta p svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
 }
 
 .zbp-join-btn,
