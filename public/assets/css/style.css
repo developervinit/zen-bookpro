@@ -229,7 +229,14 @@
     margin-top: 16px;
 }
 
-.zbp-duration,
+.zbp-duration {
+    color: #cecece;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .zbp-event-meta p {
     color: #cecece;
     margin: 0 0 6px;
