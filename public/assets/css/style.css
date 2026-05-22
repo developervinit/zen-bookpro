@@ -128,8 +128,9 @@
 }
 
 .zbp-card-top h4 {
-    font-size: 28px;
+    font-size: 22px;
     margin: 0;
+    color: #FFFFFF !important;
 }
 
 .zbp-coins {
