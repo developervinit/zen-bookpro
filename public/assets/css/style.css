@@ -248,6 +248,11 @@
     margin: 0 0 6px;
 }
 
+.zbp-event-meta p svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
 .zbp-join-btn,
 .zbp-confirm-btn {
     background: var(--zbp-accent);
