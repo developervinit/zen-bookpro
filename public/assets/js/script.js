@@ -468,7 +468,7 @@
                 }
                 joinModalProductSlots = productSlots;
                 if (joinModalCloseBtn) {
-                    joinModalCloseBtn.hidden = (productMode === "event");
+                    joinModalCloseBtn.hidden = (productMode === "event" || productMode === "free_flow");
                 }
 
                 if (joinModalTitle) {
