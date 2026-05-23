@@ -464,7 +464,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                                     <span class="zbp-selected-slot-label"><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></span>
 
-                                    <svg class="zbp-chevron" width="18" height="18" viewBox="0 0 24 24" fill="#9A9A9A"><path d="M4 8l8 8 8-8H4z"/></svg>
+                                    <svg class="zbp-chevron" width="24" height="24" viewBox="0 0 24 24" fill="#9A9A9A"><path d="M4 8l8 8 8-8H4z"/></svg>
 
                                 </button>
 
