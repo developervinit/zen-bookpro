@@ -290,7 +290,7 @@
 
                             '<span class="zbp-selected-slot-label">Choose Slot</span>' +
 
-                            '<span class="zbp-chevron">&#9662;</span>' +
+                            '<svg class="zbp-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A9A9A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>' +
 
                             '</button>' +
 
