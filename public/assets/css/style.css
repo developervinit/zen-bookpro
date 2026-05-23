@@ -2,7 +2,7 @@
     --zbp-bg: #3f3f42;
     --zbp-card: #444447;
     --zbp-border: #9A9A9A;
-    --zbp-text: #f1f1f1;
+    --zbp-text: #9A9A9A;
     --zbp-muted: #bbbbbb;
     --zbp-accent: #d8b54a;
     --zbp-dark: #2d2d2f;
@@ -170,7 +170,7 @@
     color: var(--zbp-text);
     cursor: pointer;
     display: flex;
-    font-size: 14px;
+    font-size: 16px;
     justify-content: space-between;
     align-items: center;
     padding: 12px;
