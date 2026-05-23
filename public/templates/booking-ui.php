@@ -228,7 +228,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                         <?php if ( $is_slot_based ) : ?>
                             <div class="zbp-custom-dropdown">
-                                <label><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></label>
+
                                 <button type="button" class="zbp-dropdown-toggle">
                                     <span class="zbp-selected-slot-label"><?php esc_html_e( 'Select a slot', 'zen-bookpro' ); ?></span>
                                     <span class="zbp-chevron">&#9662;</span>
