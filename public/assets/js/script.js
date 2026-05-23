@@ -141,7 +141,7 @@
                             "</span></div>" +
                             "</div>" +
                             '<div class="zbp-select-wrap zbp-custom-dropdown">' +
-                            "<label>Choose Slot</label>" +
+
                             '<button type="button" class="zbp-dropdown-toggle">' +
                             '<span class="zbp-selected-slot-label">Select a slot</span>' +
                             '<span class="zbp-chevron">&#9662;</span>' +
