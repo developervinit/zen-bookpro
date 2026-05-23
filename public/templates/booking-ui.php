@@ -114,7 +114,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <div class="zbp-select-wrap zbp-custom-dropdown">
 
                 <button type="button" class="zbp-dropdown-toggle zbp-join-slot-toggle">
-                    <span class="zbp-selected-slot-label zbp-join-selected-slot-label"><?php esc_html_e( 'Select a slot', 'zen-bookpro' ); ?></span>
+                    <span class="zbp-selected-slot-label zbp-join-selected-slot-label"><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></span>
                     <span class="zbp-chevron">&#9662;</span>
                 </button>
                 <div class="zbp-dropdown-menu zbp-join-slot-menu" hidden>
@@ -230,7 +230,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <div class="zbp-custom-dropdown">
 
                                 <button type="button" class="zbp-dropdown-toggle">
-                                    <span class="zbp-selected-slot-label"><?php esc_html_e( 'Select a slot', 'zen-bookpro' ); ?></span>
+                                    <span class="zbp-selected-slot-label"><?php esc_html_e( 'Choose Slot', 'zen-bookpro' ); ?></span>
                                     <span class="zbp-chevron">&#9662;</span>
                                 </button>
                                 <div class="zbp-dropdown-menu" hidden>

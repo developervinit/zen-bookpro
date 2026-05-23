@@ -143,7 +143,7 @@
                             '<div class="zbp-select-wrap zbp-custom-dropdown">' +
 
                             '<button type="button" class="zbp-dropdown-toggle">' +
-                            '<span class="zbp-selected-slot-label">Select a slot</span>' +
+                            '<span class="zbp-selected-slot-label">Choose Slot</span>' +
                             '<span class="zbp-chevron">&#9662;</span>' +
                             '</button>' +
                             '<div class="zbp-dropdown-menu" hidden>' +
@@ -433,9 +433,9 @@
                             var val = (slot && slot.value) ? slot.value : slotLabel(slot);
                             return val === preselectedSlotValue;
                         });
-                        joinSelectedSlotLabel.textContent = matchingSlot ? slotLabel(matchingSlot) : "Select a slot";
+                        joinSelectedSlotLabel.textContent = matchingSlot ? slotLabel(matchingSlot) : "Choose Slot";
                     } else {
-                        joinSelectedSlotLabel.textContent = "Select a slot";
+                        joinSelectedSlotLabel.textContent = "Choose Slot";
                     }
                 }
             }
