@@ -205,13 +205,13 @@
 .zbp-slot-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     margin-top: 12px;
 }
 
 .zbp-grid-view.zbp-slot-chips {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     margin-top: 0;
 }
 
@@ -219,18 +219,27 @@
 .zbp-slot-chips button,
 .zbp-chip-wrap button {
     background: transparent;
-    border: 1px solid #96969a;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
     border-radius: 999px;
-    color: #d9d9da;
+    color: #e2e2e4;
     cursor: pointer;
-    padding: 6px 12px;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 8px 18px;
     text-align: center;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.zbp-slot-chips button:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .zbp-slot-chips button.is-selected {
-    background: var(--zbp-accent);
-    border-color: var(--zbp-accent);
-    color: #232323;
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
 }
 
 .zbp-card-bottom {
