@@ -86,7 +86,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="zbp-filter-row">
 
-        <button class="zbp-filter-toggle" type="button">Filter <span class="zbp-filter-icon">&#9881;</span></button>
+        <button class="zbp-filter-toggle" type="button">Filter <span class="zbp-filter-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="8" cy="6" r="2" fill="currentColor"></circle><circle cx="16" cy="12" r="2" fill="currentColor"></circle><circle cx="10" cy="18" r="2" fill="currentColor"></circle></svg></span></button>
 
     </div>
 
