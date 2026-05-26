@@ -40,32 +40,52 @@
 
 
 
-        function convertTo24Hour(timeStr) {
+        function formatSlotTimeRange(timeStr, durationMinutes) {
             if (!timeStr) return "";
             var trimmed = timeStr.trim();
+            var h, m;
+            var parsed = false;
+
             var match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
             if (match12) {
-                var h = parseInt(match12[1], 10);
-                var m = parseInt(match12[2], 10);
+                h = parseInt(match12[1], 10);
+                m = parseInt(match12[2], 10);
                 var ampm = match12[3].toLowerCase();
                 if (ampm === "pm" && h < 12) h += 12;
                 if (ampm === "am" && h === 12) h = 0;
-                var hh = String(h).padStart(2, "0");
-                var mm = String(m).padStart(2, "0");
-                return hh + ":" + mm;
+                parsed = true;
+            } else {
+                var match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+                if (match24) {
+                    h = parseInt(match24[1], 10);
+                    m = parseInt(match24[2], 10);
+                    parsed = true;
+                }
             }
-            var match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
-            if (match24) {
-                var h = parseInt(match24[1], 10);
-                var m = parseInt(match24[2], 10);
-                var hh = String(h).padStart(2, "0");
-                var mm = String(m).padStart(2, "0");
-                return hh + ":" + mm;
+
+            if (!parsed) {
+                return timeStr;
             }
-            return timeStr;
+
+            var startHH = String(h).padStart(2, "0");
+            var startMM = String(m).padStart(2, "0");
+
+            if (!durationMinutes || durationMinutes <= 0) {
+                return startHH + ":" + startMM;
+            }
+
+            var startTotalMins = h * 60 + m;
+            var endTotalMins = startTotalMins + durationMinutes;
+            var endH = Math.floor(endTotalMins / 60) % 24;
+            var endM = endTotalMins % 60;
+
+            var endHH = String(endH).padStart(2, "0");
+            var endMM = String(endM).padStart(2, "0");
+
+            return startHH + ":" + startMM + "-" + endHH + ":" + endMM;
         }
 
-        function slotLabel(slot) {
+        function slotLabel(slot, durationMinutes) {
             if (!slot) return "Unavailable";
             var label = "Unavailable";
             if (typeof slot === "string") {
@@ -73,7 +93,7 @@
             } else if (slot && slot.label) {
                 label = slot.label;
             }
-            return convertTo24Hour(label);
+            return formatSlotTimeRange(label, durationMinutes);
         }
 
 
@@ -260,7 +280,7 @@
 
                                 .map(function (slot) {
 
-                                    var label = slotLabel(slot);
+                                    var label = slotLabel(slot, bookingDurationMinutes);
 
                                     var val = (slot && slot.value) ? slot.value : label;
 
@@ -830,7 +850,7 @@
 
 
 
-            function renderJoinSlots(slots, preselectedSlotValue) {
+            function renderJoinSlots(slots, preselectedSlotValue, durationMinutes) {
 
                 if (!joinSlotChips) {
 
@@ -858,7 +878,7 @@
 
                 var chips = slots.map(function (slot) {
 
-                    var label = slotLabel(slot);
+                    var label = slotLabel(slot, durationMinutes);
 
                     var val = (slot && slot.value) ? slot.value : label;
 
@@ -878,13 +898,13 @@
 
                         var matchingSlot = slots.find(function (slot) {
 
-                            var val = (slot && slot.value) ? slot.value : slotLabel(slot);
+                            var val = (slot && slot.value) ? slot.value : slotLabel(slot, durationMinutes);
 
                             return val === preselectedSlotValue;
 
                         });
 
-                        joinSelectedSlotLabel.textContent = matchingSlot ? slotLabel(matchingSlot) : "Choose Slot";
+                        joinSelectedSlotLabel.textContent = matchingSlot ? slotLabel(matchingSlot, durationMinutes) : "Choose Slot";
 
                     } else {
 
@@ -1096,9 +1116,11 @@
 
                         var preselectedSlotValue = selectedChip ? (selectedChip.getAttribute("data-value") || "") : "";
 
+                        var durationMins = toDurationMinutes(productDurationMinutes);
+
                         
 
-                        renderJoinSlots(productSlots, preselectedSlotValue);
+                        renderJoinSlots(productSlots, preselectedSlotValue, durationMins);
 
                     }
 
