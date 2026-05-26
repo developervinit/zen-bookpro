@@ -500,7 +500,7 @@
 
                     var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px; margin: 0;">' +
 
-                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-top:-2px;"><circle cx="6.5" cy="10" r="3"></circle><path d="M6.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="17.5" cy="10" r="3"></circle><path d="M17.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="12" cy="8.5" r="3.5"></circle><path d="M12 13c-2.2 0-6 .9-6 2.5V18h12v-2.5c0-1.6-3.8-2.5-6-2.5z"></path></svg>' +
 
                         escapeHtml(volumeText) +
 
