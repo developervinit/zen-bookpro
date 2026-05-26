@@ -109,7 +109,7 @@
     transition: border-color 0.25s ease;
 }
 
-.zbp-product-card:not(.zbp-empty-state):hover {
+.zbp-product-card.zbp-slot-card:hover {
     border-color: #D8B355;
 }
 
@@ -122,7 +122,7 @@
     transition: border-color 0.25s ease;
 }
 
-.zbp-product-card:not(.zbp-empty-state):hover .zbp-card-icon {
+.zbp-product-card.zbp-slot-card:hover .zbp-card-icon {
     border-color: #D8B355;
 }
 

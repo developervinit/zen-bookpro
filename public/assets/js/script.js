@@ -40,16 +40,40 @@
 
 
 
+        function convertTo24Hour(timeStr) {
+            if (!timeStr) return "";
+            var trimmed = timeStr.trim();
+            var match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+            if (match12) {
+                var h = parseInt(match12[1], 10);
+                var m = parseInt(match12[2], 10);
+                var ampm = match12[3].toLowerCase();
+                if (ampm === "pm" && h < 12) h += 12;
+                if (ampm === "am" && h === 12) h = 0;
+                var hh = String(h).padStart(2, "0");
+                var mm = String(m).padStart(2, "0");
+                return hh + ":" + mm;
+            }
+            var match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+            if (match24) {
+                var h = parseInt(match24[1], 10);
+                var m = parseInt(match24[2], 10);
+                var hh = String(h).padStart(2, "0");
+                var mm = String(m).padStart(2, "0");
+                return hh + ":" + mm;
+            }
+            return timeStr;
+        }
+
         function slotLabel(slot) {
-
             if (!slot) return "Unavailable";
-
-            if (typeof slot === "string") return slot;
-
-            if (slot.label) return slot.label;
-
-            return "Unavailable";
-
+            var label = "Unavailable";
+            if (typeof slot === "string") {
+                label = slot;
+            } else if (slot && slot.label) {
+                label = slot.label;
+            }
+            return convertTo24Hour(label);
         }
 
 
