@@ -248,7 +248,7 @@
 
                     var zcoins = escapeHtml(product.zen_coins || "0");
 
-                    var duration = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> (' + durationText + ')';
+                    var duration = '<svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><path d="M12 7v5h5" stroke="var(--zbp-card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg> (' + durationText + ')';
 
                     var slots = [];
 
@@ -556,7 +556,7 @@
 
                         '<p style="display: flex; align-items: center; gap: 4px;">' +
 
-                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" style="margin-top:-2px;"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><path d="M12 7v5h5" stroke="var(--zbp-card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>' +
 
                         escapeHtml(formattedTimeBlock) +
 
