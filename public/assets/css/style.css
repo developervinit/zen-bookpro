@@ -109,7 +109,8 @@
     transition: border-color 0.25s ease;
 }
 
-.zbp-product-card.zbp-slot-card:hover {
+.zbp-product-card.zbp-slot-card:hover,
+.zbp-product-card.zbp-event-card:hover {
     border-color: #D8B355;
 }
 
@@ -122,7 +123,8 @@
     transition: border-color 0.25s ease;
 }
 
-.zbp-product-card.zbp-slot-card:hover .zbp-card-icon {
+.zbp-product-card.zbp-slot-card:hover .zbp-card-icon,
+.zbp-product-card.zbp-event-card:hover .zbp-card-icon {
     border-color: #D8B355;
 }
 
