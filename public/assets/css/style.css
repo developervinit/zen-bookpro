@@ -430,7 +430,7 @@
 
 .zbp-join-product-title {
     color: #f2f2f3;
-    font-size: 30px;
+    font-size: 20px;
     line-height: 1.25;
     margin: 0;
     padding: 0;
@@ -448,7 +448,7 @@
     align-items: center;
     color: #cfcfd2;
     display: flex;
-    font-size: 22px;
+    font-size: 16px;
     gap: 12px;
     margin-top: 8px;
     width: 100%;
@@ -495,14 +495,14 @@
 }
 
 .zbp-join-description-label {
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1.2;
     margin: 0 0 8px;
 }
 
 .zbp-join-description-value {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.5;
     margin: 0;
 }
@@ -517,14 +517,14 @@
 }
 
 .zbp-join-cancellation-label {
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1.2;
     margin: 0 0 8px;
 }
 
 .zbp-join-cancellation-value {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.5;
     margin: 0;
 }
@@ -539,7 +539,7 @@
 }
 
 .zbp-join-instructor-label {
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1.2;
     margin: 0;
@@ -568,15 +568,22 @@
     flex: 0 0 auto;
 }
 
+.zbp-join-date-icon svg,
+.zbp-join-time-icon svg,
+.zbp-join-volume-icon svg,
+.zbp-join-event-category-icon svg,
+.zbp-join-duration-icon svg,
+.zbp-join-category-icon svg,
 .zbp-join-location-icon svg {
-    display: block;
-    width: 22px;
-    height: 22px;
+    display: inline-block;
+    width: 24px !important;
+    height: 24px !important;
+    vertical-align: middle;
 }
 
 .zbp-join-location-value {
     color: #cfcfd2;
-    font-size: 34px;
+    font-size: 16px;
     font-weight: 500;
     line-height: 1.25;
     margin: 0;
@@ -652,11 +659,11 @@
 .zbp-join-action-submit {
     border-radius: 999px;
     cursor: pointer;
-    font-size: 34px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1;
-    min-width: 152px;
-    padding: 18px 34px;
+    min-width: 132px;
+    padding: 18px 18px;
     transition: opacity 0.2s ease;
 }
 

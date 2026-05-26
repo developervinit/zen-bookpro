@@ -252,7 +252,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 <span class="zbp-join-date-icon" aria-hidden="true">
 
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v2H2V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm15 9v8a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-8h20Z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v2H2V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm15 9v8a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-8h20Z"/></svg>
 
                 </span>
 
@@ -264,7 +264,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 <span class="zbp-join-time-icon" aria-hidden="true">
 
-                    <svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align: middle;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" style="vertical-align: middle;">
 
                         <circle cx="12" cy="12" r="11" fill="var(--zbp-accent)" />
 
@@ -284,7 +284,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <span class="zbp-join-volume-icon" aria-hidden="true">
 
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--zbp-accent)" style="vertical-align: middle;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--zbp-accent)" style="vertical-align: middle;">
 
                             <circle cx="6.5" cy="10" r="3" />
 
@@ -310,7 +310,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <span class="zbp-join-event-category-icon" aria-hidden="true">
 
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--zbp-accent)" style="vertical-align: middle;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--zbp-accent)" style="vertical-align: middle;">
 
                             <path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5V3Zm2 0v18h7a2 2 0 0 0 2-2V8.414a2 2 0 0 0-.586-1.414l-3.414-3.414A2 2 0 0 0 15.586 3H12Z"/>
 
@@ -330,7 +330,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <span class="zbp-join-duration-icon" aria-hidden="true">
 
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.261 10.261 0 0 0 12 1.75Zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.259 8.259 0 0 1 12 20.25Zm.75-12.5a1 1 0 0 0-2 0V12a1 1 0 0 0 .5.866l3.5 2a1 1 0 0 0 1-1.732l-3-1.714Z"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.261 10.261 0 0 0 12 1.75Zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.259 8.259 0 0 1 12 20.25Zm.75-12.5a1 1 0 0 0-2 0V12a1 1 0 0 0 .5.866l3.5 2a1 1 0 0 0 1-1.732l-3-1.714Z"/></svg>
 
                     </span>
 
@@ -342,7 +342,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <span class="zbp-join-category-icon" aria-hidden="true">
 
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5V3Zm2 0v18h7a2 2 0 0 0 2-2V8.414a2 2 0 0 0-.586-1.414l-3.414-3.414A2 2 0 0 0 15.586 3H12Z"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5V3Zm2 0v18h7a2 2 0 0 0 2-2V8.414a2 2 0 0 0-.586-1.414l-3.414-3.414A2 2 0 0 0 15.586 3H12Z"/></svg>
 
                     </span>
 
@@ -378,7 +378,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 <span class="zbp-join-location-icon" aria-hidden="true">
 
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 6.12 12.14 6.38 12.43a1 1 0 0 0 1.49 0C12.88 21.14 19 14.25 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 14.5 9 2.5 2.5 0 0 1 12 11.5Z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 6.12 12.14 6.38 12.43a1 1 0 0 0 1.49 0C12.88 21.14 19 14.25 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 14.5 9 2.5 2.5 0 0 1 12 11.5Z"/></svg>
 
                 </span>
 
