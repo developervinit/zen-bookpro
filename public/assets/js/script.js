@@ -190,7 +190,21 @@
 
 
 
-        function renderProducts(productList, products) {
+        function renderProducts(productList, products, selectedDateKey) {
+
+            if (!selectedDateKey) {
+
+                var fallbackDate = new Date();
+
+                var y = fallbackDate.getFullYear();
+
+                var m = String(fallbackDate.getMonth() + 1).padStart(2, "0");
+
+                var d = String(fallbackDate.getDate()).padStart(2, "0");
+
+                selectedDateKey = y + "-" + m + "-" + d;
+
+            }
 
             if (!productList) {
 
@@ -508,7 +522,45 @@
 
 
 
-                    var isEnded = product.event_status === 'ended';
+                    var classHasEnded = false;
+
+                    if (product.mode === "event" && parsed && selectedDateKey) {
+
+                        var dateParts = selectedDateKey.split("-");
+
+                        if (dateParts.length === 3) {
+
+                            var year = parseInt(dateParts[0], 10);
+
+                            var month = parseInt(dateParts[1], 10) - 1;
+
+                            var day = parseInt(dateParts[2], 10);
+
+                            var eventStartDate = new Date(year, month, day, h, m, 0, 0);
+
+                            var now = new Date();
+
+                            classHasEnded = now.getTime() >= eventStartDate.getTime();
+
+                            console.log("Zen-BookPro Real-Time Check:", {
+
+                                product: product.name,
+
+                                eventStart: eventStartDate.toLocaleString(),
+
+                                now: now.toLocaleString(),
+
+                                classHasEnded: classHasEnded
+
+                            });
+
+                        }
+
+                    }
+
+
+
+                    var isEnded = product.event_status === 'ended' || classHasEnded;
 
                     var isWaitlist = !isEnded && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
 
@@ -664,7 +716,7 @@
 
 
 
-                    renderProducts(productList, products);
+                    renderProducts(productList, products, dateKey);
 
                     wrapper.dispatchEvent(
 
