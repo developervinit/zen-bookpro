@@ -153,12 +153,20 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <?php
 
                     $active_class = ( $selected_experience_id === (int) $term->term_id ) ? ' class="is-active"' : '';
+                    $image_id     = get_term_meta( $term->term_id, '_zen_experience_category_image_id', true );
+                    $image_url    = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
 
                     ?>
 
                     <button type="button"<?php echo $active_class; ?> data-term-id="<?php echo esc_attr( $term->term_id ); ?>">
 
-                        <?php echo esc_html( $term->name ); ?>
+                        <?php if ( $image_url ) : ?>
+
+                            <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $term->name ); ?>" class="zbp-category-icon" />
+
+                        <?php endif; ?>
+
+                        <span class="zbp-category-name"><?php echo esc_html( $term->name ); ?></span>
 
                     </button>
 
