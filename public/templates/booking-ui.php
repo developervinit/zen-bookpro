@@ -410,23 +410,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 $is_slot_based = ! empty( $product['is_slot_based'] );
 
-                $popup_image   = '';
-
-                if ( ! empty( $product['gallery'] ) && is_array( $product['gallery'] ) ) {
-
-                    $first_gallery_item = reset( $product['gallery'] );
-
-                    if ( is_string( $first_gallery_item ) ) {
-
-                        $popup_image = $first_gallery_item;
-
-                    } elseif ( is_array( $first_gallery_item ) ) {
-
-                        $popup_image = ! empty( $first_gallery_item['url'] ) ? $first_gallery_item['url'] : ( ! empty( $first_gallery_item['src'] ) ? $first_gallery_item['src'] : '' );
-
-                    }
-
-                }
+                $popup_image   = ! empty( $product['product_featured_image'] ) ? $product['product_featured_image'] : '';
 
                 $product_image = ! empty( $product['image'] ) ? $product['image'] : '';
 

@@ -207,6 +207,11 @@ class ZBP_Product_Service {
                     $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
                 }
             }
+            $prod_image_id  = $product->get_image_id();
+            $prod_image_url = $prod_image_id ? wp_get_attachment_image_url( $prod_image_id, 'large' ) : '';
+            if ( ! $prod_image_url ) {
+                $prod_image_url = get_the_post_thumbnail_url( $product_id, 'large' );
+            }
             $gallery_urls = $this->get_product_gallery_urls( $product );
             
             $all_meta = get_post_meta( $product_id );
@@ -347,6 +352,7 @@ class ZBP_Product_Service {
                 'location'          => sanitize_text_field( (string) get_post_meta( $product_id, '_zbp_location', true ) ),
                 'mode'              => $mode,
                 'image'             => $image_url ? $image_url : '',
+                'product_featured_image' => $prod_image_url ? $prod_image_url : '',
                 'gallery'           => $gallery_urls,
                 'price_html'        => $product->get_price_html(),
                 'duration'          => $this->get_duration_label( $booking_data ),

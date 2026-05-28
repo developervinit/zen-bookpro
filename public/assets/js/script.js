@@ -132,39 +132,7 @@
 
             }
 
-
-
-            if (Array.isArray(product.gallery) && product.gallery.length > 0) {
-
-                var first = product.gallery[0];
-
-                if (typeof first === "string") {
-
-                    return first;
-
-                }
-
-                if (first && typeof first === "object") {
-
-                    return first.url || first.src || first.image || "";
-
-                }
-
-            }
-
-
-
-            if (typeof product.gallery === "string" && product.gallery.trim() !== "") {
-
-                var firstPath = product.gallery.split(",")[0];
-
-                return firstPath ? firstPath.trim() : "";
-
-            }
-
-
-
-            return "";
+            return product.product_featured_image || "";
 
         }
 
