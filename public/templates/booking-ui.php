@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 
 }
-
+var_dump($products);
 ?>
 
 <div class="zbp-booking-ui" data-product-id="<?php echo esc_attr( $product_id ); ?>">
