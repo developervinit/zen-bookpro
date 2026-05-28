@@ -152,6 +152,14 @@
 
         function renderEmptyState(productList) {
 
+            if (!productList) {
+
+                return;
+
+            }
+
+            productList.setAttribute("aria-busy", "false");
+
             productList.innerHTML =
 
                 '<article class="zbp-product-card zbp-empty-state">' +
@@ -165,6 +173,28 @@
                 "</div>" +
 
                 "</article>";
+
+        }
+
+        function renderAjaxLoader(productList) {
+
+            if (!productList) {
+
+                return;
+
+            }
+
+            productList.setAttribute("aria-busy", "true");
+
+            productList.innerHTML =
+
+                '<div class="zbp-ajax-loader-card" role="status" aria-live="polite">' +
+
+                '<span class="zbp-zencoin-loader" aria-hidden="true"><span>Z</span></span>' +
+
+                '<span class="zbp-loader-text">Loading availability</span>' +
+
+                '</div>';
 
         }
 
@@ -191,6 +221,8 @@
                 return;
 
             }
+
+            productList.setAttribute("aria-busy", "false");
 
 
 
@@ -628,6 +660,14 @@
 
                 .join("");
 
+            if (!html.trim()) {
+
+                renderEmptyState(productList);
+
+                return;
+
+            }
+
 
 
             productList.innerHTML = html;
@@ -651,6 +691,14 @@
                 return;
 
             }
+
+            if (wrapper) {
+
+                wrapper.classList.add("is-ajax-loading");
+
+            }
+
+            renderAjaxLoader(productList);
 
 
 
@@ -727,6 +775,22 @@
                 .catch(function (error) {
 
                     renderEmptyState(productList);
+
+                })
+
+                .then(function () {
+
+                    if (wrapper) {
+
+                        wrapper.classList.remove("is-ajax-loading");
+
+                    }
+
+                    if (productList) {
+
+                        productList.setAttribute("aria-busy", "false");
+
+                    }
 
                 });
 
