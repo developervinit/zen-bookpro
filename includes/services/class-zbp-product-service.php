@@ -359,7 +359,7 @@ class ZBP_Product_Service {
                 'zen_duration'      => $zen_duration,
                 'booking_duration_minutes' => $booking_duration_minutes,
                 'experience_category' => $experience_category,
-                'zen_coins'         => $product->get_meta( '_zen_coins' ),
+                'zen_coins'         => $product->get_meta( '_cbb_booking_coin_cost' ),
                 'zen_instructor'    => $product->get_meta( '_zen_instructor_name' ),
                 'availability_data' => isset( $booking_data['availability'] ) ? $booking_data['availability'] : array(),
                 'has_booking_data'  => ! empty( $booking_data ),
