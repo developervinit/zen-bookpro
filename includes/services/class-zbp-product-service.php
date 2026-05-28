@@ -190,6 +190,10 @@ class ZBP_Product_Service {
             $slots        = isset( $slot_result['slots'] ) ? $slot_result['slots'] : array();
             $slot_debug   = isset( $slot_result['debug'] ) ? $slot_result['debug'] : '';
 
+            if ( 'free_flow' === $mode && empty( $slots ) ) {
+                continue;
+            }
+
             $image_url = '';
             $terms = get_the_terms( $product_id, 'experience_category' );
             if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {

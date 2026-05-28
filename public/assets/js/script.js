@@ -258,6 +258,12 @@
 
                     }
 
+                    if (isSlotBased && slots.length === 0) {
+
+                        return "";
+
+                    }
+
 
 
                     var instructorHtml = product.zen_instructor
