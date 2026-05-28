@@ -190,10 +190,22 @@ class ZBP_Product_Service {
             $slots        = isset( $slot_result['slots'] ) ? $slot_result['slots'] : array();
             $slot_debug   = isset( $slot_result['debug'] ) ? $slot_result['debug'] : '';
 
-            $image_id  = $product->get_image_id();
-            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
+            $image_url = '';
+            $terms = get_the_terms( $product_id, 'experience_category' );
+            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+                $term = reset( $terms );
+                $term_image_id = get_term_meta( $term->term_id, '_zen_experience_category_image_id', true );
+                if ( $term_image_id ) {
+                    $image_url = wp_get_attachment_image_url( $term_image_id, 'thumbnail' );
+                }
+            }
+
             if ( ! $image_url ) {
-                $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
+                $image_id  = $product->get_image_id();
+                $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
+                if ( ! $image_url ) {
+                    $image_url = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
+                }
             }
             $gallery_urls = $this->get_product_gallery_urls( $product );
             
