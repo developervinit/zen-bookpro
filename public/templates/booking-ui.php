@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 
 }
-var_dump($products);
+
 ?>
 
 <div class="zbp-booking-ui" data-product-id="<?php echo esc_attr( $product_id ); ?>">
@@ -220,7 +220,7 @@ var_dump($products);
 
             <img class="zbp-join-media" src="" alt="" hidden />
 
-            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong><?php echo esc_html( $product->get_meta( '_cbb_booking_coin_cost' ) ); ?></strong></span>
+            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong></strong></span>
 
         </div>
 
