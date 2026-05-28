@@ -220,7 +220,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
             <img class="zbp-join-media" src="" alt="" hidden />
 
-            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong>0</strong></span>
+            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong><?php echo esc_html( $product->get_meta( '_cbb_booking_coin_cost' ) ); ?></strong></span>
 
         </div>
 
