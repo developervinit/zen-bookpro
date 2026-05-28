@@ -113,6 +113,8 @@ class ZBP_Shortcode {
 
         $response_products = array_map(
             function ( $product ) {
+                $booking_coin_cost = isset( $product['booking_coin_cost'] ) ? sanitize_text_field( $product['booking_coin_cost'] ) : ( isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '' );
+
                 return array(
                     'id'              => isset( $product['id'] ) ? absint( $product['id'] ) : 0,
                     'name'            => isset( $product['title'] ) ? sanitize_text_field( $product['title'] ) : '',
@@ -124,7 +126,8 @@ class ZBP_Shortcode {
                     'zen_duration'    => isset( $product['zen_duration'] ) ? sanitize_text_field( $product['zen_duration'] ) : '',
                     'booking_duration_minutes' => isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0,
                     'experience_category' => isset( $product['experience_category'] ) ? sanitize_text_field( $product['experience_category'] ) : '',
-                    'zen_coins'       => isset( $product['zen_coins'] ) ? sanitize_text_field( $product['zen_coins'] ) : '',
+                    'booking_coin_cost' => $booking_coin_cost,
+                    'zen_coins'       => $booking_coin_cost,
                     'image'           => isset( $product['image'] ) ? esc_url_raw( $product['image'] ) : '',
                     'product_featured_image' => isset( $product['product_featured_image'] ) ? esc_url_raw( $product['product_featured_image'] ) : '',
                     'gallery'         => isset( $product['gallery'] ) ? $product['gallery'] : array(),

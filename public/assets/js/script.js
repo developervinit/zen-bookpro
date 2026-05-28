@@ -136,6 +136,18 @@
 
         }
 
+        function getBookingCoinCost(product) {
+
+            if (!product || typeof product !== "object") {
+
+                return "0";
+
+            }
+
+            return product.booking_coin_cost || product.zen_coins || "0";
+
+        }
+
 
 
         function renderEmptyState(productList) {
@@ -228,7 +240,9 @@
 
                     var durationText = bookingDurationMinutes > 0 ? (bookingDurationMinutes + " min") : "Duration N/A";
 
-                    var zcoins = escapeHtml(product.zen_coins || "0");
+                    var bookingCoinCost = getBookingCoinCost(product);
+
+                    var zcoins = escapeHtml(bookingCoinCost);
 
                     var duration = '<svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><path d="M12 7v5h5" stroke="var(--zbp-card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg> (' + durationText + ')';
 
@@ -342,7 +356,7 @@
 
                             "</div>" +
 
-                            '<button class="zbp-join-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
+                            '<button class="zbp-join-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(bookingCoinCost) + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
 
                             "</div>" +
 
@@ -594,7 +608,7 @@
 
                         "</div>" +
 
-'<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(product.zen_coins || "0") + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '" data-product-formatted-slot="' + escapeHtml(formattedTimeBlock) + '" data-product-volume="' + escapeHtml(bookedSpots + "/" + maxSpots) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+'<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(bookingCoinCost) + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '" data-product-formatted-slot="' + escapeHtml(formattedTimeBlock) + '" data-product-volume="' + escapeHtml(bookedSpots + "/" + maxSpots) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
 
                         "</div>" +
 

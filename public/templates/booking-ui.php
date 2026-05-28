@@ -210,6 +210,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     </div>
 
+    <?php
+    $initial_booking_coin_cost = '';
+    if ( ! empty( $products ) && isset( $products[0] ) ) {
+        $initial_booking_coin_cost = ! empty( $products[0]['booking_coin_cost'] ) ? $products[0]['booking_coin_cost'] : '';
+        $initial_booking_coin_cost = '' !== $initial_booking_coin_cost ? $initial_booking_coin_cost : ( ! empty( $products[0]['zen_coins'] ) ? $products[0]['zen_coins'] : '' );
+    }
+    ?>
+
     <div class="zbp-join-overlay" hidden></div>
 
     <div class="zbp-join-modal" hidden role="dialog" aria-modal="true" aria-labelledby="zbp-join-modal-title">
@@ -220,7 +228,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
             <img class="zbp-join-media" src="" alt="" hidden />
 
-            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong></strong></span>
+            <span class="zbp-join-zencoins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <strong><?php echo esc_html( $initial_booking_coin_cost ); ?></strong></span>
 
         </div>
 
@@ -440,7 +448,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                             <h4><?php echo esc_html( $product['title'] ); ?></h4>
 
-                            <div class="zbp-coins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <span><?php echo esc_html( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?></span></div>
+                            <?php
+                            $booking_coin_cost = ! empty( $product['booking_coin_cost'] ) ? $product['booking_coin_cost'] : '';
+                            $booking_coin_cost = '' !== $booking_coin_cost ? $booking_coin_cost : ( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' );
+                            ?>
+
+                            <div class="zbp-coins"><?php esc_html_e( 'ZENCOINS:', 'zen-bookpro' ); ?> <span><?php echo esc_html( $booking_coin_cost ); ?></span></div>
 
                         </div>
 
@@ -494,7 +507,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                                     data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
 
-                                    data-product-zencoins="<?php echo esc_attr( ! empty( $product['zen_coins'] ) ? $product['zen_coins'] : '0' ); ?>"
+                                    data-product-zencoins="<?php echo esc_attr( $booking_coin_cost ); ?>"
 
                                     data-product-image="<?php echo esc_url( $popup_image ); ?>"
 
