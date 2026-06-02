@@ -219,14 +219,18 @@ class ZBP_Slot_Service {
     }
 
     /**
-     * Reuse native Woo endpoint by POSTing action=wc_bookings_get_blocks.
+     * Reuse Woo Bookings slot rendering without making a nested HTTP request.
      *
      * @param string $encoded_form Serialized booking form payload.
      *
      * @return string
      */
     private function request_native_woo_slots_html( $encoded_form ) {
-        error_log( "ZBP Debug: Requesting slots with payload: " . $encoded_form );
+        $direct_html = $this->render_native_woo_slots_html( $encoded_form );
+        if ( null !== $direct_html ) {
+            return $direct_html;
+        }
+
         $response = wp_remote_post(
             admin_url( 'admin-ajax.php' ),
             array(
@@ -239,17 +243,99 @@ class ZBP_Slot_Service {
         );
 
         if ( is_wp_error( $response ) ) {
-            error_log( "ZBP Debug: Slot request failed: " . $response->get_error_message() );
             return '';
         }
 
         $body = wp_remote_retrieve_body( $response );
-        error_log( "ZBP Debug: Raw slot HTML response length: " . strlen( $body ) );
-        if ( strlen( $body ) < 500 ) {
-            error_log( "ZBP Debug: Raw slot HTML response: " . $body );
+        return is_string( $body ) ? $body : '';
+    }
+
+    /**
+     * Render the same slot HTML as WC_Bookings_Ajax::get_time_blocks_for_date().
+     *
+     * @param string $encoded_form Serialized booking form payload.
+     *
+     * @return string|null HTML string, or null when Woo internals are unavailable.
+     */
+    private function render_native_woo_slots_html( $encoded_form ) {
+        if ( ! class_exists( 'WC_Booking_Form' ) || ! function_exists( 'wc_get_product' ) || ! function_exists( 'get_wc_product_booking' ) ) {
+            return null;
         }
 
-        return is_string( $body ) ? $body : '';
+        $posted = array();
+        parse_str( (string) $encoded_form, $posted );
+
+        if ( empty( $posted['add-to-cart'] ) ) {
+            return '';
+        }
+
+        $booking_id = absint( $posted['add-to-cart'] );
+        $product    = get_wc_product_booking( wc_get_product( $booking_id ) );
+        if ( ! $product ) {
+            return '';
+        }
+
+        $timestamp = 0;
+        if ( ! empty( $posted['wc_bookings_field_start_date_year'] ) && ! empty( $posted['wc_bookings_field_start_date_month'] ) && ! empty( $posted['wc_bookings_field_start_date_day'] ) ) {
+            $year      = max( date( 'Y' ), absint( $posted['wc_bookings_field_start_date_year'] ) );
+            $month     = absint( $posted['wc_bookings_field_start_date_month'] );
+            $day       = absint( $posted['wc_bookings_field_start_date_day'] );
+            $timestamp = strtotime( "{$year}-{$month}-{$day}" );
+        }
+
+        if ( empty( $timestamp ) ) {
+            return '<li>' . esc_html__( 'Please enter a valid date.', 'woocommerce-bookings' ) . '</li>';
+        }
+
+        if ( ! empty( $posted['wc_bookings_field_duration'] ) ) {
+            $interval = (int) $posted['wc_bookings_field_duration'] * $product->get_duration();
+        } else {
+            $interval = $product->get_duration();
+        }
+
+        $base_interval = $product->get_duration();
+
+        if ( 'hour' === $product->get_duration_unit() ) {
+            $interval      *= 60;
+            $base_interval *= 60;
+        }
+
+        $first_block_time = $product->get_first_block_time();
+        $from             = strtotime( $first_block_time ? $first_block_time : 'midnight', $timestamp );
+        $standard_from    = $from;
+
+        if ( isset( $posted['get_prev_day'] ) ) {
+            $from = strtotime( '- 1 day', $from );
+        }
+
+        $to = strtotime( '+ 1 day', $standard_from ) + $interval;
+        if ( isset( $posted['get_next_day'] ) ) {
+            $to = strtotime( '+ 1 day', $to );
+        }
+
+        $to = strtotime( 'midnight', $to ) - 1;
+
+        $resource_id_to_check = ! empty( $posted['wc_bookings_field_resource'] ) ? (int) $posted['wc_bookings_field_resource'] : 0;
+        $resource             = $product->get_resource( absint( $resource_id_to_check ) );
+        $resources            = $product->get_resources();
+
+        if ( $resource_id_to_check && $resource ) {
+            $resource_id_to_check = $resource->ID;
+        } elseif ( $product->has_resources() && $resources && 1 === count( $resources ) ) {
+            $resource_id_to_check = current( $resources )->ID;
+        } else {
+            $resource_id_to_check = 0;
+        }
+
+        $booking_form = new WC_Booking_Form( $product );
+        $blocks       = $product->get_blocks_in_range( $from, $to, array( $interval, $base_interval ), $resource_id_to_check );
+        $block_html   = $booking_form->get_time_slots_html( $blocks, array( $interval, $base_interval ), $resource_id_to_check, $from, $to );
+
+        if ( empty( $block_html ) ) {
+            $block_html = '<li>' . esc_html__( 'No blocks available.', 'woocommerce-bookings' ) . '</li>';
+        }
+
+        return $block_html;
     }
 
     /**

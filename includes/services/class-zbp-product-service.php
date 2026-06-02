@@ -46,6 +46,7 @@ class ZBP_Product_Service {
         $all_products = wc_get_products(
             array(
                 'status' => 'publish',
+                'type'   => 'booking',
                 'limit'  => -1,
                 'return' => 'objects',
             )
@@ -114,6 +115,7 @@ class ZBP_Product_Service {
         $all_products = wc_get_products(
             array(
                 'status' => 'publish',
+                'type'   => 'booking',
                 'limit'  => -1,
                 'return' => 'objects',
             )
