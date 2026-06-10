@@ -431,16 +431,35 @@ class ZBP_Slot_Service {
             return array();
         }
 
-        // Parse full ISO-8601 value from Woo (including timezone offset).
-        $timestamp = strtotime( $value );
-        if ( false === $timestamp ) {
-            $timestamp = strtotime( $target_date . ' ' . $label );
+        // Extract start time part from label (e.g. "17:00" from "17:00 - 18:00")
+        $start_time = $label;
+        $parts = preg_split( '/\s*[-\x{2013}]\s*/u', $label );
+        if ( isset( $parts[0] ) && '' !== trim( $parts[0] ) ) {
+            $start_time = trim( $parts[0] );
         }
-        if ( false === $timestamp ) {
+
+        // Try to parse the time in the WordPress local timezone.
+        $timestamp = 0;
+        try {
+            $timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+            $date = new DateTime( $target_date . ' ' . $start_time, $timezone );
+            $timestamp = $date->getTimestamp();
+        } catch ( Exception $e ) {
             $timestamp = 0;
         }
 
-        $status = ( $timestamp > 0 && $timestamp < current_time( 'timestamp' ) ) ? 'expired' : 'available';
+        if ( 0 === $timestamp ) {
+            // Parse full ISO-8601 value from Woo (including timezone offset).
+            $timestamp = strtotime( $value );
+            if ( false === $timestamp ) {
+                $timestamp = strtotime( $target_date . ' ' . $label );
+            }
+            if ( false === $timestamp ) {
+                $timestamp = 0;
+            }
+        }
+
+        $status = ( $timestamp > 0 && $timestamp < time() ) ? 'expired' : 'available';
 
         return array(
             'start'     => $timestamp > 0 ? wp_date( 'Y-m-d H:i:s', $timestamp ) : '',

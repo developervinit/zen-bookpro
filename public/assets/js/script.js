@@ -120,10 +120,12 @@
             if (!label) return false;
 
             var trimmed = label.trim();
+            var parts = trimmed.split(/\s*[-\u2013]\s*/);
+            var startTimePart = parts[0] ? parts[0].trim() : trimmed;
             var h = 0, m = 0;
             var parsed = false;
 
-            var match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+            var match12 = startTimePart.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
             if (match12) {
                 h = parseInt(match12[1], 10);
                 m = parseInt(match12[2], 10);
@@ -132,7 +134,7 @@
                 if (ampm === "am" && h === 12) h = 0;
                 parsed = true;
             } else {
-                var match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+                var match24 = startTimePart.match(/^(\d{1,2}):(\d{2})$/);
                 if (match24) {
                     h = parseInt(match24[1], 10);
                     m = parseInt(match24[2], 10);
