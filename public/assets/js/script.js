@@ -269,6 +269,28 @@
 
             }
 
+            var productDateObj = null;
+
+            if (selectedDateKey) {
+
+                var parts = selectedDateKey.split("-");
+
+                if (parts.length === 3) {
+
+                    productDateObj = new Date(
+
+                        parseInt(parts[0], 10),
+
+                        parseInt(parts[1], 10) - 1,
+
+                        parseInt(parts[2], 10)
+
+                    );
+
+                }
+
+            }
+
             if (!productList) {
 
                 return;
@@ -371,7 +393,7 @@
 
                                     var val = (slot && slot.value) ? slot.value : label;
 
-                                    var isPast = isSlotPast(slot, selectedDate);
+                                    var isPast = isSlotPast(slot, productDateObj);
 
                                     var pastClass = isPast ? " is-past" : "";
 
