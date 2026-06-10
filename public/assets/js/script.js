@@ -96,6 +96,59 @@
             return formatSlotTimeRange(label, durationMinutes);
         }
 
+        function isSlotPast(slot, dateObj) {
+            if (!slot) return false;
+
+            if (slot && typeof slot === "object") {
+                if (slot.status === "expired") {
+                    return true;
+                }
+                if (slot.timestamp) {
+                    var nowTs = Math.floor(Date.now() / 1000);
+                    if (slot.timestamp < nowTs) {
+                        return true;
+                    }
+                }
+            }
+
+            var label = "";
+            if (typeof slot === "string") {
+                label = slot;
+            } else if (slot && slot.label) {
+                label = slot.label;
+            }
+            if (!label) return false;
+
+            var trimmed = label.trim();
+            var h = 0, m = 0;
+            var parsed = false;
+
+            var match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+            if (match12) {
+                h = parseInt(match12[1], 10);
+                m = parseInt(match12[2], 10);
+                var ampm = match12[3].toLowerCase();
+                if (ampm === "pm" && h < 12) h += 12;
+                if (ampm === "am" && h === 12) h = 0;
+                parsed = true;
+            } else {
+                var match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+                if (match24) {
+                    h = parseInt(match24[1], 10);
+                    m = parseInt(match24[2], 10);
+                    parsed = true;
+                }
+            }
+
+            if (parsed && dateObj) {
+                var slotDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), h, m, 0, 0);
+                var now = new Date();
+                return now.getTime() >= slotDate.getTime();
+            }
+
+            return false;
+        }
+
 
 
         function toSafeInt(value, fallback) {
@@ -318,7 +371,11 @@
 
                                     var val = (slot && slot.value) ? slot.value : label;
 
-                                    return '<button type="button" class="zbp-slot-chip" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                                    var isPast = isSlotPast(slot, selectedDate);
+
+                                    var pastClass = isPast ? " is-past" : "";
+
+                                    return '<button type="button" class="zbp-slot-chip' + pastClass + '" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
 
                                 })
 
@@ -988,7 +1045,11 @@
 
                     var isSelected = (preselectedSlotValue && val === preselectedSlotValue) ? " is-selected" : "";
 
-                    return '<button type="button" class="zbp-slot-chip zbp-join-slot-chip' + isSelected + '" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                    var isPast = isSlotPast(slot, selectedDate);
+
+                    var pastClass = isPast ? " is-past" : "";
+
+                    return '<button type="button" class="zbp-slot-chip zbp-join-slot-chip' + isSelected + pastClass + '" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
 
                 }).join("");
 
@@ -1226,6 +1287,34 @@
 
                         renderJoinSlots(productSlots, preselectedSlotValue, durationMins);
 
+                        if (joinActionSubmit) {
+                            var selectedSlotObj = null;
+                            if (preselectedSlotValue) {
+                                selectedSlotObj = productSlots.find(function (s) {
+                                    var val = (s && s.value) ? s.value : s;
+                                    return String(val) === String(preselectedSlotValue);
+                                });
+                            }
+                            if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                                joinActionSubmit.textContent = "Class Ended";
+                                joinActionSubmit.classList.add("is-ended");
+                                joinActionSubmit.disabled = true;
+                                joinActionSubmit.setAttribute("aria-disabled", "true");
+                            } else {
+                                joinActionSubmit.textContent = "Join";
+                                joinActionSubmit.classList.remove("is-ended");
+                                joinActionSubmit.disabled = false;
+                                joinActionSubmit.removeAttribute("aria-disabled");
+                            }
+                        }
+
+                    } else {
+                        if (joinActionSubmit) {
+                            joinActionSubmit.textContent = "Join";
+                            joinActionSubmit.classList.remove("is-ended");
+                            joinActionSubmit.disabled = false;
+                            joinActionSubmit.removeAttribute("aria-disabled");
+                        }
                     }
 
                 }
@@ -1627,6 +1716,33 @@
 
                         }
 
+                        // Update join button on product card
+                        var cardContent = chip.closest(".zbp-card-content");
+                        var joinBtn = cardContent ? cardContent.querySelector(".zbp-join-btn") : null;
+                        if (joinBtn) {
+                            var slotsRaw = joinBtn.getAttribute("data-product-slots") || "[]";
+                            var slots = [];
+                            try {
+                                slots = JSON.parse(slotsRaw);
+                            } catch (e) {}
+                            var selectedVal = chip.getAttribute("data-value");
+                            var selectedSlotObj = slots.find(function (s) {
+                                var val = (s && s.value) ? s.value : s;
+                                return String(val) === String(selectedVal);
+                            });
+                            if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                                joinBtn.textContent = "Class Ended";
+                                joinBtn.classList.add("is-ended");
+                                joinBtn.disabled = true;
+                                joinBtn.setAttribute("aria-disabled", "true");
+                            } else {
+                                joinBtn.textContent = "Join";
+                                joinBtn.classList.remove("is-ended");
+                                joinBtn.disabled = false;
+                                joinBtn.removeAttribute("aria-disabled");
+                            }
+                        }
+
                         return;
 
                     }
@@ -1789,6 +1905,26 @@
 
                         joinSlotMenu.hidden = true;
 
+                    }
+
+                    // Update modal submit button
+                    if (joinActionSubmit) {
+                        var selectedVal = chip.getAttribute("data-value");
+                        var selectedSlotObj = joinModalProductSlots.find(function (s) {
+                            var val = (s && s.value) ? s.value : s;
+                            return String(val) === String(selectedVal);
+                        });
+                        if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                            joinActionSubmit.textContent = "Class Ended";
+                            joinActionSubmit.classList.add("is-ended");
+                            joinActionSubmit.disabled = true;
+                            joinActionSubmit.setAttribute("aria-disabled", "true");
+                        } else {
+                            joinActionSubmit.textContent = "Join";
+                            joinActionSubmit.classList.remove("is-ended");
+                            joinActionSubmit.disabled = false;
+                            joinActionSubmit.removeAttribute("aria-disabled");
+                        }
                     }
 
                 });

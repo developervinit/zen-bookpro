@@ -994,3 +994,25 @@
     color: var(--zbp-muted);
     margin: 0;
 }
+
+/* Past/Expired Booking Slots styling */
+.zbp-slot-chips button.is-past {
+    opacity: 0.45;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+/* Modal Submit Button Expired state */
+.zbp-join-action-submit.is-ended,
+.zbp-join-action-submit[disabled] {
+    background: #c5c5c5;
+    border-color: #c5c5c5;
+    color: #4a4a4a;
+    cursor: default;
+    opacity: 0.8;
+}
+
+.zbp-join-action-submit.is-ended:hover,
+.zbp-join-action-submit[disabled]:hover {
+    opacity: 0.8;
+}
