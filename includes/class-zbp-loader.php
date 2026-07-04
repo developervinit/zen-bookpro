@@ -15,6 +15,9 @@ class ZBP_Loader {
         $shortcode = new ZBP_Shortcode( $product_service );
         $shortcode->register();
 
+        $email_service = new ZBP_Email_Service();
+        $email_service->register();
+
         if ( is_admin() ) {
             $admin = new ZBP_Admin( $product_service );
             $admin->register();
