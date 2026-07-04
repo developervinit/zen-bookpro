@@ -1113,6 +1113,36 @@
 
             }
 
+            function updateJoinModalZencoins(value) {
+                var normalizedValue = String(value || "0");
+                var zencoinWrap = wrapper.querySelector(".zbp-join-zencoins");
+                var valueNode;
+                var coinNode;
+
+                if (!zencoinWrap) {
+                    return;
+                }
+
+                zencoinWrap.setAttribute("data-zbp-zencoin-value", normalizedValue);
+
+                valueNode = zencoinWrap.querySelector(".zen-coin-global__value, strong");
+
+                if (valueNode) {
+                    valueNode.textContent = normalizedValue;
+                }
+
+                coinNode = zencoinWrap.querySelector(".zen-coin-global");
+
+                if (coinNode) {
+                    coinNode.setAttribute("data-zencoin-value", normalizedValue);
+                    coinNode.setAttribute("aria-label", normalizedValue + " Zencoins");
+                }
+
+                if (joinModalZencoin && joinModalZencoin !== valueNode) {
+                    joinModalZencoin.textContent = normalizedValue;
+                }
+            }
+
 
 
             function openJoinModal(joinBtn) {
@@ -1189,11 +1219,7 @@
 
                 }
 
-                if (joinModalZencoin) {
-
-                    joinModalZencoin.textContent = productCoins || "0";
-
-                }
+                updateJoinModalZencoins(productCoins);
 
                 if (joinModalImage) {
 
