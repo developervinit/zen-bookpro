@@ -64,6 +64,34 @@ class ZBP_Product_Mode {
             )
         );
 
+        woocommerce_wp_checkbox(
+            array(
+                'id'            => '_zbp_cancelled',
+                'wrapper_class' => 'show_if_booking show_if_zbp_event',
+                'label'         => __( 'Cancel Product', 'zen-bookpro' ),
+                'description'   => __( 'Cancel this booking event.', 'zen-bookpro' ),
+                'value'         => $product_id > 0 ? get_post_meta( $product_id, '_zbp_cancelled', true ) : 'no',
+                'cbvalue'       => 'yes',
+            )
+        );
+
+        ?>
+        <script type="text/javascript">
+        jQuery(function($){
+            function toggleZbpEventFields() {
+                var mode = $('#_zbp_product_mode').val();
+                if (mode === 'event') {
+                    $('.show_if_zbp_event').show();
+                } else {
+                    $('.show_if_zbp_event').hide();
+                }
+            }
+            $('#_zbp_product_mode').on('change', toggleZbpEventFields);
+            toggleZbpEventFields();
+        });
+        </script>
+        <?php
+
         woocommerce_wp_textarea_input(
             array(
                 'id'          => self::META_KEY_CANCELLATION_POLICY,
@@ -109,6 +137,16 @@ class ZBP_Product_Mode {
 
         $product->update_meta_data( self::META_KEY_CANCELLATION_POLICY, sanitize_text_field( $raw_cancellation_policy ) );
         $product->update_meta_data( self::META_KEY_LOCATION, sanitize_text_field( $raw_location ) );
+
+        $old_cancelled = $product->get_meta( '_zbp_cancelled' );
+        $new_cancelled = ( 'event' === $mode && isset( $_POST['_zbp_cancelled'] ) ) ? 'yes' : 'no';
+
+        if ( 'yes' === $new_cancelled && 'yes' !== $old_cancelled ) {
+            $cancellation_service = new ZBP_Cancellation_Service();
+            $cancellation_service->cancel_product( $product->get_id() );
+        } else {
+            $product->update_meta_data( '_zbp_cancelled', $new_cancelled );
+        }
 
 
     }

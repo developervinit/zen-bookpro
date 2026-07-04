@@ -30,7 +30,6 @@ class ZBP_Shortcode {
         add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
         add_action( 'wp_ajax_zbp_get_slots', array( $this, 'ajax_get_slots' ) );
         add_action( 'wp_ajax_nopriv_zbp_get_slots', array( $this, 'ajax_get_slots' ) );
-        add_action( 'wp_ajax_zbp_admin_cancel_event', array( $this, 'ajax_admin_cancel_event' ) );
     }
 
     /**
@@ -68,7 +67,6 @@ class ZBP_Shortcode {
             array(
                 'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
                 'nonce'       => wp_create_nonce( 'zbp_get_slots' ),
-                'cancelNonce' => wp_create_nonce( 'zbp_admin_cancel_event' ),
                 'isAdmin'     => current_user_can( 'manage_options' ),
                 'cartUrl'     => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' ),
             )
@@ -200,71 +198,5 @@ class ZBP_Shortcode {
         return ob_get_clean();
     }
 
-    /**
-     * Handle admin event cancellation AJAX request.
-     *
-     * @return void
-     */
-    public function ajax_admin_cancel_event() {
-        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-
-        if ( ! wp_verify_nonce( $nonce, 'zbp_admin_cancel_event' ) ) {
-            wp_send_json_error(
-                array(
-                    'message' => __( 'Invalid request nonce.', 'zen-bookpro' ),
-                ),
-                403
-            );
-        }
-
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error(
-                array(
-                    'message' => __( 'Access denied. Administrator privileges required.', 'zen-bookpro' ),
-                ),
-                403
-            );
-        }
-
-        $product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
-        $raw_date   = isset( $_POST['date'] ) ? wp_unslash( $_POST['date'] ) : '';
-        $date       = sanitize_text_field( (string) $raw_date );
-
-        if ( ! $product_id ) {
-            wp_send_json_error(
-                array(
-                    'message' => __( 'Product ID is required.', 'zen-bookpro' ),
-                ),
-                400
-            );
-        }
-
-        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
-            wp_send_json_error(
-                array(
-                    'message' => __( 'Invalid date format. Use YYYY-MM-DD.', 'zen-bookpro' ),
-                ),
-                400
-            );
-        }
-
-        $cancellation_service = new ZBP_Cancellation_Service();
-        $result = $cancellation_service->cancel_event( $product_id, $date );
-
-        if ( is_wp_error( $result ) ) {
-            wp_send_json_error(
-                array(
-                    'message' => $result->get_error_message(),
-                ),
-                400
-            );
-        }
-
-        wp_send_json_success(
-            array(
-                'message' => __( 'Event and all associated bookings have been successfully cancelled.', 'zen-bookpro' ),
-            )
-        );
-    }
 }
 

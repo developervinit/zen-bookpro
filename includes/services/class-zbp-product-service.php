@@ -333,7 +333,9 @@ class ZBP_Product_Service {
             if ( 'event' === $mode ) {
                 $cancelled_dates = $product->get_meta( '_zbp_cancelled_dates' );
                 $is_cancelled    = false;
-                if ( is_array( $cancelled_dates ) && in_array( $selected_date, $cancelled_dates, true ) ) {
+                if ( 'yes' === $product->get_meta( '_zbp_cancelled' ) ) {
+                    $is_cancelled = true;
+                } elseif ( is_array( $cancelled_dates ) && in_array( $selected_date, $cancelled_dates, true ) ) {
                     $is_cancelled = true;
                 }
 
