@@ -331,19 +331,29 @@ class ZBP_Product_Service {
 
             $event_status = 'join';
             if ( 'event' === $mode ) {
-                $event_has_ended  = false;
-                $duration_seconds = $this->get_duration_seconds( $booking_data, $zen_duration, $woo_duration_value, $woo_duration_unit );
-                $slot_end_timestamp = $this->resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds );
-                $now_timestamp = time();
-
-                if ( $slot_end_timestamp > 0 ) {
-                    $event_has_ended = $now_timestamp >= $slot_end_timestamp;
+                $cancelled_dates = $product->get_meta( '_zbp_cancelled_dates' );
+                $is_cancelled    = false;
+                if ( is_array( $cancelled_dates ) && in_array( $selected_date, $cancelled_dates, true ) ) {
+                    $is_cancelled = true;
                 }
 
-                if ( $event_has_ended ) {
-                    $event_status = 'ended';
-                } elseif ( $booked_spots >= $max_spots ) {
-                    $event_status = 'waitlist';
+                if ( $is_cancelled ) {
+                    $event_status = 'cancelled';
+                } else {
+                    $event_has_ended  = false;
+                    $duration_seconds = $this->get_duration_seconds( $booking_data, $zen_duration, $woo_duration_value, $woo_duration_unit );
+                    $slot_end_timestamp = $this->resolve_event_slot_end_timestamp( $slots, $selected_date, $duration_seconds );
+                    $now_timestamp = time();
+
+                    if ( $slot_end_timestamp > 0 ) {
+                        $event_has_ended = $now_timestamp >= $slot_end_timestamp;
+                    }
+
+                    if ( $event_has_ended ) {
+                        $event_status = 'ended';
+                    } elseif ( $booked_spots >= $max_spots ) {
+                        $event_status = 'waitlist';
+                    }
                 }
             }
 

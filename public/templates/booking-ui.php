@@ -551,7 +551,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                                 <div></div>
 
-                                <button class="zbp-ended-btn" type="button"><?php esc_html_e( 'Class Ended', 'zen-bookpro' ); ?></button>
+                                <div class="zbp-event-actions">
+
+                                    <button class="zbp-ended-btn" type="button"><?php esc_html_e( 'Class Ended', 'zen-bookpro' ); ?></button>
+
+                                </div>
 
                             </div>
 

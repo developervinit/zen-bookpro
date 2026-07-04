@@ -387,6 +387,43 @@
     padding: 10px 26px;
 }
 
+.zbp-event-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zbp-join-btn.is-cancelled {
+    background: #553333;
+    color: #ff9999;
+    border: 1px solid #773333;
+    cursor: not-allowed;
+}
+
+.zbp-admin-cancel-btn {
+    background: transparent;
+    border: 2px solid #ff4d4d;
+    border-radius: 999px;
+    color: #ff4d4d;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px 20px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.zbp-admin-cancel-btn:hover {
+    background: #ff4d4d;
+    color: #ffffff;
+}
+
+.zbp-admin-cancel-btn:disabled {
+    border-color: #999;
+    color: #999;
+    cursor: not-allowed;
+    background: transparent;
+}
+
 .zbp-overlay {
     background: rgba(0, 0, 0, 0.62);
     inset: 0;

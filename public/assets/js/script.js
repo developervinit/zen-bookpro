@@ -663,13 +663,15 @@
 
                     var isEnded = product.event_status === 'ended' || classHasEnded;
 
-                    var isWaitlist = !isEnded && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
+                    var isCancelled = product.event_status === 'cancelled';
 
-                    var btnText = isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join');
+                    var isWaitlist = !isEnded && !isCancelled && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
 
-                    var btnClass = isEnded ? 'zbp-join-btn is-ended' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn');
+                    var btnText = isCancelled ? 'Class Canceled' : (isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join'));
 
-                    var btnDisabledAttr = isEnded ? ' disabled aria-disabled="true"' : '';
+                    var btnClass = isCancelled ? 'zbp-join-btn is-cancelled' : (isEnded ? 'zbp-join-btn is-ended' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn'));
+
+                    var btnDisabledAttr = (isEnded || isCancelled) ? ' disabled aria-disabled="true"' : '';
 
 
 
@@ -727,7 +729,13 @@
 
                         "</div>" +
 
+                        '<div class="zbp-event-actions">' +
+
 '<button class="' + btnClass + '" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(bookingCoinCost) + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '" data-product-formatted-slot="' + escapeHtml(formattedTimeBlock) + '" data-product-volume="' + escapeHtml(bookedSpots + "/" + maxSpots) + '"' + btnDisabledAttr + '>' + escapeHtml(btnText) + '</button>' +
+
+                        ((window.zbpAjax && zbpAjax.isAdmin && product.mode === 'event' && !isEnded && !isCancelled) ? '<button class="zbp-admin-cancel-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-date="' + escapeHtml(selectedDateKey) + '">Cancel Class</button>' : '') +
+
+                        '</div>' +
 
                         "</div>" +
 
@@ -1672,6 +1680,8 @@
 
                     var joinBtn = event.target.closest(".zbp-join-btn");
 
+                    var cancelBtn = event.target.closest(".zbp-admin-cancel-btn");
+
 
 
                     if (toggle) {
@@ -1807,6 +1817,59 @@
 
                         openJoinModal(joinBtn);
 
+                    }
+
+                    if (cancelBtn) {
+                        var productId = cancelBtn.getAttribute("data-product-id");
+                        var eventDate = cancelBtn.getAttribute("data-date");
+                        
+                        if (!productId || !eventDate) {
+                            return;
+                        }
+
+                        if (!confirm("Are you sure you want to cancel this class and all its bookings? This action cannot be undone.")) {
+                            return;
+                        }
+
+                        cancelBtn.disabled = true;
+                        cancelBtn.textContent = "Cancelling...";
+
+                        var payload = new URLSearchParams();
+                        payload.append("action", "zbp_admin_cancel_event");
+                        payload.append("product_id", productId);
+                        payload.append("date", eventDate);
+                        payload.append("nonce", (window.zbpAjax && zbpAjax.cancelNonce) ? zbpAjax.cancelNonce : "");
+
+                        fetch(zbpAjax.ajaxUrl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                            },
+                            body: payload.toString(),
+                            credentials: "same-origin"
+                        })
+                        .then(function(response) {
+                            return response.json();
+                        })
+                        .then(function(result) {
+                            if (result && result.success) {
+                                alert(result.data.message || "Class cancelled successfully.");
+                                var dateKey = formatDateKey(selectedDate);
+                                fetchSlots(dateKey, wrapper, productList);
+                            } else {
+                                alert(result.data && result.data.message ? result.data.message : "Error cancelling class.");
+                                cancelBtn.disabled = false;
+                                cancelBtn.textContent = "Cancel Class";
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error("Error:", error);
+                            alert("A network error occurred. Please try again.");
+                            cancelBtn.disabled = false;
+                            cancelBtn.textContent = "Cancel Class";
+                        });
+
+                        return;
                     }
 
                 });
