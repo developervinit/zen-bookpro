@@ -84,40 +84,29 @@ class ZBP_Cancellation_Service {
         $product->update_meta_data( '_zbp_cancelled', 'yes' );
         $product->save();
 
-        // 2. Fetch all active bookings for this product (without date limitations)
-        $active_statuses = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' );
-        $bookings = array();
+        // 2. Retrieve affected bookings using the new Booking Service (Step 3)
+        $booking_service   = new ZBP_Booking_Service();
+        $affected_bookings = $booking_service->get_affected_bookings( $product_id, array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' ) );
 
-        if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_bookings_for_objects' ) ) {
-            $bookings = WC_Booking_Data_Store::get_bookings_for_objects(
-                array( $product_id ),
-                $active_statuses
-            );
-        } elseif ( class_exists( 'WC_Bookings_Controller' ) && method_exists( 'WC_Bookings_Controller', 'get_bookings_for_objects' ) ) {
-            $bookings = WC_Bookings_Controller::get_bookings_for_objects(
-                array( $product_id ),
-                $active_statuses
-            );
-        }
-
-        // 3. Group bookings by date to fire date-specific action hooks (maintaining compatibility)
+        // 3. Group booking IDs by date to fire date-specific action hooks
         $bookings_by_date = array();
-        foreach ( $bookings as $booking ) {
-            if ( $booking && is_a( $booking, 'WC_Booking' ) ) {
-                $start_timestamp = $booking->get_start();
-                if ( $start_timestamp ) {
-                    $date = date( 'Y-m-d', $start_timestamp );
-                    $bookings_by_date[ $date ][] = $booking;
-                }
+        foreach ( $affected_bookings as $booking_data ) {
+            $start_timestamp = $booking_data['start_time'];
+            if ( $start_timestamp ) {
+                $date = date( 'Y-m-d', $start_timestamp );
+                $bookings_by_date[ $date ][] = $booking_data;
             }
         }
 
         // 4. Update each booking status to 'cancelled' and fire actions
         foreach ( $bookings_by_date as $date => $date_bookings ) {
             $cancelled_booking_ids = array();
-            foreach ( $date_bookings as $booking ) {
-                $booking->update_status( 'cancelled' );
-                $cancelled_booking_ids[] = $booking->get_id();
+            foreach ( $date_bookings as $booking_data ) {
+                $booking = get_wc_booking( $booking_data['booking_id'] );
+                if ( $booking ) {
+                    $booking->update_status( 'cancelled' );
+                    $cancelled_booking_ids[] = $booking->get_id();
+                }
             }
             do_action( 'zbp_event_cancelled', $product_id, $date, $cancelled_booking_ids );
         }

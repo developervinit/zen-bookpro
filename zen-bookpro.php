@@ -23,6 +23,7 @@ require_once ZBP_PLUGIN_PATH . 'includes/class-zbp-product-mode.php';
 require_once ZBP_PLUGIN_PATH . 'includes/services/class-zbp-slot-service.php';
 require_once ZBP_PLUGIN_PATH . 'includes/services/class-zbp-product-service.php';
 require_once ZBP_PLUGIN_PATH . 'includes/services/class-zbp-cancellation-service.php';
+require_once ZBP_PLUGIN_PATH . 'includes/services/class-zbp-booking-service.php';
 
 /**
  * Check plugin dependencies for WooCommerce and WooCommerce Bookings.
