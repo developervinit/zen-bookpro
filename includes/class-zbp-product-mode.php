@@ -95,6 +95,29 @@ class ZBP_Product_Mode {
                 }
                 echo '</div>';
                 echo '</div>';
+            // Retrieve current hide before start values
+            $hide_value = get_post_meta( $product_id, '_zbp_hide_before_value', true );
+            $hide_unit  = get_post_meta( $product_id, '_zbp_hide_before_unit', true );
+            if ( '' === $hide_value ) {
+                $hide_value = '';
+            }
+            if ( ! $hide_unit ) {
+                $hide_unit = 'minutes';
+            }
+            ?>
+            <div class="form-field show_if_zbp_event zbp-hide-before-wrapper" style="clear: both; margin: 9px 0; padding-left: 162px; min-height: 40px; display: none;">
+                <label style="float: left; width: 150px; margin-left: -162px; font-weight: 700;"><?php esc_html_e( 'Hide Class Before Start', 'zen-bookpro' ); ?></label>
+                <div style="display: inline-block; vertical-align: middle;">
+                    <input type="number" name="_zbp_hide_before_value" value="<?php echo esc_attr( $hide_value ); ?>" min="0" step="1" style="width: 80px; vertical-align: middle;" placeholder="<?php esc_attr_e( 'e.g. 30', 'zen-bookpro' ); ?>" />
+                    <select name="_zbp_hide_before_unit" style="width: 100px; vertical-align: middle; margin-left: 8px;">
+                        <option value="minutes" <?php selected( $hide_unit, 'minutes' ); ?>><?php esc_html_e( 'Minutes', 'zen-bookpro' ); ?></option>
+                        <option value="hours" <?php selected( $hide_unit, 'hours' ); ?>><?php esc_html_e( 'Hours', 'zen-bookpro' ); ?></option>
+                        <option value="days" <?php selected( $hide_unit, 'days' ); ?>><?php esc_html_e( 'Days', 'zen-bookpro' ); ?></option>
+                    </select>
+                    <span class="description" style="display: block; margin-top: 5px;"><?php esc_html_e( 'Configure how long before the class starts the product card should be hidden from the frontend.', 'zen-bookpro' ); ?></span>
+                </div>
+            </div>
+            <?php
             }
 
             // Render Free Flow Slots Checklist UI
@@ -296,6 +319,16 @@ class ZBP_Product_Mode {
 
         // Handle date-specific cancellations
         if ( 'event' === $mode ) {
+            $hide_val = isset( $_POST['_zbp_hide_before_value'] ) ? sanitize_text_field( wp_unslash( $_POST['_zbp_hide_before_value'] ) ) : '';
+            $hide_unit = isset( $_POST['_zbp_hide_before_unit'] ) ? sanitize_text_field( wp_unslash( $_POST['_zbp_hide_before_unit'] ) ) : 'minutes';
+
+            if ( '' !== $hide_val ) {
+                $hide_val = absint( $hide_val );
+            }
+
+            $product->update_meta_data( '_zbp_hide_before_value', $hide_val );
+            $product->update_meta_data( '_zbp_hide_before_unit', $hide_unit );
+
             $old_cancelled_dates = $product->get_meta( '_zbp_cancelled_dates' );
             if ( ! is_array( $old_cancelled_dates ) ) {
                 $old_cancelled_dates = array();
@@ -367,10 +400,14 @@ class ZBP_Product_Mode {
 
             // Clear event meta if in free flow mode
             $product->update_meta_data( '_zbp_cancelled_dates', array() );
+            $product->delete_meta_data( '_zbp_hide_before_value' );
+            $product->delete_meta_data( '_zbp_hide_before_unit' );
         } else {
             // Clear cancelled dates and slots if mode changes to something else
             $product->update_meta_data( '_zbp_cancelled_dates', array() );
             $product->update_meta_data( '_zbp_cancelled_slots', array() );
+            $product->delete_meta_data( '_zbp_hide_before_value' );
+            $product->delete_meta_data( '_zbp_hide_before_unit' );
         }
     }
 

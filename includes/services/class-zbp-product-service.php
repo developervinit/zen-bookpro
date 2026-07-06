@@ -346,6 +346,32 @@ class ZBP_Product_Service {
                         $event_has_ended = $now_timestamp >= $slot_end_timestamp;
                     }
 
+                    // Check if there is a configured hide time before class start limit
+                    $hide_value = (int) $product->get_meta( '_zbp_hide_before_value' );
+                    $hide_unit  = $product->get_meta( '_zbp_hide_before_unit' );
+
+                    if ( $hide_value > 0 ) {
+                        $slot_start_timestamp = $this->resolve_event_slot_start_timestamp( $slots, $selected_date );
+                        if ( $slot_start_timestamp > 0 ) {
+                            $hide_seconds = 0;
+                            switch ( $hide_unit ) {
+                                case 'minutes':
+                                    $hide_seconds = $hide_value * MINUTE_IN_SECONDS;
+                                    break;
+                                case 'hours':
+                                    $hide_seconds = $hide_value * HOUR_IN_SECONDS;
+                                    break;
+                                case 'days':
+                                    $hide_seconds = $hide_value * DAY_IN_SECONDS;
+                                    break;
+                            }
+                            $hide_threshold = $slot_start_timestamp - $hide_seconds;
+                            if ( $now_timestamp >= $hide_threshold ) {
+                                $event_has_ended = true;
+                            }
+                        }
+                    }
+
                     if ( $event_has_ended ) {
                         continue;
                     } elseif ( $booked_spots >= $max_spots ) {
@@ -357,6 +383,12 @@ class ZBP_Product_Service {
             $booking_duration_minutes = $this->get_booking_duration_minutes( $woo_duration_value, $woo_duration_unit, $booking_data );
             $experience_category      = $this->get_term_names_for_product( $product_id, 'experience_category' );
             $booking_coin_cost        = $product->get_meta( '_cbb_booking_coin_cost' );
+
+            $hide_before_value = (int) $product->get_meta( '_zbp_hide_before_value' );
+            $hide_before_unit  = $product->get_meta( '_zbp_hide_before_unit' );
+            if ( ! $hide_before_unit ) {
+                $hide_before_unit = 'minutes';
+            }
 
             $mapped[] = array(
                 'id'                => $product_id,
@@ -383,6 +415,8 @@ class ZBP_Product_Service {
                 'max_spots'         => $max_spots,
                 'booked_spots'      => $booked_spots,
                 'event_status'      => $event_status,
+                'hide_before_value' => $hide_before_value,
+                'hide_before_unit'  => $hide_before_unit,
                 'slot_debug'        => $slot_debug,
             );
         }
@@ -687,4 +721,35 @@ class ZBP_Product_Service {
         return 0;
     }
 
+    /**
+     * Resolve event slot start timestamp from slot label or timestamp.
+     *
+     * @param array  $slots         Slots payload.
+     * @param string $selected_date Date in Y-m-d.
+     *
+     * @return int
+     */
+    private function resolve_event_slot_start_timestamp( $slots, $selected_date ) {
+        if ( empty( $slots ) || empty( $slots[0] ) || ! is_array( $slots[0] ) ) {
+            return 0;
+        }
+
+        $slot = $slots[0];
+
+        if ( ! empty( $slot['label'] ) && preg_match( '/([0-9]{1,2}:[0-9]{2}(?:\s*[ap]m)?)\s*-\s*([0-9]{1,2}:[0-9]{2}(?:\s*[ap]m)?)/i', (string) $slot['label'], $m ) ) {
+            $start_ts = $this->parse_time_on_date( $selected_date, $m[1] );
+            if ( $start_ts > 0 ) {
+                return $start_ts;
+            }
+        }
+
+        $slot_timestamp = ! empty( $slot['timestamp'] ) ? (int) $slot['timestamp'] : 0;
+        if ( $slot_timestamp > 0 ) {
+            return $slot_timestamp;
+        }
+
+        return 0;
+    }
+
 }
+

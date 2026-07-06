@@ -647,7 +647,21 @@
 
                             var now = new Date();
 
-                            classHasEnded = now.getTime() >= eventStartDate.getTime();
+                            var hideBeforeValue = parseInt(product.hide_before_value, 10) || 0;
+                            var hideBeforeUnit = product.hide_before_unit || "minutes";
+                            var hideBeforeMs = 0;
+
+                            if (hideBeforeValue > 0) {
+                                if (hideBeforeUnit === "minutes") {
+                                    hideBeforeMs = hideBeforeValue * 60 * 1000;
+                                } else if (hideBeforeUnit === "hours") {
+                                    hideBeforeMs = hideBeforeValue * 60 * 60 * 1000;
+                                } else if (hideBeforeUnit === "days") {
+                                    hideBeforeMs = hideBeforeValue * 24 * 60 * 60 * 1000;
+                                }
+                            }
+
+                            classHasEnded = now.getTime() >= (eventStartDate.getTime() - hideBeforeMs);
 
                             console.log("Zen-BookPro Real-Time Check:", {
 
@@ -656,6 +670,8 @@
                                 eventStart: eventStartDate.toLocaleString(),
 
                                 now: now.toLocaleString(),
+
+                                hideBeforeMs: hideBeforeMs,
 
                                 classHasEnded: classHasEnded
 
