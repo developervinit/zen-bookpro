@@ -507,6 +507,21 @@ class ZBP_Slot_Service {
             return empty( $slots ) ? array() : array( reset( $slots ) );
         }
 
+        if ( 'free_flow' === $mode ) {
+            $filtered = array();
+            $now      = time();
+            foreach ( $slots as $slot ) {
+                if ( isset( $slot['timestamp'] ) && (int) $slot['timestamp'] > 0 ) {
+                    // Filter out slots that have already passed according to native time
+                    if ( (int) $slot['timestamp'] < $now ) {
+                        continue;
+                    }
+                }
+                $filtered[] = $slot;
+            }
+            return $filtered;
+        }
+
         return $slots;
     }
 
