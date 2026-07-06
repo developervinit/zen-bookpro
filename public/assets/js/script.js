@@ -669,6 +669,10 @@
 
                     var isEnded = product.event_status === 'ended' || classHasEnded;
 
+                    if (!isSlotBased && isEnded) {
+                        return "";
+                    }
+
                     var isCancelled = product.event_status === 'cancelled';
 
                     var isWaitlist = !isEnded && !isCancelled && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);

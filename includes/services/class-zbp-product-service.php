@@ -347,7 +347,7 @@ class ZBP_Product_Service {
                     }
 
                     if ( $event_has_ended ) {
-                        $event_status = 'ended';
+                        continue;
                     } elseif ( $booked_spots >= $max_spots ) {
                         $event_status = 'waitlist';
                     }
