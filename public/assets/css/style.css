@@ -231,6 +231,22 @@
     opacity: 0.6;
 }
 
+.zbp-slot-chip.is-cancelled {
+    text-decoration: line-through;
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    pointer-events: none;
+}
+
+.zbp-slot-chip.is-cancelled:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
 .zbp-coins {
     color: #d0d0d0;
     font-weight: 600;

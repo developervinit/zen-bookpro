@@ -399,7 +399,13 @@
 
                                     var pastClass = isPast ? " is-past" : "";
 
-                                    return '<button type="button" class="zbp-slot-chip' + pastClass + '" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                                    var isCancelled = slot && slot.status === 'cancelled';
+
+                                    var cancelledClass = isCancelled ? " is-cancelled" : "";
+
+                                    var disabledAttr = isCancelled ? " disabled aria-disabled=\"true\"" : "";
+
+                                    return '<button type="button" class="zbp-slot-chip' + pastClass + cancelledClass + '"' + disabledAttr + ' data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
 
                                 })
 
@@ -1083,7 +1089,13 @@
 
                     var pastClass = isPast ? " is-past" : "";
 
-                    return '<button type="button" class="zbp-slot-chip zbp-join-slot-chip' + isSelected + pastClass + '" data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                    var isCancelled = slot && slot.status === 'cancelled';
+
+                    var cancelledClass = isCancelled ? " is-cancelled" : "";
+
+                    var disabledAttr = isCancelled ? " disabled aria-disabled=\"true\"" : "";
+
+                    return '<button type="button" class="zbp-slot-chip zbp-join-slot-chip' + isSelected + pastClass + cancelledClass + '"' + disabledAttr + ' data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
 
                 }).join("");
 
@@ -1355,7 +1367,12 @@
                                     return String(val) === String(preselectedSlotValue);
                                 });
                             }
-                            if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                            if (selectedSlotObj && selectedSlotObj.status === 'cancelled') {
+                                joinActionSubmit.textContent = "Class Canceled";
+                                joinActionSubmit.classList.add("is-ended");
+                                joinActionSubmit.disabled = true;
+                                joinActionSubmit.setAttribute("aria-disabled", "true");
+                            } else if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
                                 joinActionSubmit.textContent = "Class Ended";
                                 joinActionSubmit.classList.add("is-ended");
                                 joinActionSubmit.disabled = true;
@@ -1791,7 +1808,12 @@
                                 var val = (s && s.value) ? s.value : s;
                                 return String(val) === String(selectedVal);
                             });
-                            if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                            if (selectedSlotObj && selectedSlotObj.status === 'cancelled') {
+                                joinBtn.textContent = "Class Canceled";
+                                joinBtn.classList.add("is-ended");
+                                joinBtn.disabled = true;
+                                joinBtn.setAttribute("aria-disabled", "true");
+                            } else if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
                                 joinBtn.textContent = "Class Ended";
                                 joinBtn.classList.add("is-ended");
                                 joinBtn.disabled = true;
@@ -1976,7 +1998,12 @@
                             var val = (s && s.value) ? s.value : s;
                             return String(val) === String(selectedVal);
                         });
-                        if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
+                        if (selectedSlotObj && selectedSlotObj.status === 'cancelled') {
+                            joinActionSubmit.textContent = "Class Canceled";
+                            joinActionSubmit.classList.add("is-ended");
+                            joinActionSubmit.disabled = true;
+                            joinActionSubmit.setAttribute("aria-disabled", "true");
+                        } else if (selectedSlotObj && isSlotPast(selectedSlotObj, selectedDate)) {
                             joinActionSubmit.textContent = "Class Ended";
                             joinActionSubmit.classList.add("is-ended");
                             joinActionSubmit.disabled = true;

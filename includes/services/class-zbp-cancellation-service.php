@@ -67,4 +67,65 @@ class ZBP_Cancellation_Service {
 
         return true;
     }
+
+    /**
+     * Cancel bookings for a specific Free Flow slot.
+     *
+     * @param int    $product_id      WooCommerce Product ID.
+     * @param string $slot_start_time Slot start date-time in 'Y-m-d H:i:s' format.
+     * @return bool|WP_Error
+     */
+    public function cancel_slot( $product_id, $slot_start_time ) {
+        // Validate product exists and is a booking type
+        $product = wc_get_product( $product_id );
+        if ( ! $product || ! $product->is_type( 'booking' ) ) {
+            return new WP_Error( 'invalid_product', __( 'Invalid product or product is not a booking.', 'zen-bookpro' ) );
+        }
+
+        // Get date and timestamp of the slot
+        $slot_timestamp = strtotime( $slot_start_time );
+        if ( ! $slot_timestamp ) {
+            return new WP_Error( 'invalid_time', __( 'Invalid slot start time format.', 'zen-bookpro' ) );
+        }
+        $date = date( 'Y-m-d', $slot_timestamp );
+
+        // 1. Query all active bookings for this product on the date of the slot
+        $date_from = strtotime( $date . ' 00:00:00' );
+        $date_to   = strtotime( $date . ' 23:59:59' );
+
+        $active_statuses = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' );
+        $bookings = array();
+
+        if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_bookings_for_objects' ) ) {
+            $bookings = WC_Booking_Data_Store::get_bookings_for_objects(
+                array( $product_id ),
+                $active_statuses,
+                $date_from,
+                $date_to
+            );
+        } elseif ( class_exists( 'WC_Bookings_Controller' ) && method_exists( 'WC_Bookings_Controller', 'get_bookings_for_objects' ) ) {
+            $bookings = WC_Bookings_Controller::get_bookings_for_objects(
+                array( $product_id ),
+                $active_statuses,
+                $date_from,
+                $date_to
+            );
+        }
+
+        // 2. Filter bookings matching the exact start time and update their status to 'cancelled'
+        $cancelled_booking_ids = array();
+        foreach ( $bookings as $booking ) {
+            if ( $booking && is_a( $booking, 'WC_Booking' ) ) {
+                if ( (int) $booking->get_start() === (int) $slot_timestamp ) {
+                    $booking->update_status( 'cancelled' );
+                    $cancelled_booking_ids[] = $booking->get_id();
+                }
+            }
+        }
+
+        // 3. Fire the modular custom WordPress action for slot cancellation
+        do_action( 'zbp_slot_cancelled', $product_id, $slot_start_time, $cancelled_booking_ids );
+
+        return true;
+    }
 }

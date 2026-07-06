@@ -13,7 +13,7 @@ class ZBP_Slot_Service {
      *
      * @return array
      */
-    public function get_slots_for_product( $product, $selected_date, $mode ) {
+    public function get_slots_for_product( $product, $selected_date, $mode, $bypass_expired = false ) {
         $product = $this->get_booking_product( $product );
         if ( ! $product ) {
             return array( 'slots' => array(), 'debug' => 'No product object' );
@@ -27,7 +27,7 @@ class ZBP_Slot_Service {
         $slots     = $this->parse_slots_from_woo_html( $slot_html, $date_context['date'] );
 
         return array(
-            'slots' => $this->apply_mode_logic( $slots, $mode ),
+            'slots' => $this->apply_mode_logic( $product, $slots, $mode, $bypass_expired ),
             'debug' => array(
                 'payload' => $form_payload,
                 'html'    => substr($slot_html, 0, 500) . (strlen($slot_html) > 500 ? '...' : '')
@@ -497,12 +497,14 @@ class ZBP_Slot_Service {
     /**
      * Apply mode-specific slot output logic.
      *
-     * @param array  $slots Slots array.
-     * @param string $mode  Product mode.
+     * @param WC_Product $product  Product object.
+     * @param array      $slots    Slots array.
+     * @param string     $mode     Product mode.
+     * @param bool       $bypass_expired Bypass time checks.
      *
      * @return array
      */
-    private function apply_mode_logic( $slots, $mode ) {
+    private function apply_mode_logic( $product, $slots, $mode, $bypass_expired = false ) {
         if ( 'event' === $mode ) {
             return empty( $slots ) ? array() : array( reset( $slots ) );
         }
@@ -510,13 +512,28 @@ class ZBP_Slot_Service {
         if ( 'free_flow' === $mode ) {
             $filtered = array();
             $now      = time();
+
+            $cancelled_slots = array();
+            if ( $product ) {
+                $cancelled_slots = $product->get_meta( '_zbp_cancelled_slots' );
+                if ( ! is_array( $cancelled_slots ) ) {
+                    $cancelled_slots = array();
+                }
+            }
+
             foreach ( $slots as $slot ) {
                 if ( isset( $slot['timestamp'] ) && (int) $slot['timestamp'] > 0 ) {
-                    // Filter out slots that have already passed according to native time
-                    if ( (int) $slot['timestamp'] < $now ) {
+                    // Filter out slots that have already passed according to native time (Expired)
+                    if ( ! $bypass_expired && (int) $slot['timestamp'] < $now ) {
                         continue;
                     }
                 }
+
+                // Check if the slot is cancelled by admin
+                if ( ! empty( $slot['start'] ) && in_array( $slot['start'], $cancelled_slots, true ) ) {
+                    $slot['status'] = 'cancelled';
+                }
+
                 $filtered[] = $slot;
             }
             return $filtered;
