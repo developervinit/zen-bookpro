@@ -94,6 +94,7 @@ class ZBP_Product_Mode {
                     }
                 }
                 echo '</div>';
+                echo '</div>';
             }
 
             // Render Free Flow Slots Checklist UI
