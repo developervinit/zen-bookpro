@@ -438,7 +438,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 ?>
 
-                <article class="zbp-product-card <?php echo $is_slot_based ? 'zbp-slot-card' : 'zbp-event-card'; ?>">
+                <?php
+                $card_classes   = array( 'zbp-product-card' );
+                $card_classes[] = $is_slot_based ? 'zbp-slot-card' : 'zbp-event-card';
+                if ( ! empty( $product['event_status'] ) && 'cancelled' === $product['event_status'] ) {
+                    $card_classes[] = 'is-cancelled';
+                }
+                ?>
+                <article class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
 
                     <div class="zbp-card-icon"><?php echo wp_kses_post( $image_html ); ?></div>
 

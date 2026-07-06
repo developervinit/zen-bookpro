@@ -226,6 +226,11 @@
     color: #FFFFFF !important;
 }
 
+.zbp-product-card.is-cancelled .zbp-card-top h4 {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
 .zbp-coins {
     color: #d0d0d0;
     font-weight: 600;

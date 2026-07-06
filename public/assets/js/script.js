@@ -675,11 +675,15 @@
 
 
 
+                    var cardCancelledClass = isCancelled ? " is-cancelled" : "";
+
                     return (
 
                         '<article class="zbp-product-card ' +
 
                         cardClass +
+
+                        cardCancelledClass +
 
                         '">' +
 
