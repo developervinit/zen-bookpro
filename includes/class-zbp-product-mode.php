@@ -77,9 +77,9 @@ class ZBP_Product_Mode {
                 $all_dates = array_unique( array_merge( $cancelled_dates, $bookable_dates ) );
                 sort( $all_dates );
 
-                echo '<div class="options_group show_if_booking show_if_zbp_event zbp-cancellation-dates-wrapper" style="padding: 10px 162px; border-bottom: 1px solid #eee;">';
+                echo '<div class="form-field show_if_zbp_event zbp-cancellation-dates-wrapper" style="clear: both; margin: 9px 0; padding-left: 162px; min-height: 40px;">';
                 echo '<label style="float: left; width: 150px; margin-left: -162px; font-weight: 700;">' . esc_html__( 'Cancel Dates', 'zen-bookpro' ) . '</label>';
-                echo '<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; display: inline-block; min-width: 300px; box-sizing: border-box; border-radius: 4px;">';
+                echo '<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; display: inline-block; min-width: 300px; box-sizing: border-box; border-radius: 4px; vertical-align: middle;">';
                 if ( empty( $all_dates ) ) {
                     echo '<p style="margin: 0; color: #888;">' . esc_html__( 'No bookable dates found.', 'zen-bookpro' ) . '</p>';
                 } else {
@@ -93,7 +93,7 @@ class ZBP_Product_Mode {
                     }
                 }
                 echo '</div>';
-                echo '<p class="description" style="margin-top: 5px; clear: both;">' . esc_html__( 'Select the specific dates of this event that should be cancelled.', 'zen-bookpro' ) . '</p>';
+                echo '<span class="description" style="display: block; margin-top: 5px; clear: both; margin-left: 0;">' . esc_html__( 'Select the specific dates of this event that should be cancelled.', 'zen-bookpro' ) . '</span>';
                 echo '</div>';
             }
         }
@@ -235,8 +235,17 @@ class ZBP_Product_Mode {
 
         $dates = array();
         if ( is_array( $blocks ) ) {
-            foreach ( $blocks as $timestamp ) {
-                $dates[] = wp_date( 'Y-m-d', $timestamp );
+            foreach ( $blocks as $key => $val ) {
+                $timestamp = 0;
+                if ( is_numeric( $key ) && (int) $key > 100000000 ) {
+                    $timestamp = (int) $key;
+                } elseif ( is_numeric( $val ) && (int) $val > 100000000 ) {
+                    $timestamp = (int) $val;
+                }
+
+                if ( $timestamp > 0 ) {
+                    $dates[] = wp_date( 'Y-m-d', $timestamp );
+                }
             }
         }
 
