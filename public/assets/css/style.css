@@ -575,6 +575,25 @@
     background: #3f3f42;
     border-top: 1px solid #4b4b4f;
 }
+.zbp-join-notice {
+    background: rgba(255, 241, 242, 0.96);
+    border: 1px solid #d71920;
+    color: #313135;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+    padding: 12px 20px;
+}
+
+.zbp-join-notice[hidden] {
+    display: none !important;
+}
+
+.zbp-join-notice.is-success {
+    background: rgba(236, 253, 245, 0.96);
+    border-color: #36b36a;
+}
 
 .zbp-join-date-row,
 .zbp-join-time-row,
@@ -842,7 +861,6 @@
     .zbp-join-title-wrap {
         padding: 12px 14px 14px;
     }
-
     .zbp-join-date-row,
     .zbp-join-time-row,
     .zbp-join-volume-row {

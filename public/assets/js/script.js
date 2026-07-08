@@ -95,6 +95,35 @@
             }
             return formatSlotTimeRange(label, durationMinutes);
         }
+        function formatTimestampForBooking(timestamp) {
+            var ts = parseInt(timestamp, 10);
+            if (!ts || ts <= 0) return "";
+
+            var date = new Date(ts * 1000);
+            var y = String(date.getFullYear());
+            var m = String(date.getMonth() + 1).padStart(2, "0");
+            var d = String(date.getDate()).padStart(2, "0");
+            var hh = String(date.getHours()).padStart(2, "0");
+            var mm = String(date.getMinutes()).padStart(2, "0");
+
+            return y + "-" + m + "-" + d + " " + hh + ":" + mm;
+        }
+
+        function getSlotStartValue(slot) {
+            if (!slot) return "";
+
+            if (typeof slot === "string") {
+                return slot;
+            }
+
+            if (slot.value) return slot.value;
+            if (slot.start) return slot.start;
+            if (slot.start_time) return slot.start_time;
+            if (slot.timestamp) return formatTimestampForBooking(slot.timestamp);
+            if (slot.label) return slot.label;
+
+            return "";
+        }
 
         function isSlotPast(slot, dateObj) {
             if (!slot) return false;
@@ -942,6 +971,14 @@
             var joinModalZencoin = wrapper.querySelector(".zbp-join-zencoins strong");
 
             var joinModalTitle = wrapper.querySelector(".zbp-join-product-title");
+            var joinNotice = wrapper.querySelector(".zbp-join-notice");
+            if (!joinNotice && joinModalTitle && joinModalTitle.parentNode) {
+                joinNotice = document.createElement("div");
+                joinNotice.className = "zbp-join-notice";
+                joinNotice.setAttribute("role", "alert");
+                joinNotice.hidden = true;
+                joinModalTitle.parentNode.insertAdjacentElement("afterend", joinNotice);
+            }
 
             var joinDateValue = wrapper.querySelector(".zbp-join-date-value");
 
@@ -1149,6 +1186,123 @@
 
             }
 
+            function showJoinNotice(message, type) {
+                if (!joinNotice) return;
+
+                joinNotice.textContent = message || "Something went wrong. Please try again.";
+                joinNotice.classList.remove("is-success", "is-error");
+                joinNotice.classList.add(type === "success" ? "is-success" : "is-error");
+                joinNotice.hidden = false;
+            }
+
+            function clearJoinNotice() {
+                if (!joinNotice) return;
+
+                joinNotice.textContent = "";
+                joinNotice.classList.remove("is-success", "is-error");
+                joinNotice.hidden = true;
+            }
+
+            function parseWooCommerceNotices(html) {
+                var doc;
+
+                if (!html) return null;
+
+                try {
+                    doc = new DOMParser().parseFromString(html, "text/html");
+                } catch (error) {
+                    return null;
+                }
+
+                return doc;
+            }
+
+            function getFirstNoticeText(doc, selector) {
+                var nodes;
+
+                if (!doc) return "";
+
+                nodes = doc.querySelectorAll(selector);
+
+                for (var i = 0; i < nodes.length; i++) {
+                    var text = (nodes[i].textContent || "").replace(/\s+/g, " ").trim();
+                    if (text) return text;
+                }
+
+                return "";
+            }
+
+            function hasWooCommerceSuccess(doc) {
+                return !!getFirstNoticeText(doc, ".woocommerce-message, .woocommerce-notices-wrapper .is-success, .wc-block-components-notice-banner.is-success");
+            }
+
+            function extractWooCommerceError(doc) {
+                return getFirstNoticeText(doc, ".woocommerce-error li, .woocommerce-error, .woocommerce-notices-wrapper .is-error, .wc-block-components-notice-banner.is-error");
+            }
+
+            function openCheckoutPopupAfterBooking() {
+                closeJoinModal();
+
+                if (window.jQuery) {
+                    window.jQuery(document.body).trigger("added_to_cart");
+                    return;
+                }
+
+                document.body.dispatchEvent(new CustomEvent("added_to_cart"));
+            }
+
+            function ajaxAddBookingToCart(addToCartUrl) {
+                if (!addToCartUrl) {
+                    showJoinNotice("Unable to prepare this booking. Please try again.", "error");
+                    return;
+                }
+
+                clearJoinNotice();
+
+                if (joinActionSubmit) {
+                    joinActionSubmit.disabled = true;
+                    joinActionSubmit.setAttribute("aria-disabled", "true");
+                    joinActionSubmit.classList.add("is-loading");
+                }
+
+                fetch(addToCartUrl, {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(function (response) {
+                        return response.text();
+                    })
+                    .then(function (html) {
+                        var noticeDoc = parseWooCommerceNotices(html);
+                        var errorMessage = extractWooCommerceError(noticeDoc);
+
+                        if (hasWooCommerceSuccess(noticeDoc)) {
+                            openCheckoutPopupAfterBooking();
+                            return;
+                        }
+
+                        if (errorMessage) {
+                            showJoinNotice(errorMessage, "error");
+                            return;
+                        }
+
+                        openCheckoutPopupAfterBooking();
+                    })
+                    .catch(function () {
+                        showJoinNotice("Unable to add this booking. Please try again.", "error");
+                    })
+                    .finally(function () {
+                        if (joinActionSubmit) {
+                            joinActionSubmit.disabled = false;
+                            joinActionSubmit.removeAttribute("aria-disabled");
+                            joinActionSubmit.classList.remove("is-loading");
+                        }
+                    });
+            }
+
             function updateJoinModalZencoins(value) {
                 var normalizedValue = String(value || "0");
                 var zencoinWrap = wrapper.querySelector(".zbp-join-zencoins");
@@ -1234,6 +1388,9 @@
                 }
 
                 joinModalProductSlots = productSlots;
+
+
+                clearJoinNotice();
 
                 if (joinModalCloseBtn) {
 
@@ -1365,7 +1522,7 @@
 
                         joinSlotWrap.hidden = false;
 
-                        
+
 
                         // Find the selected chip on the product card
 
@@ -1377,7 +1534,7 @@
 
                         var durationMins = toDurationMinutes(productDurationMinutes);
 
-                        
+
 
                         renderJoinSlots(productSlots, preselectedSlotValue, durationMins);
 
@@ -1582,7 +1739,7 @@
 
                 var url = new URL(baseUrl, window.location.origin);
 
-                
+
 
                 var y = String(selectedDate.getFullYear());
 
@@ -1597,48 +1754,36 @@
                 if (selectedSlotValue) {
 
                     var clean = selectedSlotValue.replace('T', ' ').split('+')[0].split('Z')[0].trim();
+                    var dateTimeMatch = clean.match(/^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})/);
 
-                    var parts = clean.split(' ');
+                    if (dateTimeMatch) {
 
-                    if (parts.length >= 2 && parts[0].indexOf('-') !== -1) {
+                        y = String(parseInt(dateTimeMatch[1], 10));
+                        m = String(parseInt(dateTimeMatch[2], 10)).padStart(2, '0');
+                        d = String(parseInt(dateTimeMatch[3], 10)).padStart(2, '0');
+                        timePart = String(parseInt(dateTimeMatch[4], 10)).padStart(2, '0') + ":" + String(parseInt(dateTimeMatch[5], 10)).padStart(2, '0');
 
-                        var dateParts = parts[0].split('-');
+                    } else {
 
-                        if (dateParts.length === 3) {
+                        var startTimePart = clean.split(/\s*[-\u2013]\s*/)[0].trim();
+                        var timeMatch = startTimePart.match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/i);
 
-                            y = String(parseInt(dateParts[0], 10));
+                        if (timeMatch) {
 
-                            m = String(parseInt(dateParts[1], 10)).padStart(2, '0');
+                            var hour = parseInt(timeMatch[1], 10);
+                            var minute = parseInt(timeMatch[2], 10);
+                            var ampm = timeMatch[3] ? timeMatch[3].toLowerCase() : '';
 
-                            d = String(parseInt(dateParts[2], 10)).padStart(2, '0');
+                            if (ampm === 'pm' && hour < 12) hour += 12;
+                            if (ampm === 'am' && hour === 12) hour = 0;
 
-                            
-
-                            var timeParts = parts[1].split(':');
-
-                            if (timeParts.length >= 2) {
-
-                                timePart = String(timeParts[0]).padStart(2, '0') + ":" + String(timeParts[1]).padStart(2, '0');
-
-                            }
-
-                        }
-
-                    } else if (selectedSlotValue.indexOf(':') !== -1) {
-
-                        var timeParts = selectedSlotValue.split(':');
-
-                        if (timeParts.length >= 2) {
-
-                            timePart = String(timeParts[0]).padStart(2, '0') + ":" + String(timeParts[1]).padStart(2, '0');
+                            timePart = String(hour).padStart(2, '0') + ":" + String(minute).padStart(2, '0');
 
                         }
 
                     }
 
                 }
-
-
 
                 url.searchParams.set("add-to-cart", String(productId));
 
@@ -2038,16 +2183,23 @@
 
                     } else if (joinModalProductMode === "event") {
 
-                        selectedSlotValue = (joinModalProductSlots && joinModalProductSlots.length > 0) ? (joinModalProductSlots[0].value || "") : "";
+                        selectedSlotValue = (joinModalProductSlots && joinModalProductSlots.length > 0) ? getSlotStartValue(joinModalProductSlots[0]) : "";
 
                     }
 
 
 
+                    if (!selectedSlotValue) {
+
+                        showJoinNotice("Please choose a time slot before joining.", "error");
+
+                        return;
+
+                    }
+
                     var addToCartUrl = buildAddToCartUrl(joinModalProductId, selectedSlotValue);
 
-                    window.location.href = addToCartUrl;
-
+                    ajaxAddBookingToCart(addToCartUrl);
                 });
 
             }
@@ -2452,4 +2604,3 @@
     });
 
 })();
-
