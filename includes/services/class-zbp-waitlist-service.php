@@ -478,12 +478,12 @@ class ZBP_Waitlist_Service {
     /**
      * Listen to booking status changes to detect cancellations and find next waitlist entries.
      *
-     * @param int    $booking_id Booking ID.
      * @param string $old_status Old status.
      * @param string $new_status New status.
+     * @param int    $booking_id Booking ID.
      * @return void
      */
-    public function handle_booking_status_change( $booking_id, $old_status, $new_status ) {
+    public function handle_booking_status_change( $old_status, $new_status, $booking_id ) {
         $cancelled_statuses = array( 'cancelled', 'trash' );
         if ( ! in_array( $new_status, $cancelled_statuses, true ) ) {
             return;
