@@ -106,4 +106,62 @@ class ZBP_Email_Service {
 
         wp_mail( $to, $subject, $message, $headers );
     }
+
+    /**
+     * Send waitlist invitation email to a customer.
+     *
+     * @param int $entry_id Waitlist entry ID.
+     * @return void
+     */
+    public function send_waitlist_invitation( $entry_id ) {
+        $customer_email = get_post_meta( $entry_id, '_customer_email', true );
+        $customer_name  = get_post_meta( $entry_id, '_customer_name', true );
+        $product_id     = get_post_meta( $entry_id, '_product_id', true );
+        $event_date     = get_post_meta( $entry_id, '_event_date', true );
+        $token          = get_post_meta( $entry_id, '_waitlist_token', true );
+        $expires_at     = get_post_meta( $entry_id, '_expires_at', true );
+
+        $product    = wc_get_product( $product_id );
+        $event_name = $product ? $product->get_name() : __( 'Event', 'zen-bookpro' );
+
+        // Extract event time label
+        $event_time   = 'N/A';
+        $slot_service = new ZBP_Slot_Service();
+        $slot_data    = $slot_service->get_slots_for_product( $product_id, $event_date, 'event', true );
+        if ( ! empty( $slot_data['slots'] ) ) {
+            $first_slot = $slot_data['slots'][0];
+            $event_time = ! empty( $first_slot['label'] ) ? $first_slot['label'] : 'N/A';
+        }
+
+        // Build checkout link
+        $checkout_url = add_query_arg(
+            array(
+                'zbp_waitlist_invite' => $entry_id,
+                'zbp_token'           => $token,
+            ),
+            function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout' )
+        );
+
+        $formatted_expiry = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), intval( $expires_at ) );
+
+        $to      = $customer_email;
+        $subject = sprintf( __( 'Invitation: Spot available for %s', 'zen-bookpro' ), $event_name );
+
+        $message  = sprintf( __( 'Hi %s,', 'zen-bookpro' ), $customer_name ) . "\r\n\r\n";
+        $message .= sprintf( __( 'Good news! A seat has become available for "%s".', 'zen-bookpro' ), $event_name ) . "\r\n\r\n";
+        $message .= __( 'Event Details:', 'zen-bookpro' ) . "\r\n";
+        $message .= sprintf( __( '- Event: %s', 'zen-bookpro' ), $event_name ) . "\r\n";
+        $message .= sprintf( __( '- Date: %s', 'zen-bookpro' ), $event_date ) . "\r\n";
+        $message .= sprintf( __( '- Time: %s', 'zen-bookpro' ), $event_time ) . "\r\n\r\n";
+        $message .= __( 'Please note that you have a 20-minute reservation window to complete your booking. After this time, your invitation will expire, and the seat will be offered to the next person in line.', 'zen-bookpro' ) . "\r\n\r\n";
+        $message .= sprintf( __( 'Invitation Expires: %s', 'zen-bookpro' ), $formatted_expiry ) . "\r\n\r\n";
+        $message .= __( 'Click the link below to complete your booking (1-click checkout):', 'zen-bookpro' ) . "\r\n";
+        $message .= $checkout_url . "\r\n\r\n";
+        $message .= __( 'Thank you,', 'zen-bookpro' ) . "\r\n";
+        $message .= get_bloginfo( 'name' );
+
+        $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+
+        wp_mail( $to, $subject, $message, $headers );
+    }
 }

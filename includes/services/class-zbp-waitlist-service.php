@@ -32,6 +32,7 @@ class ZBP_Waitlist_Service {
         // Seat availability listeners
         add_action( 'woocommerce_booking_status_changed', array( $this, 'handle_booking_status_change' ), 10, 3 );
         add_action( 'trashed_post', array( $this, 'handle_booking_trashed' ) );
+        add_action( 'zbp_waitlist_prepare_invitations', array( $this, 'process_invitations' ), 10, 4 );
     }
 
     /**
@@ -472,6 +473,53 @@ class ZBP_Waitlist_Service {
         }
 
         $this->process_cancellation( $booking );
+    }
+
+    /**
+     * Process invitations for the next eligible waitlist entries.
+     *
+     * @param array  $eligible_entries Array of eligible waitlist WP_Post objects.
+     * @param int    $product_id       Product ID.
+     * @param string $event_date       Event date (Y-m-d).
+     * @param int    $available_seats  Available seats count.
+     * @return void
+     */
+    public function process_invitations( $eligible_entries, $product_id, $event_date, $available_seats ) {
+        if ( empty( $eligible_entries ) ) {
+            return;
+        }
+
+        $email_service = new ZBP_Email_Service();
+
+        foreach ( $eligible_entries as $entry ) {
+            if ( ! $entry || ! is_a( $entry, 'WP_Post' ) ) {
+                continue;
+            }
+
+            $entry_id = $entry->ID;
+
+            // Double check status to prevent race conditions
+            $status = get_post_meta( $entry_id, '_waitlist_status', true );
+            if ( 'waiting' !== $status ) {
+                continue;
+            }
+
+            // Generate secure token
+            $token = wp_generate_password( 32, false );
+
+            // Compute timestamps
+            $invited_at = time();
+            $expires_at = $invited_at + ( 20 * MINUTE_IN_SECONDS );
+
+            // Update meta-data
+            update_post_meta( $entry_id, '_waitlist_status', 'invited' );
+            update_post_meta( $entry_id, '_invited_at', $invited_at );
+            update_post_meta( $entry_id, '_expires_at', $expires_at );
+            update_post_meta( $entry_id, '_waitlist_token', $token );
+
+            // Dispatch invitation email
+            $email_service->send_waitlist_invitation( $entry_id );
+        }
     }
 
     /**
