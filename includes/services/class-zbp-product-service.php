@@ -377,6 +377,14 @@ class ZBP_Product_Service {
                     } elseif ( $booked_spots >= $max_spots ) {
                         $event_status = 'waitlist';
                     }
+
+                    if ( is_user_logged_in() ) {
+                        $user_id = get_current_user_id();
+                        $waitlist_service = new ZBP_Waitlist_Service();
+                        if ( $waitlist_service->is_user_on_waitlist( $user_id, $product_id, $selected_date ) ) {
+                            $event_status = 'on_waitlist';
+                        }
+                    }
                 }
             }
 

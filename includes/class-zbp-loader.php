@@ -18,6 +18,9 @@ class ZBP_Loader {
         $email_service = new ZBP_Email_Service();
         $email_service->register();
 
+        $waitlist_service = new ZBP_Waitlist_Service();
+        $waitlist_service->register();
+
         if ( is_admin() ) {
             $admin = new ZBP_Admin( $product_service );
             $admin->register();

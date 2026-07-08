@@ -560,7 +560,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                                 <div class="zbp-event-actions">
 
-                                    <button class="zbp-ended-btn" type="button"><?php esc_html_e( 'Class Ended', 'zen-bookpro' ); ?></button>
+                                    <?php
+                                    $event_status = ! empty( $product['event_status'] ) ? $product['event_status'] : 'join';
+                                    $btn_text     = __( 'Join', 'zen-bookpro' );
+                                    $btn_class    = 'zbp-join-btn';
+                                    $disabled     = '';
+
+                                    if ( 'cancelled' === $event_status ) {
+                                        $btn_text  = __( 'Class Canceled', 'zen-bookpro' );
+                                        $btn_class = 'zbp-join-btn is-cancelled';
+                                        $disabled  = ' disabled aria-disabled="true"';
+                                    } elseif ( 'ended' === $event_status ) {
+                                        $btn_text  = __( 'Class Ended', 'zen-bookpro' );
+                                        $btn_class = 'zbp-ended-btn';
+                                        $disabled  = ' disabled aria-disabled="true"';
+                                    } elseif ( 'on_waitlist' === $event_status ) {
+                                        $btn_text  = __( 'Leave Waitlist', 'zen-bookpro' );
+                                        $btn_class = 'zbp-join-btn is-on-waitlist';
+                                    } elseif ( 'waitlist' === $event_status ) {
+                                        $btn_text  = __( 'Join Waitlist', 'zen-bookpro' );
+                                        $btn_class = 'zbp-join-btn is-waitlist';
+                                    }
+                                    ?>
+                                    <button
+                                        class="<?php echo esc_attr( $btn_class ); ?>"
+                                        type="button"
+                                        data-product-id="<?php echo esc_attr( $product['id'] ); ?>"
+                                        data-product-name="<?php echo esc_attr( $product['title'] ); ?>"
+                                        data-product-zencoins="<?php echo esc_attr( $booking_coin_cost ); ?>"
+                                        data-product-image="<?php echo esc_url( $popup_image ); ?>"
+                                        data-product-mode="<?php echo esc_attr( $product['mode'] ); ?>"
+                                        data-product-duration-minutes="<?php echo esc_attr( isset( $product['booking_duration_minutes'] ) ? (int) $product['booking_duration_minutes'] : 0 ); ?>"
+                                        data-product-description="<?php echo esc_attr( isset( $product['description'] ) ? $product['description'] : '' ); ?>"
+                                        data-product-cancellation-policy="<?php echo esc_attr( isset( $product['cancellation_policy'] ) ? $product['cancellation_policy'] : '' ); ?>"
+                                        data-product-instructor="<?php echo esc_attr( isset( $product['zen_instructor'] ) ? $product['zen_instructor'] : '' ); ?>"
+                                        data-product-location="<?php echo esc_attr( isset( $product['location'] ) ? $product['location'] : '' ); ?>"
+                                        data-product-experience-category="<?php echo esc_attr( isset( $product['experience_category'] ) ? $product['experience_category'] : '' ); ?>"
+                                        data-product-slots="<?php echo esc_attr( wp_json_encode( isset( $product['slots'] ) ? $product['slots'] : array() ) ); ?>"
+                                        data-product-gallery="<?php echo esc_attr( wp_json_encode( isset( $product['gallery'] ) ? $product['gallery'] : array() ) ); ?>"
+                                        <?php echo $disabled; ?>
+                                    ><?php echo esc_html( $btn_text ); ?></button>
 
                                 </div>
 

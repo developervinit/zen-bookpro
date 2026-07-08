@@ -691,11 +691,13 @@
 
                     var isCancelled = product.event_status === 'cancelled';
 
-                    var isWaitlist = !isEnded && !isCancelled && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
+                    var isOnWaitlist = product.event_status === 'on_waitlist';
 
-                    var btnText = isCancelled ? 'Class Canceled' : (isEnded ? 'Class Ended' : (isWaitlist ? 'Join Waitlist' : 'Join'));
+                    var isWaitlist = !isEnded && !isCancelled && !isOnWaitlist && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
 
-                    var btnClass = isCancelled ? 'zbp-join-btn is-cancelled' : (isEnded ? 'zbp-join-btn is-ended' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn'));
+                    var btnText = isCancelled ? 'Class Canceled' : (isEnded ? 'Class Ended' : (isOnWaitlist ? 'Leave Waitlist' : (isWaitlist ? 'Join Waitlist' : 'Join')));
+
+                    var btnClass = isCancelled ? 'zbp-join-btn is-cancelled' : (isEnded ? 'zbp-join-btn is-ended' : (isOnWaitlist ? 'zbp-join-btn is-on-waitlist' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn')));
 
                     var btnDisabledAttr = (isEnded || isCancelled) ? ' disabled aria-disabled="true"' : '';
 
@@ -1731,7 +1733,95 @@
                 }
             }
 
+            function joinWaitlist(joinBtn) {
+                var productId = joinBtn.getAttribute("data-product-id");
+                var dateKey = formatDateKey(selectedDate);
 
+                if (!productId) return;
+
+                joinBtn.disabled = true;
+                joinBtn.textContent = "Joining...";
+
+                var payload = new URLSearchParams();
+                payload.append("action", "zbp_join_waitlist");
+                payload.append("product_id", productId);
+                payload.append("date", dateKey);
+                payload.append("nonce", zbpAjax.nonce || "");
+
+                fetch(zbpAjax.ajaxUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    body: payload.toString(),
+                    credentials: "same-origin",
+                })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data && data.success) {
+                        fetchSlots(dateKey, wrapper, productList);
+                    } else {
+                        alert(data && data.data && data.data.message ? data.data.message : "Failed to join waitlist.");
+                        joinBtn.disabled = false;
+                        joinBtn.textContent = "Join Waitlist";
+                    }
+                })
+                .catch(function (error) {
+                    console.error("Join Waitlist Error:", error);
+                    alert("An error occurred while joining the waitlist.");
+                    joinBtn.disabled = false;
+                    joinBtn.textContent = "Join Waitlist";
+                });
+            }
+
+            function leaveWaitlist(joinBtn) {
+                var productId = joinBtn.getAttribute("data-product-id");
+                var dateKey = formatDateKey(selectedDate);
+
+                if (!productId) return;
+
+                if (!confirm("Are you sure you want to leave the waitlist?")) {
+                    return;
+                }
+
+                joinBtn.disabled = true;
+                joinBtn.textContent = "Leaving...";
+
+                var payload = new URLSearchParams();
+                payload.append("action", "zbp_leave_waitlist");
+                payload.append("product_id", productId);
+                payload.append("date", dateKey);
+                payload.append("nonce", zbpAjax.nonce || "");
+
+                fetch(zbpAjax.ajaxUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    body: payload.toString(),
+                    credentials: "same-origin",
+                })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data && data.success) {
+                        fetchSlots(dateKey, wrapper, productList);
+                    } else {
+                        alert(data && data.data && data.data.message ? data.data.message : "Failed to leave waitlist.");
+                        joinBtn.disabled = false;
+                        joinBtn.textContent = "Leave Waitlist";
+                    }
+                })
+                .catch(function (error) {
+                    console.error("Leave Waitlist Error:", error);
+                    alert("An error occurred while leaving the waitlist.");
+                    joinBtn.disabled = false;
+                    joinBtn.textContent = "Leave Waitlist";
+                });
+            }
 
             // Custom Dropdown Event Delegation
 
@@ -1858,6 +1948,15 @@
 
                             return;
 
+                        }
+
+                        var btnText = joinBtn.textContent.trim();
+                        if (btnText === "Join Waitlist") {
+                            joinWaitlist(joinBtn);
+                            return;
+                        } else if (btnText === "Leave Waitlist") {
+                            leaveWaitlist(joinBtn);
+                            return;
                         }
 
                         console.log("ZBP Booking Mode Debug:", joinBtn.getAttribute("data-product-mode") || "");
