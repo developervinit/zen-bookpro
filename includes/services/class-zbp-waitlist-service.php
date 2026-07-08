@@ -336,7 +336,7 @@ class ZBP_Waitlist_Service {
             wp_send_json_error( array( 'message' => __( 'Product not found.', 'zen-bookpro' ) ) );
         }
 
-        $mode = get_post_meta( $product_id, '_zbp_booking_mode', true );
+        $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
         if ( 'event' !== $mode ) {
             wp_send_json_error( array( 'message' => __( 'Waitlist is only supported for Event products.', 'zen-bookpro' ) ) );
         }
@@ -603,7 +603,7 @@ class ZBP_Waitlist_Service {
         }
 
         // Check if the product is in 'event' booking mode
-        $mode = get_post_meta( $product_id, '_zbp_booking_mode', true );
+        $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
         if ( 'event' !== $mode ) {
             return;
         }
@@ -964,7 +964,7 @@ class ZBP_Waitlist_Service {
             return $passed;
         }
 
-        $mode = get_post_meta( $product_id, '_zbp_booking_mode', true );
+        $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
         if ( 'event' !== $mode ) {
             return $passed;
         }
@@ -1229,7 +1229,7 @@ class ZBP_Waitlist_Service {
 
         $event_products = array();
         foreach ( $products as $prod ) {
-            if ( 'event' === get_post_meta( $prod->get_id(), '_zbp_booking_mode', true ) ) {
+            if ( 'event' === get_post_meta( $prod->get_id(), '_zbp_product_mode', true ) ) {
                 $event_products[] = $prod;
             }
         }

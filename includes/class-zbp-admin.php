@@ -260,7 +260,7 @@ class ZBP_Admin {
         $bookable_products = $this->product_service->get_all_bookable_products();
         $event_products    = array();
         foreach ( $bookable_products as $prod ) {
-            if ( 'event' === get_post_meta( $prod->get_id(), '_zbp_booking_mode', true ) ) {
+            if ( 'event' === get_post_meta( $prod->get_id(), '_zbp_product_mode', true ) ) {
                 $event_products[] = $prod;
             }
         }
