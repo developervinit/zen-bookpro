@@ -47,6 +47,13 @@ class ZBP_Waitlist_Service {
 
         // Action Scheduler Expiry Action
         add_action( 'zbp_waitlist_check_expiry', array( $this, 'handle_waitlist_expiry' ) );
+
+        // Admin Read-only and Filter/Search handlers
+        add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
+        add_filter( 'bulk_actions-edit-zbp_waitlist', array( $this, 'remove_bulk_actions' ) );
+        add_action( 'admin_init', array( $this, 'restrict_waitlist_editing' ) );
+        add_action( 'restrict_manage_posts', array( $this, 'add_admin_filters' ) );
+        add_action( 'pre_get_posts', array( $this, 'apply_admin_filters' ) );
     }
 
     /**
@@ -80,6 +87,10 @@ class ZBP_Waitlist_Service {
             'query_var'          => true,
             'rewrite'            => false,
             'capability_type'    => 'post',
+            'capabilities'       => array(
+                'create_posts' => 'do_not_allow', // Disable "Add New" button
+            ),
+            'map_meta_cap'       => true,
             'has_archive'        => false,
             'hierarchical'       => false,
             'menu_position'      => null,
@@ -381,14 +392,16 @@ class ZBP_Waitlist_Service {
      */
     public function manage_waitlist_columns( $columns ) {
         $new_columns = array(
-            'cb'                => $columns['cb'],
-            'title'             => $columns['title'],
-            'customer'          => __( 'Customer', 'zen-bookpro' ),
-            'product'           => __( 'Event Product', 'zen-bookpro' ),
-            'date'              => __( 'Event Date', 'zen-bookpro' ),
-            'waitlist_status'   => __( 'Status', 'zen-bookpro' ),
-            'waitlist_priority' => __( 'Priority', 'zen-bookpro' ),
-            'joined_at'         => __( 'Joined At', 'zen-bookpro' ),
+            'cb'                 => $columns['cb'],
+            'title'              => $columns['title'],
+            'customer'           => __( 'Customer', 'zen-bookpro' ),
+            'product'            => __( 'Event Product', 'zen-bookpro' ),
+            'date'               => __( 'Event Date', 'zen-bookpro' ),
+            'waitlist_status'    => __( 'Status', 'zen-bookpro' ),
+            'waitlist_priority'  => __( 'Priority', 'zen-bookpro' ),
+            'joined_at'          => __( 'Joined At', 'zen-bookpro' ),
+            'invitation_sent_at' => __( 'Invitation Sent At', 'zen-bookpro' ),
+            'invitation_expires' => __( 'Invitation Expires At', 'zen-bookpro' ),
         );
         return $new_columns;
     }
@@ -450,6 +463,14 @@ class ZBP_Waitlist_Service {
             case 'joined_at':
                 $joined = get_post_meta( $post_id, '_joined_at', true );
                 echo esc_html( $joined ? wp_date( get_option( 'date_format' ) . ' H:i', intval( $joined ) ) : '—' );
+                break;
+            case 'invitation_sent_at':
+                $sent = get_post_meta( $post_id, '_invited_at', true );
+                echo esc_html( $sent ? wp_date( get_option( 'date_format' ) . ' H:i', intval( $sent ) ) : '—' );
+                break;
+            case 'invitation_expires':
+                $expires = get_post_meta( $post_id, '_expires_at', true );
+                echo esc_html( $expires ? wp_date( get_option( 'date_format' ) . ' H:i', intval( $expires ) ) : '—' );
                 break;
         }
     }
@@ -1131,5 +1152,172 @@ class ZBP_Waitlist_Service {
 
         // Fire custom WordPress action to prepare these entries (modular hook for step 3)
         do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
+    }
+
+    /**
+     * Remove row actions for read-only waitlist posts.
+     *
+     * @param array   $actions Row actions.
+     * @param WP_Post $post    Post object.
+     * @return array
+     */
+    public function remove_row_actions( $actions, $post ) {
+        if ( 'zbp_waitlist' === $post->post_type ) {
+            return array();
+        }
+        return $actions;
+    }
+
+    /**
+     * Remove bulk actions for waitlist posts.
+     *
+     * @param array $actions Bulk actions.
+     * @return array
+     */
+    public function remove_bulk_actions( $actions ) {
+        return array();
+    }
+
+    /**
+     * Block direct access to single post editing page.
+     *
+     * @return void
+     */
+    public function restrict_waitlist_editing() {
+        global $pagenow;
+        if ( 'post.php' === $pagenow && isset( $_GET['post'] ) ) {
+            $post_id = absint( $_GET['post'] );
+            if ( 'zbp_waitlist' === get_post_type( $post_id ) ) {
+                wp_die( esc_html__( 'Waitlist entries are read-only.', 'zen-bookpro' ) );
+            }
+        }
+    }
+
+    /**
+     * Render custom filters on the waitlist CPT list table.
+     *
+     * @param string $post_type Custom Post Type key.
+     * @return void
+     */
+    public function add_admin_filters( $post_type ) {
+        if ( 'zbp_waitlist' !== $post_type ) {
+            return;
+        }
+
+        // 1. Filter by Product (Event Mode Only)
+        $selected_product = isset( $_GET['zbp_filter_product'] ) ? absint( $_GET['zbp_filter_product'] ) : 0;
+        $products = wc_get_products( array(
+            'status' => 'publish',
+            'type'   => 'booking',
+            'limit'  => -1,
+        ) );
+
+        $event_products = array();
+        foreach ( $products as $prod ) {
+            if ( 'event' === get_post_meta( $prod->get_id(), '_zbp_booking_mode', true ) ) {
+                $event_products[] = $prod;
+            }
+        }
+
+        echo '<select name="zbp_filter_product" id="zbp_filter_product">';
+        echo '<option value="">' . esc_html__( 'All Event Products', 'zen-bookpro' ) . '</option>';
+        foreach ( $event_products as $prod ) {
+            printf(
+                '<option value="%d" %s>%s</option>',
+                $prod->get_id(),
+                selected( $selected_product, $prod->get_id(), false ),
+                esc_html( $prod->get_name() )
+            );
+        }
+        echo '</select>';
+
+        // 2. Filter by Waitlist Status
+        $selected_status = isset( $_GET['zbp_filter_status'] ) ? sanitize_text_field( $_GET['zbp_filter_status'] ) : '';
+        $statuses = array(
+            'waiting' => __( 'Waiting', 'zen-bookpro' ),
+            'invited' => __( 'Invited', 'zen-bookpro' ),
+            'booked'  => __( 'Booked', 'zen-bookpro' ),
+            'expired' => __( 'Expired', 'zen-bookpro' ),
+            'left'    => __( 'Left', 'zen-bookpro' ),
+        );
+
+        echo '<select name="zbp_filter_status" id="zbp_filter_status">';
+        echo '<option value="">' . esc_html__( 'All Statuses', 'zen-bookpro' ) . '</option>';
+        foreach ( $statuses as $key => $label ) {
+            printf(
+                '<option value="%s" %s>%s</option>',
+                $key,
+                selected( $selected_status, $key, false ),
+                esc_html( $label )
+            );
+        }
+        echo '</select>';
+
+        // 3. Filter by Event Date
+        $selected_date = isset( $_GET['zbp_filter_date'] ) ? sanitize_text_field( $_GET['zbp_filter_date'] ) : '';
+        echo '<input type="date" name="zbp_filter_date" value="' . esc_attr( $selected_date ) . '" style="vertical-align: middle; height: 30px;" />';
+    }
+
+    /**
+     * Apply admin filters and extend search to customer fields.
+     *
+     * @param WP_Query $query The WP_Query instance.
+     * @return void
+     */
+    public function apply_admin_filters( $query ) {
+        if ( ! is_admin() || ! $query->is_main_query() || 'edit.php' !== $GLOBALS['pagenow'] || 'zbp_waitlist' !== $query->get( 'post_type' ) ) {
+            return;
+        }
+
+        $meta_query = array();
+
+        // Handle Product filter
+        if ( isset( $_GET['zbp_filter_product'] ) && '' !== $_GET['zbp_filter_product'] ) {
+            $meta_query[] = array(
+                'key'   => '_product_id',
+                'value' => absint( $_GET['zbp_filter_product'] ),
+            );
+        }
+
+        // Handle Status filter
+        if ( isset( $_GET['zbp_filter_status'] ) && '' !== $_GET['zbp_filter_status'] ) {
+            $meta_query[] = array(
+                'key'   => '_waitlist_status',
+                'value' => sanitize_text_field( $_GET['zbp_filter_status'] ),
+            );
+        }
+
+        // Handle Date filter
+        if ( isset( $_GET['zbp_filter_date'] ) && '' !== $_GET['zbp_filter_date'] ) {
+            $meta_query[] = array(
+                'key'   => '_event_date',
+                'value' => sanitize_text_field( $_GET['zbp_filter_date'] ),
+            );
+        }
+
+        // Handle search keyword extension
+        $search_term = $query->get( 's' );
+        if ( ! empty( $search_term ) ) {
+            // Unset standard post title search so we search meta properties purely
+            $query->set( 's', '' );
+            
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_customer_name',
+                    'value'   => $search_term,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => '_customer_email',
+                    'value'   => $search_term,
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        if ( ! empty( $meta_query ) ) {
+            $query->set( 'meta_query', $meta_query );
+        }
     }
 }
