@@ -1251,7 +1251,34 @@
                 document.body.dispatchEvent(new CustomEvent("added_to_cart"));
             }
 
-            function ajaxAddBookingToCart(addToCartUrl) {
+            function validateBookingCanAdd(productId) {
+                var payload = new URLSearchParams();
+
+                payload.append("action", "zbp_validate_booking_add_to_cart");
+                payload.append("product_id", String(productId || 0));
+                payload.append("nonce", zbpAjax.nonce || "");
+
+                return fetch(zbpAjax.ajaxUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    body: payload.toString(),
+                    credentials: "same-origin"
+                })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (result) {
+                        if (result && result.success) {
+                            return true;
+                        }
+
+                        throw new Error(result && result.data && result.data.message ? result.data.message : "Unable to add this booking. Please try again.");
+                    });
+            }
+
+            function ajaxAddBookingToCart(addToCartUrl, productId) {
                 if (!addToCartUrl) {
                     showJoinNotice("Unable to prepare this booking. Please try again.", "error");
                     return;
@@ -1265,24 +1292,22 @@
                     joinActionSubmit.classList.add("is-loading");
                 }
 
-                fetch(addToCartUrl, {
-                    method: "GET",
-                    credentials: "same-origin",
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                })
+                validateBookingCanAdd(productId)
+                    .then(function () {
+                        return fetch(addToCartUrl, {
+                            method: "GET",
+                            credentials: "same-origin",
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        });
+                    })
                     .then(function (response) {
                         return response.text();
                     })
                     .then(function (html) {
                         var noticeDoc = parseWooCommerceNotices(html);
                         var errorMessage = extractWooCommerceError(noticeDoc);
-
-                        if (hasWooCommerceSuccess(noticeDoc)) {
-                            openCheckoutPopupAfterBooking();
-                            return;
-                        }
 
                         if (errorMessage) {
                             showJoinNotice(errorMessage, "error");
@@ -1291,8 +1316,8 @@
 
                         openCheckoutPopupAfterBooking();
                     })
-                    .catch(function () {
-                        showJoinNotice("Unable to add this booking. Please try again.", "error");
+                    .catch(function (error) {
+                        showJoinNotice(error && error.message ? error.message : "Unable to add this booking. Please try again.", "error");
                     })
                     .finally(function () {
                         if (joinActionSubmit) {
@@ -1302,7 +1327,6 @@
                         }
                     });
             }
-
             function updateJoinModalZencoins(value) {
                 var normalizedValue = String(value || "0");
                 var zencoinWrap = wrapper.querySelector(".zbp-join-zencoins");
@@ -2199,7 +2223,7 @@
 
                     var addToCartUrl = buildAddToCartUrl(joinModalProductId, selectedSlotValue);
 
-                    ajaxAddBookingToCart(addToCartUrl);
+                    ajaxAddBookingToCart(addToCartUrl, joinModalProductId);
                 });
 
             }

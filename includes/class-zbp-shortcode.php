@@ -30,6 +30,8 @@ class ZBP_Shortcode {
         add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
         add_action( 'wp_ajax_zbp_get_slots', array( $this, 'ajax_get_slots' ) );
         add_action( 'wp_ajax_nopriv_zbp_get_slots', array( $this, 'ajax_get_slots' ) );
+        add_action( 'wp_ajax_zbp_validate_booking_add_to_cart', array( $this, 'ajax_validate_booking_add_to_cart' ) );
+        add_action( 'wp_ajax_nopriv_zbp_validate_booking_add_to_cart', array( $this, 'ajax_validate_booking_add_to_cart' ) );
     }
 
     /**
@@ -151,6 +153,133 @@ class ZBP_Shortcode {
         );
     }
 
+    /**
+     * Validate the booking cart state before the front-end fires Woo add-to-cart.
+     *
+     * @return void
+     */
+    public function ajax_validate_booking_add_to_cart() {
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+
+        if ( ! wp_verify_nonce( $nonce, 'zbp_get_slots' ) ) {
+            wp_send_json_error(
+                array(
+                    'message' => __( 'Invalid request.', 'zen-bookpro' ),
+                ),
+                403
+            );
+        }
+
+        $product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
+
+        if ( $product_id <= 0 ) {
+            wp_send_json_error(
+                array(
+                    'message' => __( 'Unable to prepare this booking. Please try again.', 'zen-bookpro' ),
+                ),
+                400
+            );
+        }
+
+        $this->ensure_wc_cart();
+
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            wp_send_json_error(
+                array(
+                    'message' => __( 'Unable to read your cart. Please refresh and try again.', 'zen-bookpro' ),
+                ),
+                500
+            );
+        }
+
+        if ( $this->cart_has_booking_item() && $this->is_booking_product( $product_id ) ) {
+            wp_send_json_error(
+                array(
+                    'message' => __( 'Please book one class, workshop, event, or Fire & Ice session at a time.', 'zen-bookpro' ),
+                ),
+                409
+            );
+        }
+
+        wp_send_json_success(
+            array(
+                'message' => __( 'Booking can be added to cart.', 'zen-bookpro' ),
+            )
+        );
+    }
+
+    /**
+     * Ensure the Woo cart is available during admin-ajax requests.
+     *
+     * @return void
+     */
+    private function ensure_wc_cart() {
+        if ( function_exists( 'WC' ) && WC()->cart ) {
+            return;
+        }
+
+        if ( function_exists( 'wc_load_cart' ) ) {
+            wc_load_cart();
+        }
+    }
+
+    /**
+     * Check whether the cart already contains a booking item.
+     *
+     * @return bool
+     */
+    private function cart_has_booking_item() {
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            return false;
+        }
+
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( ! empty( $cart_item['booking'] ) ) {
+                return true;
+            }
+
+            if ( ! empty( $cart_item['data'] ) && $cart_item['data'] instanceof WC_Product && $cart_item['data']->is_type( array( 'booking', 'bookable' ) ) ) {
+                return true;
+            }
+
+            $cart_product_id = ! empty( $cart_item['product_id'] ) ? absint( $cart_item['product_id'] ) : 0;
+            $variation_id    = ! empty( $cart_item['variation_id'] ) ? absint( $cart_item['variation_id'] ) : 0;
+
+            if ( $cart_product_id && $this->is_booking_product( $variation_id ? $variation_id : $cart_product_id ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check whether a product is a booking product.
+     *
+     * @param int $product_id Product ID.
+     * @return bool
+     */
+    private function is_booking_product( $product_id ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return false;
+        }
+
+        $product = wc_get_product( $product_id );
+
+        if ( $product instanceof WC_Product && $product->is_type( array( 'booking', 'bookable' ) ) ) {
+            return true;
+        }
+
+        if ( (float) get_post_meta( $product_id, '_cbb_booking_coin_cost', true ) > 0 ) {
+            return true;
+        }
+
+        if ( $product instanceof WC_Product && $product->get_parent_id() && (float) get_post_meta( $product->get_parent_id(), '_cbb_booking_coin_cost', true ) > 0 ) {
+            return true;
+        }
+
+        return false;
+    }
     /**
      * Render shortcode template.
      *
