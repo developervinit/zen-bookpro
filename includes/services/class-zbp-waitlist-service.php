@@ -44,6 +44,9 @@ class ZBP_Waitlist_Service {
         // Booking completion listeners
         add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_line_item_meta' ), 10, 4 );
         add_action( 'woocommerce_new_booking', array( $this, 'handle_new_booking' ) );
+
+        // Action Scheduler Expiry Action
+        add_action( 'zbp_waitlist_check_expiry', array( $this, 'handle_waitlist_expiry' ) );
     }
 
     /**
@@ -432,6 +435,12 @@ class ZBP_Waitlist_Service {
 
                 if ( 'waiting' === $status ) {
                     echo '<span style="' . $badge_style . ' background: #e3f2fd; color: #1565c0;">' . esc_html( $status_label ) . '</span>';
+                } elseif ( 'invited' === $status ) {
+                    echo '<span style="' . $badge_style . ' background: #fff3e0; color: #e65100;">' . esc_html( $status_label ) . '</span>';
+                } elseif ( 'booked' === $status ) {
+                    echo '<span style="' . $badge_style . ' background: #e8f5e9; color: #2e7d32;">' . esc_html( $status_label ) . '</span>';
+                } elseif ( 'expired' === $status ) {
+                    echo '<span style="' . $badge_style . ' background: #eceff1; color: #37474f;">' . esc_html( $status_label ) . '</span>';
                 } elseif ( 'left' === $status ) {
                     echo '<span style="' . $badge_style . ' background: #ffebee; color: #b71c1c;">' . esc_html( $status_label ) . '</span>';
                 } else {
@@ -527,6 +536,11 @@ class ZBP_Waitlist_Service {
             update_post_meta( $entry_id, '_invited_at', $invited_at );
             update_post_meta( $entry_id, '_expires_at', $expires_at );
             update_post_meta( $entry_id, '_waitlist_token', $token );
+
+            // Schedule single expiry action via Action Scheduler
+            if ( function_exists( 'as_schedule_single_action' ) ) {
+                as_schedule_single_action( $expires_at, 'zbp_waitlist_check_expiry', array( 'entry_id' => $entry_id ) );
+            }
 
             // Dispatch invitation email
             $email_service->send_waitlist_invitation( $entry_id );
@@ -1060,9 +1074,62 @@ class ZBP_Waitlist_Service {
         update_post_meta( $invite_id, '_booking_id', $booking_id );
         delete_post_meta( $invite_id, '_waitlist_priority' );
 
+        // Unschedule Action Scheduler expiry check
+        if ( function_exists( 'as_unschedule_action' ) ) {
+            as_unschedule_action( 'zbp_waitlist_check_expiry', array( 'entry_id' => $invite_id ) );
+        }
+
         // Recalculate priorities of the remaining waiting queue
         if ( $product_id && $event_date ) {
             $this->recalculate_priorities( $product_id, $event_date );
         }
+    }
+
+    /**
+     * Handle waitlist invitation expiration check via Action Scheduler.
+     *
+     * @param int $entry_id Waitlist entry ID.
+     * @return void
+     */
+    public function handle_waitlist_expiry( $entry_id ) {
+        $entry_id = absint( $entry_id );
+        if ( ! $entry_id ) {
+            return;
+        }
+
+        $status = get_post_meta( $entry_id, '_waitlist_status', true );
+        if ( 'invited' !== $status ) {
+            return; // Already booked, left, or expired
+        }
+
+        // Get product ID and date before we change the status
+        $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
+        $event_date = get_post_meta( $entry_id, '_event_date', true );
+
+        // Update status to expired and delete priority
+        update_post_meta( $entry_id, '_waitlist_status', 'expired' );
+        delete_post_meta( $entry_id, '_waitlist_priority' );
+
+        if ( ! $product_id || empty( $event_date ) ) {
+            return;
+        }
+
+        // Recalculate priorities of the remaining waiting queue
+        $this->recalculate_priorities( $product_id, $event_date );
+
+        // Calculate available seats
+        $available_seats = $this->calculate_available_seats( $product_id, $event_date );
+        if ( $available_seats <= 0 ) {
+            return;
+        }
+
+        // Identify the next eligible customers from the waitlist
+        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, $available_seats );
+        if ( empty( $eligible_entries ) ) {
+            return;
+        }
+
+        // Fire custom WordPress action to prepare these entries (modular hook for step 3)
+        do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
     }
 }
