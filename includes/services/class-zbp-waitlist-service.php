@@ -550,7 +550,22 @@ class ZBP_Waitlist_Service {
 
             // Compute timestamps
             $invited_at = time();
-            $expires_at = $invited_at + ( 20 * MINUTE_IN_SECONDS );
+
+            $expiry_value = (int) get_option( 'zbp_waitlist_expiry_value', 20 );
+            $expiry_unit  = get_option( 'zbp_waitlist_expiry_unit', 'minutes' );
+            switch ( $expiry_unit ) {
+                case 'hours':
+                    $seconds = $expiry_value * HOUR_IN_SECONDS;
+                    break;
+                case 'days':
+                    $seconds = $expiry_value * DAY_IN_SECONDS;
+                    break;
+                case 'minutes':
+                default:
+                    $seconds = $expiry_value * MINUTE_IN_SECONDS;
+                    break;
+            }
+            $expires_at = $invited_at + $seconds;
 
             // Update meta-data
             update_post_meta( $entry_id, '_waitlist_status', 'invited' );

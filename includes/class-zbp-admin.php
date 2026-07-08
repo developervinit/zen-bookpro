@@ -65,6 +65,26 @@ class ZBP_Admin {
             'zbp_selected_product_ids',
             array( $this, 'sanitize_selected_product_ids' )
         );
+
+        register_setting(
+            'zbp_settings_group',
+            'zbp_waitlist_expiry_value',
+            array(
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                'default'           => 20,
+            )
+        );
+
+        register_setting(
+            'zbp_settings_group',
+            'zbp_waitlist_expiry_unit',
+            array(
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default'           => 'minutes',
+            )
+        );
     }
 
     /**
@@ -123,6 +143,30 @@ class ZBP_Admin {
 
                 <form method="post" action="options.php">
                     <?php settings_fields( 'zbp_settings_group' ); ?>
+
+                    <!-- Expiry Settings Section -->
+                    <div style="background: #fff; padding: 18px; border: 1px solid #ccd0d4; border-radius: 4px; margin-bottom: 20px; max-width: 1062px;">
+                        <h2 style="margin-top:0; font-size:16px; border-bottom:1px solid #eee; padding-bottom:8px;"><?php esc_html_e( 'Waitlist Expiry Settings', 'zen-bookpro' ); ?></h2>
+                        <p style="margin-bottom:15px; color:#666;"><?php esc_html_e( 'Configure how long an invited customer has to respond before their waitlist invitation expires.', 'zen-bookpro' ); ?></p>
+                        
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <label for="zbp_waitlist_expiry_value" style="font-weight: bold;"><?php esc_html_e( 'Waitlist Response Time:', 'zen-bookpro' ); ?></label>
+                            <input
+                                type="number"
+                                id="zbp_waitlist_expiry_value"
+                                name="zbp_waitlist_expiry_value"
+                                value="<?php echo esc_attr( get_option( 'zbp_waitlist_expiry_value', 20 ) ); ?>"
+                                min="1"
+                                style="width: 80px;"
+                                required
+                            />
+                            <select name="zbp_waitlist_expiry_unit" style="min-width: 120px;">
+                                <option value="minutes" <?php selected( get_option( 'zbp_waitlist_expiry_unit', 'minutes' ), 'minutes' ); ?>><?php esc_html_e( 'Minutes', 'zen-bookpro' ); ?></option>
+                                <option value="hours" <?php selected( get_option( 'zbp_waitlist_expiry_unit', 'hours' ), 'hours' ); ?>><?php esc_html_e( 'Hours', 'zen-bookpro' ); ?></option>
+                                <option value="days" <?php selected( get_option( 'zbp_waitlist_expiry_unit', 'days' ), 'days' ); ?>><?php esc_html_e( 'Days', 'zen-bookpro' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
 
                     <table class="widefat striped" style="max-width: 1100px;">
                         <thead>

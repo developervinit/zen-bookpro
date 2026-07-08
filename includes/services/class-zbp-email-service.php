@@ -120,6 +120,7 @@ class ZBP_Email_Service {
         $event_date     = get_post_meta( $entry_id, '_event_date', true );
         $token          = get_post_meta( $entry_id, '_waitlist_token', true );
         $expires_at     = get_post_meta( $entry_id, '_expires_at', true );
+        $invited_at     = get_post_meta( $entry_id, '_invited_at', true );
 
         $product    = wc_get_product( $product_id );
         $event_name = $product ? $product->get_name() : __( 'Event', 'zen-bookpro' );
@@ -144,6 +145,26 @@ class ZBP_Email_Service {
 
         $formatted_expiry = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), intval( $expires_at ) );
 
+        // Convert duration to localized label
+        $duration_seconds = intval( $expires_at - $invited_at );
+        if ( $duration_seconds <= 0 ) {
+            $duration_seconds = 20 * MINUTE_IN_SECONDS; // Fallback
+        }
+
+        if ( $duration_seconds % DAY_IN_SECONDS === 0 ) {
+            $value = $duration_seconds / DAY_IN_SECONDS;
+            $unit_label = _n( 'day', 'days', $value, 'zen-bookpro' );
+            $duration_label = sprintf( '%d %s', $value, $unit_label );
+        } elseif ( $duration_seconds % HOUR_IN_SECONDS === 0 ) {
+            $value = $duration_seconds / HOUR_IN_SECONDS;
+            $unit_label = _n( 'hour', 'hours', $value, 'zen-bookpro' );
+            $duration_label = sprintf( '%d %s', $value, $unit_label );
+        } else {
+            $value = round( $duration_seconds / MINUTE_IN_SECONDS );
+            $unit_label = _n( 'minute', 'minutes', $value, 'zen-bookpro' );
+            $duration_label = sprintf( '%d %s', $value, $unit_label );
+        }
+
         $to      = $customer_email;
         $subject = sprintf( __( 'Invitation: Spot available for %s', 'zen-bookpro' ), $event_name );
 
@@ -153,7 +174,7 @@ class ZBP_Email_Service {
         $message .= sprintf( __( '- Event: %s', 'zen-bookpro' ), $event_name ) . "\r\n";
         $message .= sprintf( __( '- Date: %s', 'zen-bookpro' ), $event_date ) . "\r\n";
         $message .= sprintf( __( '- Time: %s', 'zen-bookpro' ), $event_time ) . "\r\n\r\n";
-        $message .= __( 'Please note that you have a 20-minute reservation window to complete your booking. After this time, your invitation will expire, and the seat will be offered to the next person in line.', 'zen-bookpro' ) . "\r\n\r\n";
+        $message .= sprintf( __( 'Please note that you have a %s reservation window to complete your booking. After this time, your invitation will expire, and the seat will be offered to the next person in line.', 'zen-bookpro' ), $duration_label ) . "\r\n\r\n";
         $message .= sprintf( __( 'Invitation Expires: %s', 'zen-bookpro' ), $formatted_expiry ) . "\r\n\r\n";
         $message .= __( 'Click the link below to complete your booking (1-click checkout):', 'zen-bookpro' ) . "\r\n";
         $message .= $checkout_url . "\r\n\r\n";
