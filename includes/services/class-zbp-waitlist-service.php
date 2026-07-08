@@ -40,6 +40,10 @@ class ZBP_Waitlist_Service {
         add_action( 'template_redirect', array( $this, 'handle_book_now_redirect' ) );
         add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 3 );
         add_action( 'woocommerce_check_cart_items', array( $this, 'validate_cart_items' ) );
+
+        // Booking completion listeners
+        add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_line_item_meta' ), 10, 4 );
+        add_action( 'woocommerce_new_booking', array( $this, 'handle_new_booking' ) );
     }
 
     /**
@@ -990,6 +994,75 @@ class ZBP_Waitlist_Service {
                     wc_add_notice( $validation->get_error_message(), 'error' );
                 }
             }
+        }
+    }
+
+    /**
+     * Add waitlist invite ID to order line item meta.
+     *
+     * @param WC_Order_Item_Product $item          Order item.
+     * @param string                $cart_item_key Cart item key.
+     * @param array                 $values        Cart item values.
+     * @param WC_Order              $order         Order object.
+     * @return void
+     */
+    public function add_order_line_item_meta( $item, $cart_item_key, $values, $order ) {
+        if ( isset( $values['zbp_waitlist_invite_id'] ) ) {
+            $item->add_meta_data( '_zbp_waitlist_invite_id', absint( $values['zbp_waitlist_invite_id'] ), true );
+        }
+    }
+
+    /**
+     * Handle successful booking creation.
+     *
+     * @param int $booking_id Booking ID.
+     * @return void
+     */
+    public function handle_new_booking( $booking_id ) {
+        $booking = get_wc_booking( $booking_id );
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            return;
+        }
+
+        // Get the order item associated with the booking
+        $order_item_id = $booking->get_order_item_id();
+        if ( ! $order_item_id ) {
+            return;
+        }
+
+        $invite_id = wc_get_order_item_meta( $order_item_id, '_zbp_waitlist_invite_id', true );
+        if ( ! $invite_id ) {
+            return;
+        }
+
+        $this->complete_waitlist_booking( $invite_id, $booking_id );
+    }
+
+    /**
+     * Complete the waitlist booking process.
+     *
+     * @param int $invite_id  Waitlist entry ID.
+     * @param int $booking_id Booking ID.
+     * @return void
+     */
+    private function complete_waitlist_booking( $invite_id, $booking_id ) {
+        $status = get_post_meta( $invite_id, '_waitlist_status', true );
+        if ( 'invited' !== $status ) {
+            return;
+        }
+
+        // Get product and date before clearing priorities
+        $product_id = (int) get_post_meta( $invite_id, '_product_id', true );
+        $event_date = get_post_meta( $invite_id, '_event_date', true );
+
+        // Update status, link booking ID, and clear priority
+        update_post_meta( $invite_id, '_waitlist_status', 'booked' );
+        update_post_meta( $invite_id, '_booking_id', $booking_id );
+        delete_post_meta( $invite_id, '_waitlist_priority' );
+
+        // Recalculate priorities of the remaining waiting queue
+        if ( $product_id && $event_date ) {
+            $this->recalculate_priorities( $product_id, $event_date );
         }
     }
 }
