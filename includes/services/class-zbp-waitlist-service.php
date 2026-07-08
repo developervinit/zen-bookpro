@@ -1320,4 +1320,65 @@ class ZBP_Waitlist_Service {
             $query->set( 'meta_query', $meta_query );
         }
     }
+
+    /**
+     * Query waitlist entries based on filters.
+     *
+     * @param array $filters Query filters.
+     * @return array Array of WP_Post objects.
+     */
+    public function query_waitlist_entries( $filters = array() ) {
+        $query_args = array(
+            'post_type'      => 'zbp_waitlist',
+            'posts_per_page' => isset( $filters['limit'] ) ? intval( $filters['limit'] ) : -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+            ),
+        );
+
+        if ( ! empty( $filters['product_id'] ) ) {
+            $query_args['meta_query'][] = array(
+                'key'   => '_product_id',
+                'value' => absint( $filters['product_id'] ),
+            );
+        }
+
+        if ( ! empty( $filters['status'] ) ) {
+            $query_args['meta_query'][] = array(
+                'key'   => '_waitlist_status',
+                'value' => sanitize_text_field( $filters['status'] ),
+            );
+        }
+
+        if ( ! empty( $filters['event_date'] ) ) {
+            $query_args['meta_query'][] = array(
+                'key'   => '_event_date',
+                'value' => sanitize_text_field( $filters['event_date'] ),
+            );
+        }
+
+        if ( ! empty( $filters['search'] ) ) {
+            $query_args['meta_query'][] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_customer_name',
+                    'value'   => sanitize_text_field( $filters['search'] ),
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => '_customer_email',
+                    'value'   => sanitize_text_field( $filters['search'] ),
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        // Order by joined_at descending by default (newest first)
+        $query_args['meta_key'] = '_joined_at';
+        $query_args['orderby']  = 'meta_value_num';
+        $query_args['order']    = 'DESC';
+
+        return get_posts( $query_args );
+    }
 }

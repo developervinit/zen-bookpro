@@ -22,7 +22,7 @@ class ZBP_Loader {
         $waitlist_service->register();
 
         if ( is_admin() ) {
-            $admin = new ZBP_Admin( $product_service );
+            $admin = new ZBP_Admin( $product_service, $waitlist_service );
             $admin->register();
 
             $product_mode = new ZBP_Product_Mode();
