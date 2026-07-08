@@ -33,6 +33,13 @@ class ZBP_Waitlist_Service {
         add_action( 'woocommerce_booking_status_changed', array( $this, 'handle_booking_status_change' ), 10, 3 );
         add_action( 'trashed_post', array( $this, 'handle_booking_trashed' ) );
         add_action( 'zbp_waitlist_prepare_invitations', array( $this, 'process_invitations' ), 10, 4 );
+
+        // Cart / Checkout validation
+        add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
+        add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'get_cart_item_from_session' ), 10, 2 );
+        add_action( 'template_redirect', array( $this, 'handle_book_now_redirect' ) );
+        add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 3 );
+        add_action( 'woocommerce_check_cart_items', array( $this, 'validate_cart_items' ) );
     }
 
     /**
@@ -721,5 +728,268 @@ class ZBP_Waitlist_Service {
         );
 
         return get_posts( $args );
+    }
+
+    /**
+     * Add waitlist invite ID to cart item data.
+     *
+     * @param array $cart_item_data Cart item data.
+     * @param int   $product_id     Product ID.
+     * @param int   $variation_id   Variation ID.
+     * @return array
+     */
+    public function add_cart_item_data( $cart_item_data, $product_id, $variation_id ) {
+        if ( isset( $_GET['zbp_waitlist_invite'] ) ) {
+            $cart_item_data['zbp_waitlist_invite_id'] = absint( $_GET['zbp_waitlist_invite'] );
+        } elseif ( isset( $_POST['zbp_waitlist_invite'] ) ) {
+            $cart_item_data['zbp_waitlist_invite_id'] = absint( $_POST['zbp_waitlist_invite'] );
+        }
+        return $cart_item_data;
+    }
+
+    /**
+     * Get cart item from session.
+     *
+     * @param array $cart_item Cart item.
+     * @param array $values    Values from session.
+     * @return array
+     */
+    public function get_cart_item_from_session( $cart_item, $values ) {
+        if ( isset( $values['zbp_waitlist_invite_id'] ) ) {
+            $cart_item['zbp_waitlist_invite_id'] = $values['zbp_waitlist_invite_id'];
+        }
+        return $cart_item;
+    }
+
+    /**
+     * Handle the secure Book Now checkout redirection.
+     *
+     * @return void
+     */
+    public function handle_book_now_redirect() {
+        if ( is_admin() ) {
+            return;
+        }
+
+        $entry_id = isset( $_GET['zbp_waitlist_invite'] ) ? absint( $_GET['zbp_waitlist_invite'] ) : 0;
+        $token    = isset( $_GET['zbp_token'] ) ? sanitize_text_field( $_GET['zbp_token'] ) : '';
+
+        if ( ! $entry_id || empty( $token ) ) {
+            return;
+        }
+
+        // Run validation
+        $validation = $this->validate_invitation( $entry_id, $token );
+        if ( is_wp_error( $validation ) ) {
+            wc_add_notice( $validation->get_error_message(), 'error' );
+            wp_safe_redirect( wc_get_cart_url() );
+            exit;
+        }
+
+        $product_id = get_post_meta( $entry_id, '_product_id', true );
+        $event_date = get_post_meta( $entry_id, '_event_date', true );
+
+        // Extract slot date parameters
+        $date_timestamp = strtotime( $event_date );
+        if ( ! $date_timestamp ) {
+            wc_add_notice( __( 'Invalid event date.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( wc_get_cart_url() );
+            exit;
+        }
+
+        $year  = date( 'Y', $date_timestamp );
+        $month = date( 'm', $date_timestamp );
+        $day   = date( 'd', $date_timestamp );
+
+        // Query the first slot start time (e.g. "09:00")
+        $slot_time    = '00:00';
+        $slot_service = new ZBP_Slot_Service();
+        $slot_data    = $slot_service->get_slots_for_product( $product_id, $event_date, 'event', true );
+        if ( ! empty( $slot_data['slots'] ) ) {
+            $first_slot = $slot_data['slots'][0];
+            if ( ! empty( $first_slot['timestamp'] ) ) {
+                $slot_time = wp_date( 'H:i', $first_slot['timestamp'] );
+            }
+        }
+
+        // Empty existing cart
+        WC()->cart->empty_cart();
+
+        // Build WooCommerce Bookings fields for cart
+        $cart_item_data = array(
+            'zbp_waitlist_invite_id' => $entry_id,
+            'booking' => array(
+                '_year'  => $year,
+                '_month' => $month,
+                '_day'   => $day,
+                '_date'  => $event_date,
+                '_time'  => $slot_time,
+            )
+        );
+
+        // Add to cart programmatically
+        $added = WC()->cart->add_to_cart( $product_id, 1, 0, array(), $cart_item_data );
+
+        if ( ! $added ) {
+            wc_add_notice( __( 'Failed to add the booking to your cart. Please try again.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( wc_get_cart_url() );
+            exit;
+        }
+
+        // Redirect directly to checkout
+        wp_safe_redirect( wc_get_checkout_url() );
+        exit;
+    }
+
+    /**
+     * Validate a waitlist invitation.
+     *
+     * @param int    $entry_id Waitlist entry ID.
+     * @param string $token    Secure token.
+     * @return true|WP_Error
+     */
+    public function validate_invitation( $entry_id, $token ) {
+        $post = get_post( $entry_id );
+        if ( ! $post || 'zbp_waitlist' !== $post->post_type ) {
+            return new WP_Error( 'invalid_waitlist', __( 'Invalid invitation link.', 'zen-bookpro' ) );
+        }
+
+        $status = get_post_meta( $entry_id, '_waitlist_status', true );
+        if ( 'invited' !== $status ) {
+            return new WP_Error( 'invalid_status', __( 'This invitation is no longer active.', 'zen-bookpro' ) );
+        }
+
+        $stored_token = get_post_meta( $entry_id, '_waitlist_token', true );
+        if ( empty( $stored_token ) || $stored_token !== $token ) {
+            return new WP_Error( 'invalid_token', __( 'Invalid or tampered invitation link.', 'zen-bookpro' ) );
+        }
+
+        $customer_id = (int) get_post_meta( $entry_id, '_customer_id', true );
+        if ( get_current_user_id() !== $customer_id ) {
+            return new WP_Error( 'invalid_owner', __( 'This invitation does not belong to you.', 'zen-bookpro' ) );
+        }
+
+        $expires_at = (int) get_post_meta( $entry_id, '_expires_at', true );
+        if ( time() >= $expires_at ) {
+            return new WP_Error( 'expired_invitation', __( 'This invitation has expired.', 'zen-bookpro' ) );
+        }
+
+        // Verify if a seat is still physically available
+        $product_id = get_post_meta( $entry_id, '_product_id', true );
+        $event_date = get_post_meta( $entry_id, '_event_date', true );
+
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return new WP_Error( 'invalid_product', __( 'Product not found.', 'zen-bookpro' ) );
+        }
+
+        $max_spots = (int) $product->get_meta( '_zbp_max_spots' );
+        if ( $max_spots <= 0 ) {
+            $max_spots = method_exists( $product, 'get_qty' ) ? (int) $product->get_qty() : 1;
+        }
+
+        $booked_spots = $this->get_active_bookings_count( $product_id, $event_date );
+        if ( $booked_spots >= $max_spots ) {
+            return new WP_Error( 'no_seats', __( 'This event has already been filled.', 'zen-bookpro' ) );
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate product addition to cart.
+     * Block other users if the only available seats are reserved for waitlist invitations.
+     *
+     * @param bool $passed     Whether validation passed.
+     * @param int  $product_id Product ID.
+     * @param int  $quantity   Quantity.
+     * @return bool
+     */
+    public function validate_add_to_cart( $passed, $product_id, $quantity ) {
+        if ( ! $passed ) {
+            return $passed;
+        }
+
+        $mode = get_post_meta( $product_id, '_zbp_booking_mode', true );
+        if ( 'event' !== $mode ) {
+            return $passed;
+        }
+
+        // Get the booking date from POST parameters
+        $year  = isset( $_POST['wc_bookings_field_start_date_year'] ) ? absint( $_POST['wc_bookings_field_start_date_year'] ) : 0;
+        $month = isset( $_POST['wc_bookings_field_start_date_month'] ) ? absint( $_POST['wc_bookings_field_start_date_month'] ) : 0;
+        $day   = isset( $_POST['wc_bookings_field_start_date_day'] ) ? absint( $_POST['wc_bookings_field_start_date_day'] ) : 0;
+
+        if ( ! $year || ! $month || ! $day ) {
+            return $passed;
+        }
+
+        $event_date = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+
+        // If the current user has a valid waitlist invite ID in their session/URL, let them pass
+        $invite_id = isset( $_GET['zbp_waitlist_invite'] ) ? absint( $_GET['zbp_waitlist_invite'] ) : 0;
+        if ( ! $invite_id && isset( $_POST['zbp_waitlist_invite'] ) ) {
+            $invite_id = absint( $_POST['zbp_waitlist_invite'] );
+        }
+
+        // If they are validating an invite, check if it's correct
+        if ( $invite_id ) {
+            $invite_product_id = get_post_meta( $invite_id, '_product_id', true );
+            $invite_event_date = get_post_meta( $invite_id, '_event_date', true );
+            $invite_customer   = (int) get_post_meta( $invite_id, '_customer_id', true );
+
+            if ( $invite_product_id === $product_id && $invite_event_date === $event_date && get_current_user_id() === $invite_customer ) {
+                return $passed; // Let the invited user book
+            }
+        }
+
+        // For all other users, check if waitlist invitations are active
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return $passed;
+        }
+
+        $max_spots = (int) $product->get_meta( '_zbp_max_spots' );
+        if ( $max_spots <= 0 ) {
+            $max_spots = method_exists( $product, 'get_qty' ) ? (int) $product->get_qty() : 1;
+        }
+
+        $booked_spots = $this->get_active_bookings_count( $product_id, $event_date );
+
+        // Reserved waitlist spots
+        $reserved_spots = $this->get_reserved_waitlist_count( $product_id, $event_date );
+
+        if ( ( $booked_spots + $reserved_spots ) >= $max_spots ) {
+            // Block addition because the vacancy is reserved for the waitlist invitation
+            wc_add_notice( __( 'This seat is currently reserved for a waitlist invitation.', 'zen-bookpro' ), 'error' );
+            return false;
+        }
+
+        return $passed;
+    }
+
+    /**
+     * Perform final validation checks on cart items.
+     *
+     * @return void
+     */
+    public function validate_cart_items() {
+        if ( is_admin() || ! WC()->cart ) {
+            return;
+        }
+
+        foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+            if ( isset( $cart_item['zbp_waitlist_invite_id'] ) ) {
+                $invite_id = $cart_item['zbp_waitlist_invite_id'];
+                $token     = get_post_meta( $invite_id, '_waitlist_token', true );
+
+                $validation = $this->validate_invitation( $invite_id, $token );
+                if ( is_wp_error( $validation ) ) {
+                    // Remove from cart and show error notice
+                    WC()->cart->remove_cart_item( $cart_item_key );
+                    wc_add_notice( $validation->get_error_message(), 'error' );
+                }
+            }
+        }
     }
 }
