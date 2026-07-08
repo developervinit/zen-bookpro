@@ -6,6 +6,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ZBP_Waitlist_Service {
 
     /**
+     * Cache to prevent duplicate processing of cancellations in the same request thread.
+     *
+     * @var array
+     */
+    private static $processed_bookings = array();
+
+    /**
      * Register hooks.
      *
      * @return void
@@ -21,6 +28,10 @@ class ZBP_Waitlist_Service {
         // Admin Custom columns for waitlist management
         add_filter( 'manage_zbp_waitlist_posts_columns', array( $this, 'manage_waitlist_columns' ) );
         add_action( 'manage_zbp_waitlist_posts_custom_column', array( $this, 'manage_waitlist_custom_column' ), 10, 2 );
+
+        // Seat availability listeners
+        add_action( 'woocommerce_booking_status_changed', array( $this, 'handle_booking_status_change' ), 10, 3 );
+        add_action( 'trashed_post', array( $this, 'handle_booking_trashed' ) );
     }
 
     /**
@@ -420,5 +431,247 @@ class ZBP_Waitlist_Service {
                 echo esc_html( $joined ? wp_date( get_option( 'date_format' ) . ' H:i', intval( $joined ) ) : '—' );
                 break;
         }
+    }
+
+    /**
+     * Listen to booking status changes to detect cancellations and find next waitlist entries.
+     *
+     * @param int    $booking_id Booking ID.
+     * @param string $old_status Old status.
+     * @param string $new_status New status.
+     * @return void
+     */
+    public function handle_booking_status_change( $booking_id, $old_status, $new_status ) {
+        $cancelled_statuses = array( 'cancelled', 'trash' );
+        if ( ! in_array( $new_status, $cancelled_statuses, true ) ) {
+            return;
+        }
+
+        $booking = get_wc_booking( $booking_id );
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            return;
+        }
+
+        $this->process_cancellation( $booking );
+    }
+
+    /**
+     * Handle trashing a booking post.
+     *
+     * @param int $post_id Post ID.
+     * @return void
+     */
+    public function handle_booking_trashed( $post_id ) {
+        if ( 'wc_booking' !== get_post_type( $post_id ) ) {
+            return;
+        }
+
+        $booking = get_wc_booking( $post_id );
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            return;
+        }
+
+        $this->process_cancellation( $booking );
+    }
+
+    /**
+     * Process cancellation for a booking object.
+     *
+     * @param WC_Booking $booking Booking object.
+     * @return void
+     */
+    private function process_cancellation( $booking ) {
+        $booking_id = $booking->get_id();
+        if ( in_array( $booking_id, self::$processed_bookings, true ) ) {
+            return;
+        }
+        self::$processed_bookings[] = $booking_id;
+
+        $product_id = $booking->get_product_id();
+        $product    = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return;
+        }
+
+        // Check if the product is in 'event' booking mode
+        $mode = get_post_meta( $product_id, '_zbp_booking_mode', true );
+        if ( 'event' !== $mode ) {
+            return;
+        }
+
+        // Extract the event date in Y-m-d format
+        $start_timestamp = $booking->get_start();
+        if ( ! $start_timestamp ) {
+            return;
+        }
+        $event_date = wp_date( 'Y-m-d', $start_timestamp );
+
+        // 1. Calculate how many seats are now available
+        $available_seats = $this->calculate_available_seats( $product_id, $event_date );
+
+        if ( $available_seats <= 0 ) {
+            return;
+        }
+
+        // 2. Identify the next eligible customers from the waitlist
+        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, $available_seats );
+
+        if ( empty( $eligible_entries ) ) {
+            return;
+        }
+
+        // 3. Fire custom WordPress action to prepare these entries (modular hook for step 3)
+        do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
+    }
+
+    /**
+     * Calculate the number of conceptually available seats for an Event product on a specific date.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Date in Y-m-d format.
+     * @return int Available seats.
+     */
+    public function calculate_available_seats( $product_id, $date ) {
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return 0;
+        }
+
+        // Get max spots
+        $max_spots = (int) $product->get_meta( '_zbp_max_spots' );
+        if ( $max_spots <= 0 ) {
+            // Fallback to WooCommerce Bookings capacity if meta is not set
+            $max_spots = method_exists( $product, 'get_qty' ) ? (int) $product->get_qty() : 1;
+        }
+
+        // Get active booked seats on this date
+        $booked_spots = $this->get_active_bookings_count( $product_id, $date );
+
+        // Get reserved waitlist spots (invited status)
+        $reserved_spots = $this->get_reserved_waitlist_count( $product_id, $date );
+
+        $available = $max_spots - ( $booked_spots + $reserved_spots );
+
+        return max( 0, $available );
+    }
+
+    /**
+     * Count active bookings for product on date.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Date in Y-m-d format.
+     * @return int
+     */
+    private function get_active_bookings_count( $product_id, $date ) {
+        $date_from = strtotime( $date . ' 00:00:00' );
+        $date_to   = strtotime( $date . ' 23:59:59' );
+
+        // Active booking statuses
+        $active_statuses = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'on-hold' );
+        $bookings = array();
+
+        if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_bookings_for_objects' ) ) {
+            $bookings = WC_Booking_Data_Store::get_bookings_for_objects(
+                array( $product_id ),
+                $active_statuses,
+                $date_from,
+                $date_to
+            );
+        } elseif ( class_exists( 'WC_Bookings_Controller' ) && method_exists( 'WC_Bookings_Controller', 'get_bookings_for_objects' ) ) {
+            $bookings = WC_Bookings_Controller::get_bookings_for_objects(
+                array( $product_id ),
+                $active_statuses,
+                $date_from,
+                $date_to
+            );
+        }
+
+        // Since it's Event (Single Slot), we count total qty of slots booked
+        $count = 0;
+        foreach ( $bookings as $booking ) {
+            if ( $booking && is_a( $booking, 'WC_Booking' ) ) {
+                if ( in_array( $booking->get_status(), array( 'cancelled', 'trash' ), true ) ) {
+                    continue;
+                }
+                $qty = method_exists( $booking, 'get_qty' ) ? (int) $booking->get_qty() : 1;
+                $count += $qty;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Count reserved waitlist spots (invited) for product on date.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Date in Y-m-d format.
+     * @return int
+     */
+    private function get_reserved_waitlist_count( $product_id, $date ) {
+        $args = array(
+            'post_type'      => 'zbp_waitlist',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'   => '_product_id',
+                    'value' => $product_id,
+                ),
+                array(
+                    'key'   => '_event_date',
+                    'value' => $date,
+                ),
+                array(
+                    'key'   => '_waitlist_status',
+                    'value' => 'invited',
+                ),
+            ),
+        );
+
+        $posts = get_posts( $args );
+        return count( $posts );
+    }
+
+    /**
+     * Query next N eligible waitlist entries.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Date in Y-m-d format.
+     * @param int    $limit      Max number of entries to retrieve.
+     * @return array Array of WP_Post objects.
+     */
+    public function get_next_eligible_waitlist_entries( $product_id, $date, $limit ) {
+        if ( $limit <= 0 ) {
+            return array();
+        }
+
+        $args = array(
+            'post_type'      => 'zbp_waitlist',
+            'posts_per_page' => $limit,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'   => '_product_id',
+                    'value' => $product_id,
+                ),
+                array(
+                    'key'   => '_event_date',
+                    'value' => $date,
+                ),
+                array(
+                    'key'   => '_waitlist_status',
+                    'value' => 'waiting',
+                ),
+            ),
+            'meta_key'       => '_waitlist_priority',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+        );
+
+        return get_posts( $args );
     }
 }
