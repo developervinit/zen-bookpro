@@ -29,6 +29,8 @@ class ZBP_Waitlist_Service {
         // Admin Custom columns for waitlist management
         add_filter( 'manage_zbp_waitlist_posts_columns', array( $this, 'manage_waitlist_columns' ) );
         add_action( 'manage_zbp_waitlist_posts_custom_column', array( $this, 'manage_waitlist_custom_column' ), 10, 2 );
+        add_action( 'admin_post_zbp_clear_class_waitlist', array( $this, 'handle_clear_class_waitlist' ) );
+        add_action( 'admin_notices', array( $this, 'render_waitlist_admin_notices' ) );
 
         // Seat availability listeners
         add_action( 'woocommerce_booking_status_changed', array( $this, 'handle_booking_status_change' ), 10, 3 );
@@ -499,6 +501,8 @@ class ZBP_Waitlist_Service {
                     echo '<span style="' . $badge_style . ' background: #eceff1; color: #37474f;">' . esc_html( $status_label ) . '</span>';
                 } elseif ( 'left' === $status ) {
                     echo '<span style="' . $badge_style . ' background: #ffebee; color: #b71c1c;">' . esc_html( $status_label ) . '</span>';
+                } elseif ( 'cleared' === $status ) {
+                    echo '<span style="' . $badge_style . ' background: #f3e5f5; color: #6a1b9a;">' . esc_html( $status_label ) . '</span>';
                 } else {
                     echo '<span style="' . $badge_style . ' background: #eee; color: #555;">' . esc_html( $status_label ) . '</span>';
                 }
@@ -1573,6 +1577,105 @@ class ZBP_Waitlist_Service {
         return 0;
     }
     /**
+     * Clear active waitlist entries for the same product/date as a selected waitlist entry.
+     *
+     * @return void
+     */
+    public function handle_clear_class_waitlist() {
+        if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'You are not allowed to clear waitlists.', 'zen-bookpro' ) );
+        }
+
+        $entry_id = isset( $_GET['entry_id'] ) ? absint( $_GET['entry_id'] ) : 0;
+        if ( ! $entry_id || ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '', 'zbp_clear_class_waitlist_' . $entry_id ) ) {
+            wp_die( esc_html__( 'Invalid waitlist clear request.', 'zen-bookpro' ) );
+        }
+
+        $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
+        $event_date = get_post_meta( $entry_id, '_event_date', true );
+        $cleared    = $this->clear_class_waitlist_entries( $product_id, $event_date );
+
+        $redirect_url = add_query_arg(
+            array(
+                'post_type'            => 'zbp_waitlist',
+                'zbp_waitlist_cleared' => $cleared,
+            ),
+            admin_url( 'edit.php' )
+        );
+
+        wp_safe_redirect( $redirect_url );
+        exit;
+    }
+
+    /**
+     * Mark active waitlist entries for one class/date as cleared.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $event_date Event date.
+     * @return int Number of entries cleared.
+     */
+    private function clear_class_waitlist_entries( $product_id, $event_date ) {
+        if ( ! $product_id || empty( $event_date ) ) {
+            return 0;
+        }
+
+        $entries = get_posts( array(
+            'post_type'      => 'zbp_waitlist',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'   => '_product_id',
+                    'value' => $product_id,
+                ),
+                array(
+                    'key'   => '_event_date',
+                    'value' => $event_date,
+                ),
+                array(
+                    'key'     => '_waitlist_status',
+                    'value'   => array( 'waiting', 'invited' ),
+                    'compare' => 'IN',
+                ),
+            ),
+        ) );
+
+        foreach ( $entries as $clear_entry_id ) {
+            update_post_meta( $clear_entry_id, '_waitlist_status', 'cleared' );
+            update_post_meta( $clear_entry_id, '_cleared_at', time() );
+            update_post_meta( $clear_entry_id, '_cleared_by', get_current_user_id() );
+            delete_post_meta( $clear_entry_id, '_waitlist_priority' );
+
+            if ( function_exists( 'as_unschedule_action' ) ) {
+                as_unschedule_action( 'zbp_waitlist_check_expiry', array( 'entry_id' => (int) $clear_entry_id ) );
+            }
+        }
+
+        $this->recalculate_priorities( $product_id, $event_date );
+
+        return count( $entries );
+    }
+
+    /**
+     * Render admin notices for waitlist actions.
+     *
+     * @return void
+     */
+    public function render_waitlist_admin_notices() {
+        if ( ! isset( $_GET['zbp_waitlist_cleared'] ) ) {
+            return;
+        }
+
+        $count = absint( $_GET['zbp_waitlist_cleared'] );
+        printf(
+            '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+            esc_html( sprintf( _n( '%d waitlist entry cleared.', '%d waitlist entries cleared.', $count, 'zen-bookpro' ), $count ) )
+        );
+    }
+
+    /**
      * Remove row actions for read-only waitlist posts.
      *
      * @param array   $actions Row actions.
@@ -1580,10 +1683,39 @@ class ZBP_Waitlist_Service {
      * @return array
      */
     public function remove_row_actions( $actions, $post ) {
-        if ( 'zbp_waitlist' === $post->post_type ) {
+        if ( 'zbp_waitlist' !== $post->post_type ) {
+            return $actions;
+        }
+
+        if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
             return array();
         }
-        return $actions;
+
+        $product_id = (int) get_post_meta( $post->ID, '_product_id', true );
+        $event_date = get_post_meta( $post->ID, '_event_date', true );
+        if ( ! $product_id || empty( $event_date ) ) {
+            return array();
+        }
+
+        $clear_url = wp_nonce_url(
+            add_query_arg(
+                array(
+                    'action'   => 'zbp_clear_class_waitlist',
+                    'entry_id' => $post->ID,
+                ),
+                admin_url( 'admin-post.php' )
+            ),
+            'zbp_clear_class_waitlist_' . $post->ID
+        );
+
+        return array(
+            'zbp_clear_class_waitlist' => sprintf(
+                '<a href="%s" class="submitdelete" onclick="return confirm(%s);">%s</a>',
+                esc_url( $clear_url ),
+                esc_attr( wp_json_encode( __( 'Clear all active waitlist entries for this class/date? This cannot be undone.', 'zen-bookpro' ) ) ),
+                esc_html__( 'Clear class waitlist', 'zen-bookpro' )
+            ),
+        );
     }
 
     /**
@@ -1657,6 +1789,7 @@ class ZBP_Waitlist_Service {
             'booked'  => __( 'Booked', 'zen-bookpro' ),
             'expired' => __( 'Expired', 'zen-bookpro' ),
             'left'    => __( 'Left', 'zen-bookpro' ),
+            'cleared' => __( 'Cleared', 'zen-bookpro' ),
         );
 
         echo '<select name="zbp_filter_status" id="zbp_filter_status">';
