@@ -40,7 +40,8 @@ class ZBP_Waitlist_Service {
         // Cart / Checkout validation
         add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
         add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'get_cart_item_from_session' ), 10, 2 );
-        add_action( 'template_redirect', array( $this, 'handle_book_now_redirect' ) );
+        add_action( 'wp_loaded', array( $this, 'handle_book_now_redirect' ), 15 );
+        add_filter( 'woocommerce_add_to_cart_redirect', array( $this, 'redirect_waitlist_invite_to_checkout' ), 10, 2 );
         add_action( 'template_redirect', array( $this, 'handle_decline_waitlist_invitation' ) );
         add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 3 );
         add_action( 'woocommerce_check_cart_items', array( $this, 'validate_cart_items' ) );
@@ -938,11 +939,11 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function handle_book_now_redirect() {
-        if ( is_admin() || isset( $_GET['add-to-cart'] ) ) {
+        if ( is_admin() || ! isset( $_GET['zbp_waitlist_invite'] ) ) {
             return;
         }
 
-        $entry_id = isset( $_GET['zbp_waitlist_invite'] ) ? absint( $_GET['zbp_waitlist_invite'] ) : 0;
+        $entry_id = absint( $_GET['zbp_waitlist_invite'] );
         $token    = isset( $_GET['zbp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['zbp_token'] ) ) : '';
 
         if ( ! $entry_id || empty( $token ) ) {
@@ -965,7 +966,6 @@ class ZBP_Waitlist_Service {
         $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
         $event_date = get_post_meta( $entry_id, '_event_date', true );
 
-
         if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
             wc_add_notice( __( 'This waitlist invitation is no longer available.', 'zen-bookpro' ), 'error' );
             wp_safe_redirect( wc_get_cart_url() );
@@ -979,17 +979,39 @@ class ZBP_Waitlist_Service {
             exit;
         }
 
-        $claim_args = array_merge(
+        if ( function_exists( 'WC' ) && WC()->cart ) {
+            WC()->cart->empty_cart();
+        }
+
+        $request_data = array_merge(
             $booking_posted_data,
             array(
                 'add-to-cart'         => $product_id,
+                'quantity'            => 1,
                 'zbp_waitlist_invite' => $entry_id,
                 'zbp_token'           => $token,
             )
         );
 
-        wp_safe_redirect( add_query_arg( $claim_args, wc_get_checkout_url() ) );
-        exit;
+        foreach ( $request_data as $key => $value ) {
+            $_GET[ $key ]     = $value;
+            $_POST[ $key ]    = $value;
+            $_REQUEST[ $key ] = $value;
+        }
+    }
+    /**
+     * Send successful waitlist invite claims to checkout without replaying the invite URL.
+     *
+     * @param string|false $url     Existing redirect URL.
+     * @param WC_Product   $product Product being added.
+     * @return string|false
+     */
+    public function redirect_waitlist_invite_to_checkout( $url, $product ) {
+        if ( isset( $_REQUEST['zbp_waitlist_invite'] ) && isset( $_REQUEST['zbp_token'] ) ) {
+            return wc_get_checkout_url();
+        }
+
+        return $url;
     }
     /**
      * Handle secure decline links from waitlist invitation emails.

@@ -394,7 +394,8 @@
     color: #ffffff;
 }
 
-.zbp-join-btn.is-ended {
+.zbp-join-btn.is-ended,
+.zbp-join-btn.is-booked {
     background: #c5c5c5;
     color: #4a4a4a;
     cursor: default;

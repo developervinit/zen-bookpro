@@ -720,15 +720,17 @@
 
                     var isCancelled = product.event_status === 'cancelled';
 
+                    var isBooked = product.event_status === 'booked';
+
                     var isOnWaitlist = product.event_status === 'on_waitlist';
 
-                    var isWaitlist = !isEnded && !isCancelled && !isOnWaitlist && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
+                    var isWaitlist = !isEnded && !isCancelled && !isBooked && !isOnWaitlist && (product.event_status === 'waitlist' || bookedSpots >= maxSpots);
 
-                    var btnText = isCancelled ? 'Class Canceled' : (isEnded ? 'Class Ended' : (isOnWaitlist ? 'Leave Waitlist' : (isWaitlist ? 'Join Waitlist' : 'Join')));
+                    var btnText = isCancelled ? 'Class Canceled' : (isEnded ? 'Class Ended' : (isBooked ? 'Booked' : (isOnWaitlist ? 'Leave Waitlist' : (isWaitlist ? 'Join Waitlist' : 'Join'))));
 
-                    var btnClass = isCancelled ? 'zbp-join-btn is-cancelled' : (isEnded ? 'zbp-join-btn is-ended' : (isOnWaitlist ? 'zbp-join-btn is-on-waitlist' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn')));
+                    var btnClass = isCancelled ? 'zbp-join-btn is-cancelled' : (isEnded ? 'zbp-join-btn is-ended' : (isBooked ? 'zbp-join-btn is-booked' : (isOnWaitlist ? 'zbp-join-btn is-on-waitlist' : (isWaitlist ? 'zbp-join-btn is-waitlist' : 'zbp-join-btn'))));
 
-                    var btnDisabledAttr = (isEnded || isCancelled) ? ' disabled aria-disabled="true"' : '';
+                    var btnDisabledAttr = (isEnded || isCancelled || isBooked) ? ' disabled aria-disabled="true"' : '';
 
 
 

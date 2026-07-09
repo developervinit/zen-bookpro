@@ -226,6 +226,7 @@ class ZBP_Product_Service {
             $booked_spots = 0;
             $woo_duration_value = 0;
             $woo_duration_unit  = '';
+            $current_user_has_booking = false;
             
             if ( class_exists( 'WC_Product_Booking' ) ) {
                 $booking_product = new WC_Product_Booking( $product_id );
@@ -294,6 +295,7 @@ class ZBP_Product_Service {
                     }
 
                     if ( ! empty( $existing_bookings ) ) {
+                        $current_user_id = is_user_logged_in() ? get_current_user_id() : 0;
                         // Event mode requires seat usage as booking count, not persons sum.
                         $total_booked = 0;
                         $first_booking_time = '';
@@ -304,6 +306,10 @@ class ZBP_Product_Service {
                                 continue;
                             }
                             $total_booked += 1;
+
+                            if ( $current_user_id && method_exists( $booking, 'get_customer_id' ) && (int) $booking->get_customer_id() === (int) $current_user_id ) {
+                                $current_user_has_booking = true;
+                            }
 
                             if ( ! $first_booking_time && method_exists( $booking, 'get_start' ) ) {
                                 $first_booking_ts = $booking->get_start();
@@ -376,11 +382,13 @@ class ZBP_Product_Service {
 
                     if ( $event_has_ended ) {
                         continue;
+                    } elseif ( $current_user_has_booking ) {
+                        $event_status = 'booked';
                     } elseif ( $booked_spots >= $max_spots ) {
                         $event_status = 'waitlist';
                     }
 
-                    if ( is_user_logged_in() ) {
+                    if ( is_user_logged_in() && 'booked' !== $event_status ) {
                         $user_id = get_current_user_id();
                         $waitlist_service = new ZBP_Waitlist_Service();
                         if ( $waitlist_service->is_user_on_waitlist( $user_id, $product_id, $selected_date ) ) {
