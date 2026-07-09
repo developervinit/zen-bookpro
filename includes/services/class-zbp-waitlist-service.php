@@ -484,13 +484,16 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function handle_booking_status_change( $old_status, $new_status, $booking_id ) {
+        $this->log( sprintf( "handle_booking_status_change called: old_status=%s, new_status=%s, booking_id=%d", $old_status, $new_status, $booking_id ) );
         $cancelled_statuses = array( 'cancelled', 'trash' );
         if ( ! in_array( $new_status, $cancelled_statuses, true ) ) {
+            $this->log( "Exiting handle_booking_status_change: new_status not cancelled or trash" );
             return;
         }
 
         $booking = get_wc_booking( $booking_id );
         if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            $this->log( "Exiting handle_booking_status_change: booking not found or not WC_Booking instance" );
             return;
         }
 
@@ -504,12 +507,15 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function handle_booking_trashed( $post_id ) {
+        $this->log( sprintf( "handle_booking_trashed called: post_id=%d", $post_id ) );
         if ( 'wc_booking' !== get_post_type( $post_id ) ) {
+            $this->log( "Exiting handle_booking_trashed: post_type is not wc_booking" );
             return;
         }
 
         $booking = get_wc_booking( $post_id );
         if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            $this->log( "Exiting handle_booking_trashed: booking not found or not WC_Booking instance" );
             return;
         }
 
@@ -526,22 +532,31 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function process_invitations( $eligible_entries, $product_id, $event_date, $available_seats ) {
+        $this->log( sprintf( "process_invitations called: product_id=%d, event_date=%s, available_seats=%d, eligible_entries count=%d", $product_id, $event_date, $available_seats, count( $eligible_entries ) ) );
         if ( empty( $eligible_entries ) ) {
+            $this->log( "process_invitations early exit: eligible_entries is empty" );
             return;
         }
 
         $email_service = new ZBP_Email_Service();
 
         foreach ( $eligible_entries as $entry ) {
+            if ( is_numeric( $entry ) ) {
+                $entry = get_post( $entry );
+            }
+
             if ( ! $entry || ! is_a( $entry, 'WP_Post' ) ) {
+                $this->log( sprintf( "process_invitations: entry %s is not a valid WP_Post object", var_export( $entry, true ) ) );
                 continue;
             }
 
             $entry_id = $entry->ID;
+            $this->log( sprintf( "process_invitations: processing entry ID=%d", $entry_id ) );
 
             // Double check status to prevent race conditions
             $status = get_post_meta( $entry_id, '_waitlist_status', true );
             if ( 'waiting' !== $status ) {
+                $this->log( sprintf( "process_invitations: entry ID=%d status is '%s', expected 'waiting'", $entry_id, $status ) );
                 continue;
             }
 
@@ -567,6 +582,8 @@ class ZBP_Waitlist_Service {
             }
             $expires_at = $invited_at + $seconds;
 
+            $this->log( sprintf( "process_invitations: updating entry ID=%d to status 'invited', expires_at=%d", $entry_id, $expires_at ) );
+
             // Update meta-data
             update_post_meta( $entry_id, '_waitlist_status', 'invited' );
             update_post_meta( $entry_id, '_invited_at', $invited_at );
@@ -575,10 +592,14 @@ class ZBP_Waitlist_Service {
 
             // Schedule single expiry action via Action Scheduler
             if ( function_exists( 'as_schedule_single_action' ) ) {
+                $this->log( sprintf( "process_invitations: scheduling expiry for entry ID=%d via Action Scheduler", $entry_id ) );
                 as_schedule_single_action( $expires_at, 'zbp_waitlist_check_expiry', array( 'entry_id' => $entry_id ) );
+            } else {
+                $this->log( "process_invitations WARNING: as_schedule_single_action function does not exist" );
             }
 
             // Dispatch invitation email
+            $this->log( sprintf( "process_invitations: sending invitation email to entry ID=%d", $entry_id ) );
             $email_service->send_waitlist_invitation( $entry_id );
         }
     }
@@ -591,7 +612,9 @@ class ZBP_Waitlist_Service {
      */
     private function process_cancellation( $booking ) {
         $booking_id = $booking->get_id();
+        $this->log( sprintf( "process_cancellation: booking_id=%d", $booking_id ) );
         if ( in_array( $booking_id, self::$processed_bookings, true ) ) {
+            $this->log( "process_cancellation early exit: booking already processed" );
             return;
         }
         self::$processed_bookings[] = $booking_id;
@@ -599,37 +622,48 @@ class ZBP_Waitlist_Service {
         $product_id = $booking->get_product_id();
         $product    = wc_get_product( $product_id );
         if ( ! $product ) {
+            $this->log( "process_cancellation early exit: product not found" );
             return;
         }
 
         // Check if the product is in 'event' booking mode
         $mode = get_post_meta( $product_id, '_zbp_product_mode', true );
+        $this->log( sprintf( "process_cancellation: product_id=%d, mode=%s", $product_id, $mode ) );
         if ( 'event' !== $mode ) {
+            $this->log( "process_cancellation early exit: mode is not event" );
             return;
         }
 
         // Extract the event date in Y-m-d format
         $start_timestamp = $booking->get_start();
+        $this->log( sprintf( "process_cancellation: start_timestamp=%s", var_export( $start_timestamp, true ) ) );
         if ( ! $start_timestamp ) {
+            $this->log( "process_cancellation early exit: no start timestamp" );
             return;
         }
         $event_date = wp_date( 'Y-m-d', $start_timestamp );
+        $this->log( sprintf( "process_cancellation: event_date=%s", $event_date ) );
 
         // 1. Calculate how many seats are now available
         $available_seats = $this->calculate_available_seats( $product_id, $event_date );
+        $this->log( sprintf( "process_cancellation: available_seats calculated=%d", $available_seats ) );
 
         if ( $available_seats <= 0 ) {
+            $this->log( "process_cancellation early exit: available_seats <= 0" );
             return;
         }
 
         // 2. Identify the next eligible customers from the waitlist
         $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, $available_seats );
+        $this->log( sprintf( "process_cancellation: eligible_entries count=%d", count( $eligible_entries ) ) );
 
         if ( empty( $eligible_entries ) ) {
+            $this->log( "process_cancellation early exit: eligible_entries is empty" );
             return;
         }
 
         // 3. Fire custom WordPress action to prepare these entries (modular hook for step 3)
+        $this->log( "process_cancellation: firing zbp_waitlist_prepare_invitations action" );
         do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
     }
 
@@ -643,6 +677,7 @@ class ZBP_Waitlist_Service {
     public function calculate_available_seats( $product_id, $date ) {
         $product = wc_get_product( $product_id );
         if ( ! $product ) {
+            $this->log( sprintf( "calculate_available_seats: product_id=%d not found", $product_id ) );
             return 0;
         }
 
@@ -660,6 +695,7 @@ class ZBP_Waitlist_Service {
         $reserved_spots = $this->get_reserved_waitlist_count( $product_id, $date );
 
         $available = $max_spots - ( $booked_spots + $reserved_spots );
+        $this->log( sprintf( "calculate_available_seats: product_id=%d, date=%s, max_spots=%d, booked_spots=%d, reserved_spots=%d, calculated_available=%d", $product_id, $date, $max_spots, $booked_spots, $reserved_spots, $available ) );
 
         return max( 0, $available );
     }
@@ -753,7 +789,9 @@ class ZBP_Waitlist_Service {
      * @return array Array of WP_Post objects.
      */
     public function get_next_eligible_waitlist_entries( $product_id, $date, $limit ) {
+        $this->log( sprintf( "get_next_eligible_waitlist_entries: product_id=%d, date=%s, limit=%d", $product_id, $date, $limit ) );
         if ( $limit <= 0 ) {
+            $this->log( "get_next_eligible_waitlist_entries early exit: limit <= 0" );
             return array();
         }
 
@@ -781,7 +819,12 @@ class ZBP_Waitlist_Service {
             'order'          => 'ASC',
         );
 
-        return get_posts( $args );
+        $results = get_posts( $args );
+        $this->log( sprintf( "get_next_eligible_waitlist_entries: query returned %d posts", count( $results ) ) );
+        foreach ( $results as $r ) {
+            $this->log( sprintf( " - eligible post ID=%d, customer_email=%s", $r->ID, get_post_meta( $r->ID, '_customer_email', true ) ) );
+        }
+        return $results;
     }
 
     /**
@@ -1396,4 +1439,11 @@ class ZBP_Waitlist_Service {
 
         return get_posts( $query_args );
     }
+
+    public function log( $message ) {
+        $log_file = ZBP_PLUGIN_PATH . 'debug_log.txt';
+        $formatted = sprintf( "[%s] %s\n", date('Y-m-d H:i:s'), $message );
+        file_put_contents( $log_file, $formatted, FILE_APPEND );
+    }
 }
+

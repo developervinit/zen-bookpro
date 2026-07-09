@@ -116,6 +116,8 @@ class ZBP_Email_Service {
     public function send_waitlist_invitation( $entry_id ) {
         $customer_email = get_post_meta( $entry_id, '_customer_email', true );
         $customer_name  = get_post_meta( $entry_id, '_customer_name', true );
+        $log_file = ZBP_PLUGIN_PATH . 'debug_log.txt';
+        file_put_contents( $log_file, sprintf( "[%s] send_waitlist_invitation called for entry_id=%d, email=%s, name=%s\n", date('Y-m-d H:i:s'), $entry_id, $customer_email, $customer_name ), FILE_APPEND );
         $product_id     = get_post_meta( $entry_id, '_product_id', true );
         $event_date     = get_post_meta( $entry_id, '_event_date', true );
         $token          = get_post_meta( $entry_id, '_waitlist_token', true );
@@ -183,6 +185,7 @@ class ZBP_Email_Service {
 
         $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 
-        wp_mail( $to, $subject, $message, $headers );
+        $sent_status = wp_mail( $to, $subject, $message, $headers );
+        file_put_contents( $log_file, sprintf( "[%s] wp_mail result: %s\n", date('Y-m-d H:i:s'), $sent_status ? 'success' : 'failed' ), FILE_APPEND );
     }
 }
