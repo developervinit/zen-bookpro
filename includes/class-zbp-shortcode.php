@@ -32,6 +32,9 @@ class ZBP_Shortcode {
         add_action( 'wp_ajax_nopriv_zbp_get_slots', array( $this, 'ajax_get_slots' ) );
         add_action( 'wp_ajax_zbp_validate_booking_add_to_cart', array( $this, 'ajax_validate_booking_add_to_cart' ) );
         add_action( 'wp_ajax_nopriv_zbp_validate_booking_add_to_cart', array( $this, 'ajax_validate_booking_add_to_cart' ) );
+        add_filter( 'woocommerce_add_to_cart_redirect', array( $this, 'disable_booking_ajax_add_to_cart_redirect' ), 99, 2 );
+        add_filter( 'pre_option_woocommerce_cart_redirect_after_add', array( $this, 'disable_booking_ajax_cart_redirect_option' ), 10, 3 );
+        add_action( 'wp_loaded', array( $this, 'send_booking_ajax_add_to_cart_response' ), 99 );
     }
 
     /**
@@ -209,6 +212,87 @@ class ZBP_Shortcode {
         );
     }
 
+    /**
+     * Prevent Woo redirecting the lightweight booking add-to-cart request.
+     *
+     * @param string|false $url Redirect URL.
+     * @param WC_Product   $product Product being added.
+     * @return string|false
+     */
+    public function disable_booking_ajax_add_to_cart_redirect( $url, $product ) {
+        if ( empty( $_GET['zbp_ajax_add_booking'] ) || isset( $_REQUEST['zbp_waitlist_invite'], $_REQUEST['zbp_token'] ) ) {
+            return $url;
+        }
+
+        return false;
+    }
+
+    /**
+     * Disable Woo's cart-redirect fallback for the lightweight booking add-to-cart request.
+     *
+     * @param mixed  $pre_option Pre-option value.
+     * @param string $option     Option name.
+     * @param mixed  $default    Default value.
+     * @return mixed
+     */
+    public function disable_booking_ajax_cart_redirect_option( $pre_option, $option, $default ) {
+        if ( empty( $_GET['zbp_ajax_add_booking'] ) || isset( $_REQUEST['zbp_waitlist_invite'], $_REQUEST['zbp_token'] ) ) {
+            return $pre_option;
+        }
+
+        return 'no';
+    }
+
+    /**
+     * Return a compact JSON response after Woo handles add-to-cart.
+     *
+     * @return void
+     */
+    public function send_booking_ajax_add_to_cart_response() {
+        if ( empty( $_GET['zbp_ajax_add_booking'] ) || empty( $_GET['add-to-cart'] ) ) {
+            return;
+        }
+
+        if ( is_admin() || wp_doing_ajax() || ! function_exists( 'wc_get_notices' ) ) {
+            return;
+        }
+
+        $errors = wc_get_notices( 'error' );
+
+        if ( ! empty( $errors ) ) {
+            wp_send_json_error(
+                array(
+                    'message' => $this->get_first_wc_notice_message( $errors ),
+                ),
+                400
+            );
+        }
+
+        wp_send_json_success(
+            array(
+                'message' => __( 'Booking added to cart.', 'zen-bookpro' ),
+            )
+        );
+    }
+
+    /**
+     * Extract a readable notice from Woo notice arrays.
+     *
+     * @param array $notices Woo notices.
+     * @return string
+     */
+    private function get_first_wc_notice_message( $notices ) {
+        foreach ( $notices as $notice ) {
+            $message = is_array( $notice ) && isset( $notice['notice'] ) ? $notice['notice'] : $notice;
+            $message = wp_strip_all_tags( (string) $message );
+
+            if ( '' !== trim( $message ) ) {
+                return trim( $message );
+            }
+        }
+
+        return __( 'Unable to add this booking. Please try again.', 'zen-bookpro' );
+    }
     /**
      * Ensure the Woo cart is available during admin-ajax requests.
      *

@@ -833,6 +833,31 @@
     color: #2a2a2b;
 }
 
+
+.zbp-join-action-submit.is-loading {
+    align-items: center;
+    display: inline-flex;
+    gap: 10px;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.zbp-join-action-submit.is-loading::before {
+    animation: zbp-spin 0.8s linear infinite;
+    border: 2px solid rgba(42, 42, 43, 0.3);
+    border-radius: 50%;
+    border-top-color: #2a2a2b;
+    content: "";
+    height: 18px;
+    width: 18px;
+}
+
+@keyframes zbp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .zbp-join-action-close:hover,
 .zbp-join-action-submit:hover {
     opacity: 0.9;

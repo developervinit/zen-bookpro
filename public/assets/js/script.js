@@ -1280,30 +1280,85 @@
                 document.body.dispatchEvent(new CustomEvent("added_to_cart"));
             }
 
-            function validateBookingCanAdd(productId) {
-                var payload = new URLSearchParams();
+            function withBookingAjaxResponse(addToCartUrl) {
+                try {
+                    var url = new URL(addToCartUrl, window.location.href);
+                    url.searchParams.set("zbp_ajax_add_booking", "1");
+                    return url.toString();
+                } catch (error) {
+                    return addToCartUrl + (addToCartUrl.indexOf("?") === -1 ? "?" : "&") + "zbp_ajax_add_booking=1";
+                }
+            }
 
-                payload.append("action", "zbp_validate_booking_add_to_cart");
-                payload.append("product_id", String(productId || 0));
-                payload.append("nonce", zbpAjax.nonce || "");
+            function normalizeBookingAddToCartResponse(response) {
+                var contentType = response.headers.get("content-type") || "";
 
-                return fetch(zbpAjax.ajaxUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                    },
-                    body: payload.toString(),
-                    credentials: "same-origin"
-                })
-                    .then(function (response) {
-                        return response.json();
-                    })
-                    .then(function (result) {
-                        if (result && result.success) {
-                            return true;
+                return response.text().then(function (body) {
+                    var parsed;
+                    var noticeDoc;
+                    var errorMessage;
+
+                    if (contentType.indexOf("application/json") !== -1) {
+                        try {
+                            parsed = JSON.parse(body);
+                        } catch (error) {
+                            parsed = null;
                         }
 
-                        throw new Error(result && result.data && result.data.message ? result.data.message : "Unable to add this booking. Please try again.");
+                        if (parsed) {
+                            return parsed;
+                        }
+                    }
+
+                    noticeDoc = parseWooCommerceNotices(body);
+                    errorMessage = extractWooCommerceError(noticeDoc);
+
+                    if (errorMessage) {
+                        return {
+                            success: false,
+                            data: {
+                                message: errorMessage
+                            }
+                        };
+                    }
+
+                    return {
+                        success: response.ok,
+                        data: {
+                            message: response.ok ? "" : "Unable to add this booking. Please try again."
+                        }
+                    };
+                });
+            }
+
+            function validateBookingCanAdd(productId) {
+                var formData = new FormData();
+
+                formData.append("action", "zbp_validate_booking_add_to_cart");
+                formData.append("nonce", (window.zbpAjax && zbpAjax.nonce) ? zbpAjax.nonce : "");
+                formData.append("product_id", productId || "");
+
+                return fetch((window.zbpAjax && zbpAjax.ajaxUrl) ? zbpAjax.ajaxUrl : "/wp-admin/admin-ajax.php", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    body: formData
+                })
+                    .then(function (response) {
+                        return response.json().catch(function () {
+                            return {
+                                success: false,
+                                data: {
+                                    message: "Unable to validate this booking. Please try again."
+                                }
+                            };
+                        });
+                    })
+                    .then(function (result) {
+                        if (!result || !result.success) {
+                            throw new Error(result && result.data && result.data.message ? result.data.message : "Unable to validate this booking. Please try again.");
+                        }
+
+                        return result;
                     });
             }
 
@@ -1316,30 +1371,30 @@
                 clearJoinNotice();
 
                 if (joinActionSubmit) {
+                    if (!joinActionSubmit.getAttribute("data-original-label")) {
+                        joinActionSubmit.setAttribute("data-original-label", joinActionSubmit.textContent || "Join");
+                    }
                     joinActionSubmit.disabled = true;
                     joinActionSubmit.setAttribute("aria-disabled", "true");
                     joinActionSubmit.classList.add("is-loading");
+                    joinActionSubmit.textContent = "Booking...";
                 }
 
                 validateBookingCanAdd(productId)
                     .then(function () {
-                        return fetch(addToCartUrl, {
+                        return fetch(withBookingAjaxResponse(addToCartUrl), {
                             method: "GET",
                             credentials: "same-origin",
                             headers: {
-                                "X-Requested-With": "XMLHttpRequest"
+                                "X-Requested-With": "XMLHttpRequest",
+                                "Accept": "application/json, text/html;q=0.9, */*;q=0.8"
                             }
                         });
                     })
-                    .then(function (response) {
-                        return response.text();
-                    })
-                    .then(function (html) {
-                        var noticeDoc = parseWooCommerceNotices(html);
-                        var errorMessage = extractWooCommerceError(noticeDoc);
-
-                        if (errorMessage) {
-                            showJoinNotice(errorMessage, "error");
+                    .then(normalizeBookingAddToCartResponse)
+                    .then(function (result) {
+                        if (!result || !result.success) {
+                            showJoinNotice(result && result.data && result.data.message ? result.data.message : "Unable to add this booking. Please try again.", "error");
                             return;
                         }
 
@@ -1353,9 +1408,12 @@
                             joinActionSubmit.disabled = false;
                             joinActionSubmit.removeAttribute("aria-disabled");
                             joinActionSubmit.classList.remove("is-loading");
+                            joinActionSubmit.textContent = joinActionSubmit.getAttribute("data-original-label") || "Join";
+                            joinActionSubmit.removeAttribute("data-original-label");
                         }
                     });
             }
+
             function updateJoinModalZencoins(value) {
                 var normalizedValue = String(value || "0");
                 var zencoinWrap = wrapper.querySelector(".zbp-join-zencoins");
