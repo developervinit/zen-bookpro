@@ -2133,8 +2133,8 @@
                 confirmBtn.className = "zbp-confirm-ok";
                 confirmBtn.textContent = options.confirmLabel || "OK";
 
-                actions.appendChild(cancelBtn);
                 actions.appendChild(confirmBtn);
+                actions.appendChild(cancelBtn);
                 dialog.appendChild(title);
                 dialog.appendChild(message);
                 dialog.appendChild(actions);

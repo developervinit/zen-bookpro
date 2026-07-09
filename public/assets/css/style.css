@@ -1121,7 +1121,7 @@
 
 .zbp-confirm-overlay {
     align-items: center;
-    background: rgba(20, 20, 22, 0.68);
+    background: rgba(0, 0, 0, 0.72);
     display: flex;
     inset: 0;
     justify-content: center;
@@ -1131,52 +1131,89 @@
 }
 
 .zbp-confirm-dialog {
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
-    color: #242428;
-    max-width: 440px;
-    padding: 28px;
+    background: #3F3E3E;
+    border-radius: 12px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+    color: #f6f2ea;
+    max-width: 540px;
+    padding: 48px 32px 36px;
+    text-align: center;
     width: 100%;
 }
 
 .zbp-confirm-dialog h3 {
-    color: #242428;
-    font-size: 22px;
+    color: #D8B355;
+    font-size: 28px;
+    font-weight: 700;
     line-height: 1.25;
-    margin: 0 0 12px;
+    margin: 0 0 18px;
 }
 
 .zbp-confirm-dialog p {
-    color: #4b4b50;
-    font-size: 16px;
-    line-height: 1.5;
-    margin: 0 0 22px;
+    color: #f6f2ea;
+    font-size: 20px;
+    line-height: 1.45;
+    margin: 0 0 34px;
 }
 
 .zbp-confirm-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 34px;
 }
 
 .zbp-confirm-actions button {
-    border: 0;
-    border-radius: 6px;
+    align-items: center;
+    background: transparent;
+    border: 3px solid currentColor;
+    border-radius: 999px;
     cursor: pointer;
-    font-size: 15px;
+    display: inline-flex;
+    font-size: 24px;
     font-weight: 700;
-    min-height: 42px;
-    padding: 0 18px;
+    justify-content: center;
+    line-height: 1.2;
+    min-height: 88px;
+    padding: 18px 28px;
+    text-align: center;
+    width: 100%;
 }
 
 .zbp-confirm-cancel {
-    background: #f1f1f3;
-    color: #242428;
+    color: #9A9A9A;
 }
 
 .zbp-confirm-ok {
-    background: #d71920;
-    color: #ffffff;
+    color: #D8B355;
+}
+
+.zbp-confirm-cancel:hover,
+.zbp-confirm-cancel:focus,
+.zbp-confirm-ok:hover,
+.zbp-confirm-ok:focus {
+    background: rgba(255, 255, 255, 0.04);
+    color: currentColor;
+}
+
+@media (max-width: 640px) {
+    .zbp-confirm-dialog {
+        padding: 34px 20px 26px;
+    }
+
+    .zbp-confirm-dialog h3 {
+        font-size: 22px;
+    }
+
+    .zbp-confirm-dialog p {
+        font-size: 17px;
+    }
+
+    .zbp-confirm-actions {
+        gap: 20px;
+    }
+
+    .zbp-confirm-actions button {
+        font-size: 18px;
+        min-height: 64px;
+    }
 }
