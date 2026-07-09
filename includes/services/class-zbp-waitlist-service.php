@@ -716,6 +716,17 @@ class ZBP_Waitlist_Service {
     }
 
     /**
+     * Determine whether an Event session is full for waitlist eligibility.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Date in Y-m-d format.
+     * @return bool
+     */
+    private function is_session_full( $product_id, $date ) {
+        return $this->calculate_available_seats( $product_id, $date ) <= 0;
+    }
+
+    /**
      * Calculate the number of conceptually available seats for an Event product on a specific date.
      *
      * @param int    $product_id Product ID.
