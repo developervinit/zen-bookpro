@@ -264,14 +264,16 @@ class ZBP_Product_Service {
                     }
                 } 
                 
-                // CRITICAL FIX: If slots are empty or booked_spots is 0 but it's an event, 
-                // fetch actual bookings to see if it's just full.
-                if ( 'event' === $mode && ( empty( $slots ) || $booked_spots === 0 ) ) {
+                // Event public capacity should not count temporary Woo Bookings cart holds.
+                // Recalculate from real booking statuses so another user's cart does not force waitlist.
+                if ( 'event' === $mode ) {
+                    $booked_spots = 0;
+
                     // Use date strings for more reliable querying
                     $date_from = $selected_date . ' 00:00:00';
                     $date_to   = $selected_date . ' 23:59:59';
 
-                    $status_filter = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'in-cart', 'on-hold' );
+                    $status_filter = array( 'confirmed', 'paid', 'complete', 'unpaid', 'pending-confirmation', 'on-hold' );
                     $existing_bookings = array();
 
                     if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_bookings_for_objects' ) ) {
