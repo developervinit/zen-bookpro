@@ -2041,16 +2041,76 @@
                 });
             }
 
-            function leaveWaitlist(joinBtn) {
-                var productId = joinBtn.getAttribute("data-product-id");
-                var dateKey = formatDateKey(selectedDate);
+            function openWaitlistConfirmDialog(options) {
+                options = options || {};
 
-                if (!productId) return;
+                var dialogOverlay = document.createElement("div");
+                dialogOverlay.className = "zbp-confirm-overlay";
 
-                if (!confirm("Are you sure you want to leave the waitlist?")) {
-                    return;
+                var dialog = document.createElement("div");
+                dialog.className = "zbp-confirm-dialog";
+                dialog.setAttribute("role", "dialog");
+                dialog.setAttribute("aria-modal", "true");
+                dialog.setAttribute("aria-labelledby", "zbp-confirm-dialog-title");
+
+                var title = document.createElement("h3");
+                title.id = "zbp-confirm-dialog-title";
+                title.textContent = options.title || "Confirm action";
+
+                var message = document.createElement("p");
+                message.textContent = options.message || "Are you sure?";
+
+                var actions = document.createElement("div");
+                actions.className = "zbp-confirm-actions";
+
+                var cancelBtn = document.createElement("button");
+                cancelBtn.type = "button";
+                cancelBtn.className = "zbp-confirm-cancel";
+                cancelBtn.textContent = options.cancelLabel || "Cancel";
+
+                var confirmBtn = document.createElement("button");
+                confirmBtn.type = "button";
+                confirmBtn.className = "zbp-confirm-ok";
+                confirmBtn.textContent = options.confirmLabel || "OK";
+
+                actions.appendChild(cancelBtn);
+                actions.appendChild(confirmBtn);
+                dialog.appendChild(title);
+                dialog.appendChild(message);
+                dialog.appendChild(actions);
+                dialogOverlay.appendChild(dialog);
+                document.body.appendChild(dialogOverlay);
+
+                function closeDialog() {
+                    document.removeEventListener("keydown", handleKeydown);
+                    if (dialogOverlay.parentNode) {
+                        dialogOverlay.parentNode.removeChild(dialogOverlay);
+                    }
                 }
 
+                function handleKeydown(event) {
+                    if (event.key === "Escape") {
+                        closeDialog();
+                    }
+                }
+
+                cancelBtn.addEventListener("click", closeDialog);
+                dialogOverlay.addEventListener("click", function (event) {
+                    if (event.target === dialogOverlay) {
+                        closeDialog();
+                    }
+                });
+                confirmBtn.addEventListener("click", function () {
+                    closeDialog();
+                    if (typeof options.onConfirm === "function") {
+                        options.onConfirm();
+                    }
+                });
+                document.addEventListener("keydown", handleKeydown);
+                confirmBtn.focus();
+            }
+
+            function submitLeaveWaitlist(joinBtn, productId, dateKey) {
                 joinBtn.disabled = true;
                 joinBtn.textContent = "Leaving...";
 
@@ -2085,6 +2145,23 @@
                     alert("An error occurred while leaving the waitlist.");
                     joinBtn.disabled = false;
                     joinBtn.textContent = "Leave Waitlist";
+                });
+            }
+
+            function leaveWaitlist(joinBtn) {
+                var productId = joinBtn.getAttribute("data-product-id");
+                var dateKey = formatDateKey(selectedDate);
+
+                if (!productId) return;
+
+                openWaitlistConfirmDialog({
+                    title: "Leave waitlist?",
+                    message: "Your waitlist spot will be released. If you already received an invitation, the next person in line may be notified immediately.",
+                    confirmLabel: "Leave waitlist",
+                    cancelLabel: "Cancel",
+                    onConfirm: function () {
+                        submitLeaveWaitlist(joinBtn, productId, dateKey);
+                    }
                 });
             }
 

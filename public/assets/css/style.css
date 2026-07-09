@@ -1092,3 +1092,65 @@
 .zbp-join-action-submit[disabled]:hover {
     opacity: 0.8;
 }
+
+.zbp-confirm-overlay {
+    align-items: center;
+    background: rgba(20, 20, 22, 0.68);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 24px;
+    position: fixed;
+    z-index: 100000;
+}
+
+.zbp-confirm-dialog {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+    color: #242428;
+    max-width: 440px;
+    padding: 28px;
+    width: 100%;
+}
+
+.zbp-confirm-dialog h3 {
+    color: #242428;
+    font-size: 22px;
+    line-height: 1.25;
+    margin: 0 0 12px;
+}
+
+.zbp-confirm-dialog p {
+    color: #4b4b50;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 22px;
+}
+
+.zbp-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.zbp-confirm-actions button {
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    min-height: 42px;
+    padding: 0 18px;
+}
+
+.zbp-confirm-cancel {
+    background: #f1f1f3;
+    color: #242428;
+}
+
+.zbp-confirm-ok {
+    background: #d71920;
+    color: #ffffff;
+}

@@ -938,18 +938,23 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function handle_book_now_redirect() {
-        if ( is_admin() ) {
+        if ( is_admin() || isset( $_GET['add-to-cart'] ) ) {
             return;
         }
 
         $entry_id = isset( $_GET['zbp_waitlist_invite'] ) ? absint( $_GET['zbp_waitlist_invite'] ) : 0;
-        $token    = isset( $_GET['zbp_token'] ) ? sanitize_text_field( $_GET['zbp_token'] ) : '';
+        $token    = isset( $_GET['zbp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['zbp_token'] ) ) : '';
 
         if ( ! $entry_id || empty( $token ) ) {
             return;
         }
 
-        // Run validation
+        if ( ! is_user_logged_in() ) {
+            wc_add_notice( __( 'Please log in to claim your waitlist invitation.', 'zen-bookpro' ), 'notice' );
+            wp_safe_redirect( wc_get_page_permalink( 'myaccount' ) );
+            exit;
+        }
+
         $validation = $this->validate_invitation( $entry_id, $token );
         if ( is_wp_error( $validation ) ) {
             wc_add_notice( $validation->get_error_message(), 'error' );
@@ -957,19 +962,12 @@ class ZBP_Waitlist_Service {
             exit;
         }
 
-        $product_id = get_post_meta( $entry_id, '_product_id', true );
+        $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
         $event_date = get_post_meta( $entry_id, '_event_date', true );
+
 
         if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
             wc_add_notice( __( 'This waitlist invitation is no longer available.', 'zen-bookpro' ), 'error' );
-            wp_safe_redirect( wc_get_cart_url() );
-            exit;
-        }
-
-        // Extract slot date parameters
-        $date_timestamp = strtotime( $event_date );
-        if ( ! $date_timestamp ) {
-            wc_add_notice( __( 'Invalid event date.', 'zen-bookpro' ), 'error' );
             wp_safe_redirect( wc_get_cart_url() );
             exit;
         }
@@ -981,32 +979,18 @@ class ZBP_Waitlist_Service {
             exit;
         }
 
-        foreach ( $booking_posted_data as $key => $value ) {
-            $_POST[ $key ] = $value;
-        }
-
-        // Empty existing cart
-        WC()->cart->empty_cart();
-
-        // Let WooCommerce Bookings build the actual booking cart data from $_POST.
-        $cart_item_data = array(
-            'zbp_waitlist_invite_id' => $entry_id,
+        $claim_args = array_merge(
+            $booking_posted_data,
+            array(
+                'add-to-cart'         => $product_id,
+                'zbp_waitlist_invite' => $entry_id,
+                'zbp_token'           => $token,
+            )
         );
 
-        // Add to cart programmatically
-        $added = WC()->cart->add_to_cart( $product_id, 1, 0, array(), $cart_item_data );
-
-        if ( ! $added ) {
-            wc_add_notice( __( 'Failed to add the booking to your cart. Please try again.', 'zen-bookpro' ), 'error' );
-            wp_safe_redirect( wc_get_cart_url() );
-            exit;
-        }
-
-        // Redirect directly to checkout
-        wp_safe_redirect( wc_get_checkout_url() );
+        wp_safe_redirect( add_query_arg( $claim_args, wc_get_checkout_url() ) );
         exit;
     }
-
     /**
      * Handle secure decline links from waitlist invitation emails.
      *
@@ -1047,6 +1031,12 @@ class ZBP_Waitlist_Service {
         $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
         $event_date = get_post_meta( $entry_id, '_event_date', true );
 
+        $confirmed = isset( $_GET['zbp_confirm_decline'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['zbp_confirm_decline'] ) );
+        if ( ! $confirmed ) {
+            $this->render_decline_waitlist_confirmation( $entry_id, $token, $product_id, $event_date, $redirect_url );
+            exit;
+        }
+
         update_post_meta( $entry_id, '_waitlist_status', 'left' );
         delete_post_meta( $entry_id, '_waitlist_priority' );
 
@@ -1062,6 +1052,41 @@ class ZBP_Waitlist_Service {
         wc_add_notice( __( 'Your waitlist invitation has been released.', 'zen-bookpro' ), 'success' );
         wp_safe_redirect( $redirect_url );
         exit;
+    }
+
+    /**
+     * Render a confirmation page before releasing an emailed waitlist invitation.
+     *
+     * @param int    $entry_id     Waitlist entry ID.
+     * @param string $token        Invitation token.
+     * @param int    $product_id   Product ID.
+     * @param string $event_date   Event date.
+     * @param string $redirect_url Cancel redirect URL.
+     * @return void
+     */
+    private function render_decline_waitlist_confirmation( $entry_id, $token, $product_id, $event_date, $redirect_url ) {
+        $product     = wc_get_product( $product_id );
+        $event_name  = $product ? $product->get_name() : __( 'this class', 'zen-bookpro' );
+        $confirm_url = add_query_arg(
+            array(
+                'zbp_waitlist_decline' => $entry_id,
+                'zbp_token'            => $token,
+                'zbp_confirm_decline'  => '1',
+            ),
+            home_url( '/' )
+        );
+
+        status_header( 200 );
+        nocache_headers();
+        echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . esc_html__( 'Release waitlist spot', 'zen-bookpro' ) . '</title>';
+        wp_head();
+        echo '<style>.zbp-decline-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:rgba(20,20,22,.72);padding:24px;box-sizing:border-box}.zbp-decline-dialog{width:min(440px,100%);background:#fff;color:#242428;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.28);padding:28px}.zbp-decline-dialog h1{font-size:24px;line-height:1.25;margin:0 0 12px}.zbp-decline-dialog p{font-size:16px;line-height:1.5;margin:0 0 20px}.zbp-decline-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}.zbp-decline-actions a{border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;min-height:42px;padding:0 18px;text-decoration:none}.zbp-decline-cancel{background:#f1f1f3;color:#242428}.zbp-decline-confirm{background:#d71920;color:#fff}</style></head><body>';
+        echo '<main class="zbp-decline-page"><section class="zbp-decline-dialog" role="dialog" aria-modal="true"><h1>' . esc_html__( 'Release this waitlist spot?', 'zen-bookpro' ) . '</h1>';
+        echo '<p>' . esc_html( sprintf( __( 'If you release your spot for %1$s on %2$s, the next person on the waitlist will be invited immediately.', 'zen-bookpro' ), $event_name, $event_date ) ) . '</p>';
+        echo '<div class="zbp-decline-actions"><a class="zbp-decline-cancel" href="' . esc_url( $redirect_url ) . '">' . esc_html__( 'Cancel', 'zen-bookpro' ) . '</a><a class="zbp-decline-confirm" href="' . esc_url( $confirm_url ) . '">' . esc_html__( 'Release spot', 'zen-bookpro' ) . '</a></div>';
+        echo '</section></main>';
+        wp_footer();
+        echo '</body></html>';
     }
 
     /**
@@ -1939,4 +1964,3 @@ class ZBP_Waitlist_Service {
         file_put_contents( $log_file, $formatted, FILE_APPEND );
     }
 }
-
