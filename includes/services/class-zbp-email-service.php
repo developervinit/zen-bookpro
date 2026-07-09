@@ -22,18 +22,14 @@ class ZBP_Email_Service {
      * @return void
      */
     public function handle_event_cancellation( $product_id, $date, $cancelled_booking_ids ) {
-        if ( empty( $cancelled_booking_ids ) ) {
-            return;
-        }
-
         $booking_service = new ZBP_Booking_Service();
         $product         = wc_get_product( $product_id );
         $product_name    = $product ? $product->get_name() : __( 'Event', 'zen-bookpro' );
 
         $admin_bookings_info = array();
 
-        // 1. Loop and send email to each customer
-        foreach ( $cancelled_booking_ids as $booking_id ) {
+        // 1. Loop and send email to each booked customer.
+        foreach ( (array) $cancelled_booking_ids as $booking_id ) {
             $booking_data = $booking_service->get_booking_by_id( $booking_id );
             if ( ! $booking_data ) {
                 continue;
@@ -46,7 +42,10 @@ class ZBP_Email_Service {
             }
         }
 
-        // 2. Send summary email to site administrator
+        // 2. Notify waitlisted customers. No refund language is included because no ZC were deducted.
+        $this->send_waitlist_cancellation_notifications( $product_id, $date, $product_name );
+
+        // 3. Send summary email to site administrator.
         $this->send_admin_email( $product_name, $date, $admin_bookings_info );
     }
 
@@ -107,6 +106,75 @@ class ZBP_Email_Service {
         wp_mail( $to, $subject, $message, $headers );
     }
 
+    /**
+     * Notify all active waitlist customers when the studio cancels an event.
+     *
+     * @param int    $product_id   Product ID.
+     * @param string $date         Event date.
+     * @param string $product_name Product name.
+     * @return void
+     */
+    private function send_waitlist_cancellation_notifications( $product_id, $date, $product_name ) {
+        $entries = get_posts( array(
+            'post_type'      => 'zbp_waitlist',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'   => '_product_id',
+                    'value' => $product_id,
+                ),
+                array(
+                    'key'   => '_event_date',
+                    'value' => $date,
+                ),
+                array(
+                    'key'     => '_waitlist_status',
+                    'value'   => array( 'waiting', 'invited' ),
+                    'compare' => 'IN',
+                ),
+            ),
+        ) );
+
+        foreach ( $entries as $entry_id ) {
+            $this->send_waitlist_cancellation_email( $entry_id, $product_name, $date );
+            update_post_meta( $entry_id, '_waitlist_status', 'cancelled' );
+            delete_post_meta( $entry_id, '_waitlist_priority' );
+
+            if ( function_exists( 'as_unschedule_action' ) ) {
+                as_unschedule_action( 'zbp_waitlist_check_expiry', array( 'entry_id' => (int) $entry_id ) );
+            }
+        }
+    }
+
+    /**
+     * Send a cancellation email to one waitlisted customer.
+     *
+     * @param int    $entry_id     Waitlist entry ID.
+     * @param string $product_name Product name.
+     * @param string $date         Event date.
+     * @return void
+     */
+    private function send_waitlist_cancellation_email( $entry_id, $product_name, $date ) {
+        $to            = get_post_meta( $entry_id, '_customer_email', true );
+        $customer_name = get_post_meta( $entry_id, '_customer_name', true );
+
+        if ( empty( $to ) ) {
+            return;
+        }
+
+        $subject = sprintf( __( 'Cancelled: %s', 'zen-bookpro' ), $product_name );
+
+        $message  = sprintf( __( 'Hi %s,', 'zen-bookpro' ), $customer_name ? $customer_name : __( 'there', 'zen-bookpro' ) ) . "\r\n\r\n";
+        $message .= sprintf( __( 'The event "%s" on %s has been cancelled by the studio.', 'zen-bookpro' ), $product_name, $date ) . "\r\n\r\n";
+        $message .= __( 'You were on the waitlist for this event. No Zencoins were deducted for joining the waitlist, so no refund is needed.', 'zen-bookpro' ) . "\r\n\r\n";
+        $message .= __( 'Thank you for your understanding.', 'zen-bookpro' ) . "\r\n";
+        $message .= get_bloginfo( 'name' );
+
+        wp_mail( $to, $subject, $message, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+    }
     /**
      * Send waitlist invitation email to a customer.
      *

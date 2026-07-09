@@ -44,6 +44,9 @@ class ZBP_Waitlist_Service {
         // Booking completion listeners
         add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_line_item_meta' ), 10, 4 );
         add_action( 'woocommerce_new_booking', array( $this, 'handle_new_booking' ) );
+        add_action( 'woocommerce_checkout_order_processed', array( $this, 'handle_checkout_order_processed' ), 50, 3 );
+        add_action( 'woocommerce_order_status_processing', array( $this, 'handle_paid_order_status' ), 50, 1 );
+        add_action( 'woocommerce_order_status_completed', array( $this, 'handle_paid_order_status' ), 50, 1 );
 
         // Action Scheduler Expiry Action
         add_action( 'zbp_waitlist_check_expiry', array( $this, 'handle_waitlist_expiry' ) );
@@ -174,6 +177,18 @@ class ZBP_Waitlist_Service {
         $product = wc_get_product( $product_id );
         if ( ! $product ) {
             return new WP_Error( 'invalid_product', __( 'Invalid product ID.', 'zen-bookpro' ) );
+        }
+
+        if ( ! $this->is_session_full( $product_id, $date ) ) {
+            return new WP_Error( 'session_not_full', __( 'Waitlist is only available when the session is full.', 'zen-bookpro' ) );
+        }
+
+        if ( $this->is_event_cancelled( $product_id, $date ) ) {
+            return new WP_Error( 'event_cancelled', __( 'This event has been cancelled.', 'zen-bookpro' ) );
+        }
+
+        if ( $this->has_event_started( $product_id, $date ) ) {
+            return new WP_Error( 'event_started', __( 'Waitlist is closed for this event.', 'zen-bookpro' ) );
         }
 
         // Count existing waiting entries to assign priority
@@ -532,9 +547,20 @@ class ZBP_Waitlist_Service {
      * @return void
      */
     public function process_invitations( $eligible_entries, $product_id, $event_date, $available_seats ) {
+        if ( $eligible_entries instanceof WP_Post || is_numeric( $eligible_entries ) ) {
+            $eligible_entries = array( $eligible_entries );
+        } elseif ( ! is_array( $eligible_entries ) ) {
+            $eligible_entries = array();
+        }
+
         $this->log( sprintf( "process_invitations called: product_id=%d, event_date=%s, available_seats=%d, eligible_entries count=%d", $product_id, $event_date, $available_seats, count( $eligible_entries ) ) );
         if ( empty( $eligible_entries ) ) {
             $this->log( "process_invitations early exit: eligible_entries is empty" );
+            return;
+        }
+
+        if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
+            $this->log( "process_invitations early exit: event cancelled or started" );
             return;
         }
 
@@ -644,6 +670,11 @@ class ZBP_Waitlist_Service {
         $event_date = wp_date( 'Y-m-d', $start_timestamp );
         $this->log( sprintf( "process_cancellation: event_date=%s", $event_date ) );
 
+        if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
+            $this->log( "process_cancellation early exit: event cancelled or started" );
+            return;
+        }
+
         // 1. Calculate how many seats are now available
         $available_seats = $this->calculate_available_seats( $product_id, $event_date );
         $this->log( sprintf( "process_cancellation: available_seats calculated=%d", $available_seats ) );
@@ -654,7 +685,7 @@ class ZBP_Waitlist_Service {
         }
 
         // 2. Identify the next eligible customers from the waitlist
-        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, $available_seats );
+        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, 1 );
         $this->log( sprintf( "process_cancellation: eligible_entries count=%d", count( $eligible_entries ) ) );
 
         if ( empty( $eligible_entries ) ) {
@@ -886,6 +917,12 @@ class ZBP_Waitlist_Service {
         $product_id = get_post_meta( $entry_id, '_product_id', true );
         $event_date = get_post_meta( $entry_id, '_event_date', true );
 
+        if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
+            wc_add_notice( __( 'This waitlist invitation is no longer available.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( wc_get_cart_url() );
+            exit;
+        }
+
         // Extract slot date parameters
         $date_timestamp = strtotime( $event_date );
         if ( ! $date_timestamp ) {
@@ -894,34 +931,23 @@ class ZBP_Waitlist_Service {
             exit;
         }
 
-        $year  = date( 'Y', $date_timestamp );
-        $month = date( 'm', $date_timestamp );
-        $day   = date( 'd', $date_timestamp );
+        $booking_posted_data = $this->build_booking_posted_data( $product_id, $event_date );
+        if ( empty( $booking_posted_data ) ) {
+            wc_add_notice( __( 'Unable to prepare this booking. Please contact the studio.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( wc_get_cart_url() );
+            exit;
+        }
 
-        // Query the first slot start time (e.g. "09:00")
-        $slot_time    = '00:00';
-        $slot_service = new ZBP_Slot_Service();
-        $slot_data    = $slot_service->get_slots_for_product( $product_id, $event_date, 'event', true );
-        if ( ! empty( $slot_data['slots'] ) ) {
-            $first_slot = $slot_data['slots'][0];
-            if ( ! empty( $first_slot['timestamp'] ) ) {
-                $slot_time = wp_date( 'H:i', $first_slot['timestamp'] );
-            }
+        foreach ( $booking_posted_data as $key => $value ) {
+            $_POST[ $key ] = $value;
         }
 
         // Empty existing cart
         WC()->cart->empty_cart();
 
-        // Build WooCommerce Bookings fields for cart
+        // Let WooCommerce Bookings build the actual booking cart data from $_POST.
         $cart_item_data = array(
             'zbp_waitlist_invite_id' => $entry_id,
-            'booking' => array(
-                '_year'  => $year,
-                '_month' => $month,
-                '_day'   => $day,
-                '_date'  => $event_date,
-                '_time'  => $slot_time,
-            )
         );
 
         // Add to cart programmatically
@@ -980,6 +1006,14 @@ class ZBP_Waitlist_Service {
             return new WP_Error( 'invalid_product', __( 'Product not found.', 'zen-bookpro' ) );
         }
 
+        if ( $this->is_event_cancelled( $product_id, $event_date ) ) {
+            return new WP_Error( 'event_cancelled', __( 'This event has been cancelled.', 'zen-bookpro' ) );
+        }
+
+        if ( $this->has_event_started( $product_id, $event_date ) ) {
+            return new WP_Error( 'event_started', __( 'This invitation is no longer available.', 'zen-bookpro' ) );
+        }
+
         $max_spots = (int) $product->get_meta( '_zbp_max_spots' );
         if ( $max_spots <= 0 ) {
             $max_spots = method_exists( $product, 'get_qty' ) ? (int) $product->get_qty() : 1;
@@ -1035,8 +1069,11 @@ class ZBP_Waitlist_Service {
             $invite_event_date = get_post_meta( $invite_id, '_event_date', true );
             $invite_customer   = (int) get_post_meta( $invite_id, '_customer_id', true );
 
-            if ( $invite_product_id === $product_id && $invite_event_date === $event_date && get_current_user_id() === $invite_customer ) {
-                return $passed; // Let the invited user book
+            if ( (int) $invite_product_id === (int) $product_id && $invite_event_date === $event_date && get_current_user_id() === $invite_customer ) {
+                $token = isset( $_GET['zbp_token'] ) ? sanitize_text_field( $_GET['zbp_token'] ) : get_post_meta( $invite_id, '_waitlist_token', true );
+                if ( ! is_wp_error( $this->validate_invitation( $invite_id, $token ) ) ) {
+                    return $passed; // Let the invited user book
+                }
             }
         }
 
@@ -1106,18 +1143,20 @@ class ZBP_Waitlist_Service {
     }
 
     /**
-     * Handle successful booking creation.
+     * Handle booking creation.
+     *
+     * WooCommerce Bookings fires this for temporary in-cart bookings too, so this
+     * only completes an invite when the booking already has a real order item.
      *
      * @param int $booking_id Booking ID.
      * @return void
      */
     public function handle_new_booking( $booking_id ) {
         $booking = get_wc_booking( $booking_id );
-        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) || $booking->has_status( array( 'in-cart', 'was-in-cart' ) ) ) {
             return;
         }
 
-        // Get the order item associated with the booking
         $order_item_id = $booking->get_order_item_id();
         if ( ! $order_item_id ) {
             return;
@@ -1132,6 +1171,62 @@ class ZBP_Waitlist_Service {
     }
 
     /**
+     * Complete waitlist entries after checkout processing.
+     *
+     * @param int      $order_id Order ID.
+     * @param array    $posted_data Posted data.
+     * @param WC_Order $order Order object.
+     * @return void
+     */
+    public function handle_checkout_order_processed( $order_id, $posted_data = array(), $order = null ) {
+        $this->complete_waitlist_bookings_for_order( $order_id );
+    }
+
+    /**
+     * Complete waitlist entries when an order reaches a paid status.
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function handle_paid_order_status( $order_id ) {
+        $this->complete_waitlist_bookings_for_order( $order_id );
+    }
+
+    /**
+     * Complete waitlist entries attached to an order once CBB/checkout has finalized.
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    private function complete_waitlist_bookings_for_order( $order_id ) {
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+            return;
+        }
+
+        foreach ( $order->get_items( 'line_item' ) as $item_id => $item ) {
+            $invite_id = wc_get_order_item_meta( $item_id, '_zbp_waitlist_invite_id', true );
+            if ( ! $invite_id ) {
+                continue;
+            }
+
+            $coin_cost = (float) wc_get_order_item_meta( $item_id, '_cbb_coin_item_cost', true );
+            if ( $coin_cost > 0 && ! $order->get_meta( '_cbb_coins_debited_transaction_id', true ) ) {
+                continue;
+            }
+
+            $booking_ids = array();
+            if ( class_exists( 'WC_Booking_Data_Store' ) && method_exists( 'WC_Booking_Data_Store', 'get_booking_ids_from_order_item_id' ) ) {
+                $booking_ids = WC_Booking_Data_Store::get_booking_ids_from_order_item_id( $item_id );
+            }
+
+            foreach ( (array) $booking_ids as $booking_id ) {
+                $this->complete_waitlist_booking( $invite_id, $booking_id );
+            }
+        }
+    }
+
+    /**
      * Complete the waitlist booking process.
      *
      * @param int $invite_id  Waitlist entry ID.
@@ -1141,6 +1236,11 @@ class ZBP_Waitlist_Service {
     private function complete_waitlist_booking( $invite_id, $booking_id ) {
         $status = get_post_meta( $invite_id, '_waitlist_status', true );
         if ( 'invited' !== $status ) {
+            return;
+        }
+
+        $booking = get_wc_booking( $booking_id );
+        if ( $booking && is_a( $booking, 'WC_Booking' ) && $booking->has_status( array( 'in-cart', 'was-in-cart' ) ) ) {
             return;
         }
 
@@ -1196,6 +1296,10 @@ class ZBP_Waitlist_Service {
         // Recalculate priorities of the remaining waiting queue
         $this->recalculate_priorities( $product_id, $event_date );
 
+        if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
+            return;
+        }
+
         // Calculate available seats
         $available_seats = $this->calculate_available_seats( $product_id, $event_date );
         if ( $available_seats <= 0 ) {
@@ -1203,7 +1307,7 @@ class ZBP_Waitlist_Service {
         }
 
         // Identify the next eligible customers from the waitlist
-        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, $available_seats );
+        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, 1 );
         if ( empty( $eligible_entries ) ) {
             return;
         }
@@ -1212,6 +1316,137 @@ class ZBP_Waitlist_Service {
         do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
     }
 
+    /**
+     * Determine whether an event date has been cancelled by the studio.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Event date.
+     * @return bool
+     */
+    private function is_event_cancelled( $product_id, $date ) {
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return false;
+        }
+
+        $cancelled_dates = $product->get_meta( '_zbp_cancelled_dates' );
+        return is_array( $cancelled_dates ) && in_array( $date, $cancelled_dates, true );
+    }
+
+    /**
+     * Determine whether the event has already started.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Event date.
+     * @return bool
+     */
+    private function has_event_started( $product_id, $date ) {
+        $start_timestamp = $this->get_event_start_timestamp( $product_id, $date );
+        return $start_timestamp > 0 && time() >= $start_timestamp;
+    }
+
+    /**
+     * Resolve the event start timestamp from the first Woo Bookings slot.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $date       Event date.
+     * @return int
+     */
+    private function get_event_start_timestamp( $product_id, $date ) {
+        $slot_service = new ZBP_Slot_Service();
+        $slot_data    = $slot_service->get_slots_for_product( $product_id, $date, 'event', true );
+
+        if ( ! empty( $slot_data['slots'][0]['timestamp'] ) ) {
+            return (int) $slot_data['slots'][0]['timestamp'];
+        }
+
+        return 0;
+    }
+
+    /**
+     * Build native WooCommerce Bookings POST fields for a waitlist claim.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $event_date Event date.
+     * @return array
+     */
+    private function build_booking_posted_data( $product_id, $event_date ) {
+        $product = wc_get_product( $product_id );
+        if ( ! $product || ! method_exists( $product, 'is_type' ) || ! $product->is_type( 'booking' ) ) {
+            return array();
+        }
+
+        if ( class_exists( 'WC_Product_Booking' ) && ! ( $product instanceof WC_Product_Booking ) ) {
+            $booking_product = new WC_Product_Booking( $product_id );
+            if ( $booking_product && method_exists( $booking_product, 'is_type' ) && $booking_product->is_type( 'booking' ) ) {
+                $product = $booking_product;
+            }
+        }
+
+        $date_timestamp = strtotime( $event_date );
+        if ( ! $date_timestamp ) {
+            return array();
+        }
+
+        $payload = array(
+            'add-to-cart'                        => (int) $product_id,
+            'wc_bookings_field_start_date_year'  => wp_date( 'Y', $date_timestamp ),
+            'wc_bookings_field_start_date_month' => wp_date( 'n', $date_timestamp ),
+            'wc_bookings_field_start_date_day'   => wp_date( 'j', $date_timestamp ),
+            'wc_bookings_field_duration'         => 1,
+            'wc_bookings_field_qty'              => 1,
+        );
+
+        $start_timestamp = $this->get_event_start_timestamp( $product_id, $event_date );
+        if ( $start_timestamp > 0 ) {
+            $payload['wc_bookings_field_start_date_time'] = wp_date( 'Y-m-d H:i:s', $start_timestamp );
+        }
+
+        if ( method_exists( $product, 'has_persons' ) && $product->has_persons() ) {
+            $min_persons = method_exists( $product, 'get_min_persons' ) ? absint( $product->get_min_persons() ) : 1;
+            $payload['wc_bookings_field_persons'] = max( 1, $min_persons );
+        }
+
+        if ( method_exists( $product, 'has_resources' ) && $product->has_resources() && method_exists( $product, 'is_resource_assignment_type' ) && $product->is_resource_assignment_type( 'customer' ) ) {
+            $resource_id = $this->resolve_first_valid_resource_id( method_exists( $product, 'get_resources' ) ? $product->get_resources() : array() );
+            if ( $resource_id > 0 ) {
+                $payload['wc_bookings_field_resource'] = $resource_id;
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Pick the first usable resource ID for customer-assigned resources.
+     *
+     * @param array $resources Product resources.
+     * @return int
+     */
+    private function resolve_first_valid_resource_id( $resources ) {
+        if ( ! is_array( $resources ) || empty( $resources ) ) {
+            return 0;
+        }
+
+        foreach ( $resources as $resource ) {
+            if ( ! is_object( $resource ) ) {
+                continue;
+            }
+
+            $resource_id = isset( $resource->ID ) ? (int) $resource->ID : ( method_exists( $resource, 'get_id' ) ? (int) $resource->get_id() : 0 );
+            if ( $resource_id <= 0 ) {
+                continue;
+            }
+
+            if ( method_exists( $resource, 'get_qty' ) && (int) $resource->get_qty() <= 0 ) {
+                continue;
+            }
+
+            return $resource_id;
+        }
+
+        return 0;
+    }
     /**
      * Remove row actions for read-only waitlist posts.
      *
