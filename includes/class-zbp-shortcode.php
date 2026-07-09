@@ -71,6 +71,7 @@ class ZBP_Shortcode {
                 'nonce'       => wp_create_nonce( 'zbp_get_slots' ),
                 'isAdmin'     => current_user_can( 'manage_options' ),
                 'cartUrl'     => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' ),
+                'isLoggedIn'  => is_user_logged_in(),
             )
         );
     }

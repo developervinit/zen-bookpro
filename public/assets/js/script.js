@@ -1048,7 +1048,8 @@
 
             var joinModalProductSlots = [];
 
-
+            var pendingWaitlistInProgress = false;
+            var pendingWaitlistStorageKey = 'zbp_pending_waitlist';
 
             if (!dateRow || !weekRange || !productList) {
 
@@ -1058,6 +1059,32 @@
 
 
 
+            function attemptPendingWaitlist() {
+                var pending = getPendingWaitlist();
+                if (!pending || pendingWaitlistInProgress) {
+                    return;
+                }
+
+                if (pending.date && pending.date !== formatDateKey(selectedDate)) {
+                    return;
+                }
+
+                var pendingProductId = String(pending.productId || "").replace(/[^0-9]/g, "");
+                var pendingBtn = pendingProductId ? productList.querySelector('.zbp-join-btn[data-product-id="' + pendingProductId + '"]') : null;
+                if (!pendingBtn || pendingBtn.disabled || pendingBtn.textContent.trim() !== "Join Waitlist") {
+                    return;
+                }
+
+                pendingWaitlistInProgress = true;
+                joinWaitlist(pendingBtn, { resume: true });
+                window.setTimeout(function () {
+                    pendingWaitlistInProgress = false;
+                }, 1500);
+            }
+
+            wrapper.addEventListener("zbp_slots_updated", function () {
+                window.setTimeout(attemptPendingWaitlist, 50);
+            });
             wrapper.addEventListener("zbp_date_selected", function (event) {
 
                 var selectedKey = event && event.detail ? event.detail.selected_date : "";
@@ -1902,11 +1929,76 @@
                 }
             }
 
-            function joinWaitlist(joinBtn) {
+            function getPendingWaitlist() {
+                try {
+                    return JSON.parse(window.sessionStorage.getItem(pendingWaitlistStorageKey) || "null");
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function clearPendingWaitlist() {
+                try {
+                    window.sessionStorage.removeItem(pendingWaitlistStorageKey);
+                } catch (error) {}
+            }
+
+            function storePendingWaitlist(productId, dateKey) {
+                try {
+                    window.sessionStorage.setItem(
+                        pendingWaitlistStorageKey,
+                        JSON.stringify({
+                            productId: String(productId || ""),
+                            date: String(dateKey || ""),
+                            createdAt: Date.now()
+                        })
+                    );
+                } catch (error) {}
+            }
+
+            function openLoginForWaitlist(productId, dateKey) {
+                storePendingWaitlist(productId, dateKey);
+
+                try {
+                    var returnUrl = new URL(window.location.href);
+                    returnUrl.searchParams.set("zbp_waitlist_resume", "1");
+                    returnUrl.searchParams.set("zbp_waitlist_date", dateKey);
+                    window.sessionStorage.setItem("zenctuary_post_auth_redirect", returnUrl.toString());
+                } catch (error) {}
+
+                if (window.zenctuaryAuth && typeof window.zenctuaryAuth.openModal === "function") {
+                    window.zenctuaryAuth.openModal("login");
+                    return true;
+                }
+
+                var loginTrigger = document.querySelector('[data-auth="login"]');
+                if (loginTrigger) {
+                    loginTrigger.click();
+                    return true;
+                }
+
+                return false;
+            }
+
+            function resetWaitlistButton(joinBtn) {
+                if (!joinBtn) return;
+                joinBtn.disabled = false;
+                joinBtn.textContent = "Join Waitlist";
+            }
+
+            function joinWaitlist(joinBtn, options) {
+                options = options || {};
                 var productId = joinBtn.getAttribute("data-product-id");
                 var dateKey = formatDateKey(selectedDate);
 
                 if (!productId) return;
+
+                if (!options.resume && zbpAjax && zbpAjax.isLoggedIn === false) {
+                    if (!openLoginForWaitlist(productId, dateKey)) {
+                        alert("Please log in to join the waitlist.");
+                    }
+                    return;
+                }
 
                 joinBtn.disabled = true;
                 joinBtn.textContent = "Joining...";
@@ -1930,18 +2022,22 @@
                 })
                 .then(function (data) {
                     if (data && data.success) {
+                        clearPendingWaitlist();
                         fetchSlots(dateKey, wrapper, productList);
+                    } else if (data && data.data && data.data.loggedOut) {
+                        resetWaitlistButton(joinBtn);
+                        if (!openLoginForWaitlist(productId, dateKey)) {
+                            alert("Please log in to join the waitlist.");
+                        }
                     } else {
                         alert(data && data.data && data.data.message ? data.data.message : "Failed to join waitlist.");
-                        joinBtn.disabled = false;
-                        joinBtn.textContent = "Join Waitlist";
+                        resetWaitlistButton(joinBtn);
                     }
                 })
                 .catch(function (error) {
                     console.error("Join Waitlist Error:", error);
                     alert("An error occurred while joining the waitlist.");
-                    joinBtn.disabled = false;
-                    joinBtn.textContent = "Join Waitlist";
+                    resetWaitlistButton(joinBtn);
                 });
             }
 
@@ -2452,6 +2548,12 @@
             var weekStart = new Date(currentWeekStart);
 
             var selectedDate = new Date(today);
+
+            var pendingWaitlist = getPendingWaitlist();
+            if (pendingWaitlist && pendingWaitlist.date) {
+                selectedDate = startOfDay(parseDateKeyLocal(pendingWaitlist.date));
+                weekStart = getWeekStartMonday(selectedDate);
+            }
 
 
 

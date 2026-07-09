@@ -23,6 +23,7 @@ class ZBP_Waitlist_Service {
 
         // AJAX Actions
         add_action( 'wp_ajax_zbp_join_waitlist', array( $this, 'ajax_join_waitlist' ) );
+        add_action( 'wp_ajax_nopriv_zbp_join_waitlist', array( $this, 'ajax_login_required' ) );
         add_action( 'wp_ajax_zbp_leave_waitlist', array( $this, 'ajax_leave_waitlist' ) );
 
         // Admin Custom columns for waitlist management
@@ -326,6 +327,22 @@ class ZBP_Waitlist_Service {
         return count( $posts );
     }
 
+    /**
+     * AJAX response for logged-out waitlist requests.
+     *
+     * @return void
+     */
+    public function ajax_login_required() {
+        check_ajax_referer( 'zbp_get_slots', 'nonce' );
+
+        wp_send_json_error(
+            array(
+                'message'   => __( 'Please log in to join the waitlist.', 'zen-bookpro' ),
+                'loggedOut' => true,
+            ),
+            401
+        );
+    }
     /**
      * AJAX Action Handler for joining waitlist.
      *
