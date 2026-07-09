@@ -39,6 +39,7 @@ class ZBP_Waitlist_Service {
         add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
         add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'get_cart_item_from_session' ), 10, 2 );
         add_action( 'template_redirect', array( $this, 'handle_book_now_redirect' ) );
+        add_action( 'template_redirect', array( $this, 'handle_decline_waitlist_invitation' ) );
         add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 3 );
         add_action( 'woocommerce_check_cart_items', array( $this, 'validate_cart_items' ) );
 
@@ -240,12 +241,22 @@ class ZBP_Waitlist_Service {
             return new WP_Error( 'not_on_waitlist', __( 'You do not have an active waitlist entry for this event date.', 'zen-bookpro' ) );
         }
 
+        $was_invited = 'invited' === get_post_meta( $entry->ID, '_waitlist_status', true );
+
         // Update status to 'left'
         update_post_meta( $entry->ID, '_waitlist_status', 'left' );
         delete_post_meta( $entry->ID, '_waitlist_priority' );
 
+        if ( $was_invited && function_exists( 'as_unschedule_action' ) ) {
+            as_unschedule_action( 'zbp_waitlist_check_expiry', array( 'entry_id' => $entry->ID ) );
+        }
+
         // Recalculate priorities for remaining waiting entries
         $this->recalculate_priorities( $product_id, $date );
+
+        if ( $was_invited ) {
+            $this->process_next_waitlist_invitation( $product_id, $date );
+        }
 
         return true;
     }
@@ -993,6 +1004,63 @@ class ZBP_Waitlist_Service {
     }
 
     /**
+     * Handle secure decline links from waitlist invitation emails.
+     *
+     * @return void
+     */
+    public function handle_decline_waitlist_invitation() {
+        if ( is_admin() || ! isset( $_GET['zbp_waitlist_decline'] ) ) {
+            return;
+        }
+
+        $entry_id = absint( $_GET['zbp_waitlist_decline'] );
+        $token    = isset( $_GET['zbp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['zbp_token'] ) ) : '';
+
+        $redirect_url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' );
+
+        if ( ! $entry_id || empty( $token ) ) {
+            wc_add_notice( __( 'Invalid waitlist decline link.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( $redirect_url );
+            exit;
+        }
+
+        $post = get_post( $entry_id );
+        if ( ! $post || 'zbp_waitlist' !== $post->post_type ) {
+            wc_add_notice( __( 'Invalid waitlist decline link.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( $redirect_url );
+            exit;
+        }
+
+        $status       = get_post_meta( $entry_id, '_waitlist_status', true );
+        $stored_token = get_post_meta( $entry_id, '_waitlist_token', true );
+
+        if ( 'invited' !== $status || empty( $stored_token ) || ! hash_equals( (string) $stored_token, (string) $token ) ) {
+            wc_add_notice( __( 'This waitlist invitation is no longer active.', 'zen-bookpro' ), 'error' );
+            wp_safe_redirect( $redirect_url );
+            exit;
+        }
+
+        $product_id = (int) get_post_meta( $entry_id, '_product_id', true );
+        $event_date = get_post_meta( $entry_id, '_event_date', true );
+
+        update_post_meta( $entry_id, '_waitlist_status', 'left' );
+        delete_post_meta( $entry_id, '_waitlist_priority' );
+
+        if ( function_exists( 'as_unschedule_action' ) ) {
+            as_unschedule_action( 'zbp_waitlist_check_expiry', array( 'entry_id' => $entry_id ) );
+        }
+
+        if ( $product_id && ! empty( $event_date ) ) {
+            $this->recalculate_priorities( $product_id, $event_date );
+            $this->process_next_waitlist_invitation( $product_id, $event_date );
+        }
+
+        wc_add_notice( __( 'Your waitlist invitation has been released.', 'zen-bookpro' ), 'success' );
+        wp_safe_redirect( $redirect_url );
+        exit;
+    }
+
+    /**
      * Validate a waitlist invitation.
      *
      * @param int    $entry_id Waitlist entry ID.
@@ -1290,6 +1358,35 @@ class ZBP_Waitlist_Service {
         if ( $product_id && $event_date ) {
             $this->recalculate_priorities( $product_id, $event_date );
         }
+    }
+
+    /**
+     * Notify the next eligible waitlisted user when a reserved invitation is released.
+     *
+     * @param int    $product_id Product ID.
+     * @param string $event_date Event date.
+     * @return void
+     */
+    private function process_next_waitlist_invitation( $product_id, $event_date ) {
+        if ( ! $product_id || empty( $event_date ) ) {
+            return;
+        }
+
+        if ( $this->is_event_cancelled( $product_id, $event_date ) || $this->has_event_started( $product_id, $event_date ) ) {
+            return;
+        }
+
+        $available_seats = $this->calculate_available_seats( $product_id, $event_date );
+        if ( $available_seats <= 0 ) {
+            return;
+        }
+
+        $eligible_entries = $this->get_next_eligible_waitlist_entries( $product_id, $event_date, 1 );
+        if ( empty( $eligible_entries ) ) {
+            return;
+        }
+
+        do_action( 'zbp_waitlist_prepare_invitations', $eligible_entries, $product_id, $event_date, $available_seats );
     }
 
     /**

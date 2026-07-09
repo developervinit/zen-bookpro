@@ -213,6 +213,14 @@ class ZBP_Email_Service {
             function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout' )
         );
 
+        $decline_url = add_query_arg(
+            array(
+                'zbp_waitlist_decline' => $entry_id,
+                'zbp_token'            => $token,
+            ),
+            home_url( '/' )
+        );
+
         $formatted_expiry = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), intval( $expires_at ) );
 
         // Convert duration to localized label
@@ -248,6 +256,8 @@ class ZBP_Email_Service {
         $message .= sprintf( __( 'Invitation Expires: %s', 'zen-bookpro' ), $formatted_expiry ) . "\r\n\r\n";
         $message .= __( 'Click the link below to complete your booking (1-click checkout):', 'zen-bookpro' ) . "\r\n";
         $message .= $checkout_url . "\r\n\r\n";
+        $message .= __( 'If you do not want this spot, release it for the next person here:', 'zen-bookpro' ) . "\r\n";
+        $message .= $decline_url . "\r\n\r\n";
         $message .= __( 'Thank you,', 'zen-bookpro' ) . "\r\n";
         $message .= get_bloginfo( 'name' );
 
