@@ -34,6 +34,8 @@ class ZBP_Waitlist_Service {
 
         // Seat availability listeners
         add_action( 'woocommerce_booking_status_changed', array( $this, 'handle_booking_status_change' ), 10, 3 );
+        add_action( 'woocommerce_booking_cancelled', array( $this, 'handle_booking_cancelled' ), 10, 2 );
+        add_action( 'woocommerce_bookings_cancelled_booking', array( $this, 'handle_booking_cancelled' ), 10, 1 );
         add_action( 'trashed_post', array( $this, 'handle_booking_trashed' ) );
         add_action( 'zbp_waitlist_prepare_invitations', array( $this, 'process_invitations' ), 10, 4 );
 
@@ -548,6 +550,28 @@ class ZBP_Waitlist_Service {
         $this->process_cancellation( $booking );
     }
 
+    /**
+     * Listen to explicit Woo Bookings cancellation hooks.
+     *
+     * @param int             $booking_id Booking ID.
+     * @param WC_Booking|null $booking    Booking object when provided by Woo Bookings.
+     * @return void
+     */
+    public function handle_booking_cancelled( $booking_id, $booking = null ) {
+        $booking_id = absint( $booking_id );
+        $this->log( sprintf( "handle_booking_cancelled called: booking_id=%d", $booking_id ) );
+
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            $booking = get_wc_booking( $booking_id );
+        }
+
+        if ( ! $booking || ! is_a( $booking, 'WC_Booking' ) ) {
+            $this->log( "Exiting handle_booking_cancelled: booking not found or not WC_Booking instance" );
+            return;
+        }
+
+        $this->process_cancellation( $booking );
+    }
     /**
      * Handle trashing a booking post.
      *
