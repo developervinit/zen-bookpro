@@ -253,6 +253,21 @@ class ZBP_Product_Service {
 
                     if ( ! empty( $blocks_to_check ) ) {
                         $available_slots = wc_bookings_get_time_slots( $booking_product, $blocks_to_check, array(), 0, 0, 0, true );
+
+                        foreach ( $slots as &$slot_item ) {
+                            $ts = isset( $slot_item['timestamp'] ) ? (int) $slot_item['timestamp'] : 0;
+                            if ( $ts > 0 && isset( $available_slots[ $ts ] ) ) {
+                                $slot_item['booked_spots']    = (int) $available_slots[ $ts ]['booked'];
+                                $slot_item['available_spots'] = (int) $available_slots[ $ts ]['available'];
+                                $slot_item['max_spots']       = $slot_item['booked_spots'] + $slot_item['available_spots'];
+                            } else {
+                                $slot_item['booked_spots']    = 0;
+                                $slot_item['available_spots'] = $max_spots;
+                                $slot_item['max_spots']       = $max_spots;
+                            }
+                        }
+                        unset( $slot_item );
+
                         $first_timestamp = $slots[0]['timestamp'];
 
                         if ( isset( $available_slots[ $first_timestamp ] ) ) {
@@ -262,7 +277,20 @@ class ZBP_Product_Service {
                             $max_spots = $booked_spots + $available_count;
                         }
                     }
-                } 
+                }
+
+                foreach ( $slots as &$slot_item ) {
+                    if ( ! isset( $slot_item['booked_spots'] ) ) {
+                        $slot_item['booked_spots'] = 0;
+                    }
+                    if ( ! isset( $slot_item['max_spots'] ) ) {
+                        $slot_item['max_spots'] = $max_spots;
+                    }
+                    if ( ! isset( $slot_item['available_spots'] ) ) {
+                        $slot_item['available_spots'] = max( 0, $slot_item['max_spots'] - $slot_item['booked_spots'] );
+                    }
+                }
+                unset( $slot_item ); 
                 
                 // CRITICAL FIX: If slots are empty or booked_spots is 0 but it's an event, 
                 // fetch actual bookings to see if it's just full.

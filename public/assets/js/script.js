@@ -434,7 +434,11 @@
 
                                     var disabledAttr = isCancelled ? " disabled aria-disabled=\"true\"" : "";
 
-                                    return '<button type="button" class="zbp-slot-chip' + pastClass + cancelledClass + '"' + disabledAttr + ' data-value="' + escapeHtml(val) + '">' + escapeHtml(label) + "</button>";
+                                    var availSpotsAttr = (slot && slot.available_spots !== undefined) ? (' data-available-spots="' + escapeHtml(String(slot.available_spots)) + '"') : '';
+                                    var maxSpotsAttr = (slot && slot.max_spots !== undefined) ? (' data-max-spots="' + escapeHtml(String(slot.max_spots)) + '"') : '';
+                                    var bookedSpotsAttr = (slot && slot.booked_spots !== undefined) ? (' data-booked-spots="' + escapeHtml(String(slot.booked_spots)) + '"') : '';
+
+                                    return '<button type="button" class="zbp-slot-chip' + pastClass + cancelledClass + '"' + disabledAttr + ' data-value="' + escapeHtml(val) + '"' + availSpotsAttr + maxSpotsAttr + bookedSpotsAttr + '>' + escapeHtml(label) + "</button>";
 
                                 })
 
@@ -509,6 +513,8 @@
                             (instructorHtml ? ' ' + instructorHtml : '') +
 
                             "</div>" +
+
+                            '<div class="zbp-slot-remaining-spots" style="display: none; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 13px; margin-top: 4px;"></div>' +
 
                             '<button class="zbp-join-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(bookingCoinCost) + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
 
@@ -2079,9 +2085,12 @@
 
                         }
 
-                        // Update join button on product card
+                        // Update join button & remaining spots display on product card
                         var cardContent = chip.closest(".zbp-card-content");
+                        var remainingSpotsEl = cardContent ? cardContent.querySelector(".zbp-slot-remaining-spots") : null;
                         var joinBtn = cardContent ? cardContent.querySelector(".zbp-join-btn") : null;
+                        var selectedSlotObj = null;
+
                         if (joinBtn) {
                             var slotsRaw = joinBtn.getAttribute("data-product-slots") || "[]";
                             var slots = [];
@@ -2089,7 +2098,7 @@
                                 slots = JSON.parse(slotsRaw);
                             } catch (e) {}
                             var selectedVal = chip.getAttribute("data-value");
-                            var selectedSlotObj = slots.find(function (s) {
+                            selectedSlotObj = slots.find(function (s) {
                                 var val = (s && s.value) ? s.value : s;
                                 return String(val) === String(selectedVal);
                             });
@@ -2108,6 +2117,29 @@
                                 joinBtn.classList.remove("is-ended");
                                 joinBtn.disabled = false;
                                 joinBtn.removeAttribute("aria-disabled");
+                            }
+                        }
+
+                        if (remainingSpotsEl) {
+                            var available = null;
+                            var max = 1;
+
+                            if (selectedSlotObj && selectedSlotObj.available_spots !== undefined) {
+                                available = toSafeInt(selectedSlotObj.available_spots, 0);
+                                max = toSafeInt(selectedSlotObj.max_spots, 1);
+                            } else if (chip.hasAttribute("data-available-spots")) {
+                                available = toSafeInt(chip.getAttribute("data-available-spots"), 0);
+                                max = toSafeInt(chip.getAttribute("data-max-spots"), 1);
+                            }
+
+                            if (max > 1 && available !== null) {
+                                var iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-top:-2px;"><circle cx="6.5" cy="10" r="3"></circle><path d="M6.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="17.5" cy="10" r="3"></circle><path d="M17.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="12" cy="8.5" r="3.5"></circle><path d="M12 13c-2.2 0-6 .9-6 2.5V18h12v-2.5c0-1.6-3.8-2.5-6-2.5z"></path></svg>';
+                                var text = available > 0 ? (available + " spot" + (available === 1 ? "" : "s") + " remaining") : "0 spots remaining (Full)";
+                                remainingSpotsEl.innerHTML = iconSvg + " <span>" + escapeHtml(text) + "</span>";
+                                remainingSpotsEl.style.display = "flex";
+                            } else {
+                                remainingSpotsEl.style.display = "none";
+                                remainingSpotsEl.innerHTML = "";
                             }
                         }
 
