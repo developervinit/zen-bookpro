@@ -454,8 +454,26 @@ class ZBP_Product_Service {
                 'hide_before_value' => $hide_before_value,
                 'hide_before_unit'  => $hide_before_unit,
                 'slot_debug'        => $slot_debug,
+                'product_list_order' => get_post_meta( $product_id, '_zbp_product_list_order', true ),
             );
         }
+
+        usort(
+            $mapped,
+            static function ( $a, $b ) {
+                $raw_a = isset( $a['product_list_order'] ) ? $a['product_list_order'] : '';
+                $raw_b = isset( $b['product_list_order'] ) ? $b['product_list_order'] : '';
+
+                $order_a = ( '' !== $raw_a && null !== $raw_a ) ? (int) $raw_a : 99999;
+                $order_b = ( '' !== $raw_b && null !== $raw_b ) ? (int) $raw_b : 99999;
+
+                if ( $order_a === $order_b ) {
+                    return (int) ( $a['id'] ?? 0 ) <=> (int) ( $b['id'] ?? 0 );
+                }
+
+                return $order_a <=> $order_b;
+            }
+        );
 
         return $mapped;
     }

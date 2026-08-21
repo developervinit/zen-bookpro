@@ -332,15 +332,15 @@
 
 
 
-            if (!Array.isArray(products) || products.length === 0) {
+            products.sort(function (a, b) {
+                var orderA = (a && a.product_list_order !== undefined && a.product_list_order !== "" && a.product_list_order !== null) ? toSafeInt(a.product_list_order, 99999) : 99999;
+                var orderB = (b && b.product_list_order !== undefined && b.product_list_order !== "" && b.product_list_order !== null) ? toSafeInt(b.product_list_order, 99999) : 99999;
 
-                renderEmptyState(productList);
-
-                return;
-
-            }
-
-
+                if (orderA === orderB) {
+                    return toSafeInt(a ? a.id : 0, 0) - toSafeInt(b ? b.id : 0, 0);
+                }
+                return orderA - orderB;
+            });
 
             var html = products
 

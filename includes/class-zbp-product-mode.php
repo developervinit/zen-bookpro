@@ -10,6 +10,7 @@ class ZBP_Product_Mode {
     const META_KEY = '_zbp_product_mode';
     const META_KEY_CANCELLATION_POLICY = '_zbp_cancellation_policy';
     const META_KEY_LOCATION = '_zbp_location';
+    const META_KEY_LIST_ORDER = '_zbp_product_list_order';
 
     /**
      * Allowed mode values.
@@ -291,6 +292,21 @@ class ZBP_Product_Mode {
             )
         );
 
+        woocommerce_wp_text_input(
+            array(
+                'id'          => self::META_KEY_LIST_ORDER,
+                'label'       => __( 'Product List Order', 'zen-bookpro' ),
+                'description' => __( 'Enter numeric order (e.g. 1, 2, 3) to position this product in the frontend list.', 'zen-bookpro' ),
+                'desc_tip'    => true,
+                'type'        => 'number',
+                'custom_attributes' => array(
+                    'step' => '1',
+                    'min'  => '0',
+                ),
+                'value'       => $product_id > 0 ? (string) get_post_meta( $product_id, self::META_KEY_LIST_ORDER, true ) : '',
+            )
+        );
+
         echo '</div>';
     }
 
@@ -313,9 +329,16 @@ class ZBP_Product_Mode {
 
         $raw_cancellation_policy = isset( $_POST[ self::META_KEY_CANCELLATION_POLICY ] ) ? wp_unslash( $_POST[ self::META_KEY_CANCELLATION_POLICY ] ) : '';
         $raw_location            = isset( $_POST[ self::META_KEY_LOCATION ] ) ? wp_unslash( $_POST[ self::META_KEY_LOCATION ] ) : '';
+        $raw_list_order          = isset( $_POST[ self::META_KEY_LIST_ORDER ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::META_KEY_LIST_ORDER ] ) ) : '';
 
         $product->update_meta_data( self::META_KEY_CANCELLATION_POLICY, sanitize_text_field( $raw_cancellation_policy ) );
         $product->update_meta_data( self::META_KEY_LOCATION, sanitize_text_field( $raw_location ) );
+
+        if ( '' !== $raw_list_order ) {
+            $product->update_meta_data( self::META_KEY_LIST_ORDER, absint( $raw_list_order ) );
+        } else {
+            $product->delete_meta_data( self::META_KEY_LIST_ORDER );
+        }
 
         // Handle date-specific cancellations
         if ( 'event' === $mode ) {

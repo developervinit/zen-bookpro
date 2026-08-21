@@ -141,6 +141,7 @@ class ZBP_Shortcode {
                     'event_status'    => isset( $product['event_status'] ) ? $product['event_status'] : 'join',
                     'slot_debug'      => isset( $product['slot_debug'] ) ? $product['slot_debug'] : '',
                     'zen_instructor'  => isset( $product['zen_instructor'] ) ? sanitize_text_field( $product['zen_instructor'] ) : '',
+                    'product_list_order' => isset( $product['product_list_order'] ) ? $product['product_list_order'] : '',
                 );
             },
             $products
