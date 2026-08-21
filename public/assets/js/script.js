@@ -506,6 +506,8 @@
 
                             '<div class="zbp-card-bottom">' +
 
+                            '<div class="zbp-card-bottom-left" style="display: flex; flex-direction: column; align-items: flex-start;">' +
+
                             '<div class="zbp-duration">' +
 
                             duration +
@@ -514,7 +516,9 @@
 
                             "</div>" +
 
-                            '<div class="zbp-slot-remaining-spots" style="display: none; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 13px; margin-top: 4px;"></div>' +
+                            '<div class="zbp-slot-remaining-spots" style="display: none; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 13px; margin-top: 4px; text-align: left;"></div>' +
+
+                            "</div>" +
 
                             '<button class="zbp-join-btn" type="button" data-product-id="' + escapeHtml(String(product.id || 0)) + '" data-product-name="' + escapeHtml(product.name || "") + '" data-product-zencoins="' + escapeHtml(bookingCoinCost) + '" data-product-image="' + escapeHtml(popupImage || "") + '" data-product-mode="' + escapeHtml(product.mode || "") + '" data-product-duration-minutes="' + escapeHtml(String(product.booking_duration_minutes || 0)) + '" data-product-description="' + escapeHtml(product.description || "") + '" data-product-cancellation-policy="' + escapeHtml(product.cancellation_policy || "") + '" data-product-instructor="' + escapeHtml(product.zen_instructor || "") + '" data-product-location="' + escapeHtml(product.location || "") + '" data-product-experience-category="' + escapeHtml(product.experience_category || "") + '" data-product-slots="' + escapeHtml(JSON.stringify(product.slots || [])) + '" data-product-gallery="' + escapeHtml(JSON.stringify(product.gallery || [])) + '">Join</button>' +
 
@@ -2123,19 +2127,29 @@
                         if (remainingSpotsEl) {
                             var available = null;
                             var max = 1;
+                            var booked = 0;
 
                             if (selectedSlotObj && selectedSlotObj.available_spots !== undefined) {
                                 available = toSafeInt(selectedSlotObj.available_spots, 0);
                                 max = toSafeInt(selectedSlotObj.max_spots, 1);
+                                booked = selectedSlotObj.booked_spots !== undefined ? toSafeInt(selectedSlotObj.booked_spots, 0) : Math.max(0, max - available);
                             } else if (chip.hasAttribute("data-available-spots")) {
                                 available = toSafeInt(chip.getAttribute("data-available-spots"), 0);
                                 max = toSafeInt(chip.getAttribute("data-max-spots"), 1);
+                                booked = chip.hasAttribute("data-booked-spots") ? toSafeInt(chip.getAttribute("data-booked-spots"), 0) : Math.max(0, max - available);
                             }
 
                             if (max > 1 && available !== null) {
+                                if (booked < 0) booked = 0;
+                                if (booked > max) max = booked;
+
+                                var volumeText = booked + "/" + max;
+                                if (booked >= max) {
+                                    volumeText += " (Full)";
+                                }
+
                                 var iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-top:-2px;"><circle cx="6.5" cy="10" r="3"></circle><path d="M6.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="17.5" cy="10" r="3"></circle><path d="M17.5 14c-1.8 0-4.5.7-4.5 2.2V18h9v-1.8c0-1.5-2.7-2.2-4.5-2.2z"></path><circle cx="12" cy="8.5" r="3.5"></circle><path d="M12 13c-2.2 0-6 .9-6 2.5V18h12v-2.5c0-1.6-3.8-2.5-6-2.5z"></path></svg>';
-                                var text = available > 0 ? (available + " spot" + (available === 1 ? "" : "s") + " remaining") : "0 spots remaining (Full)";
-                                remainingSpotsEl.innerHTML = iconSvg + " <span>" + escapeHtml(text) + "</span>";
+                                remainingSpotsEl.innerHTML = iconSvg + " <span>" + escapeHtml(volumeText) + "</span>";
                                 remainingSpotsEl.style.display = "flex";
                             } else {
                                 remainingSpotsEl.style.display = "none";
