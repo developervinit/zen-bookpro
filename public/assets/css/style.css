@@ -575,6 +575,7 @@
     background: #3f3f42;
     border-top: 1px solid #4b4b4f;
 }
+
 .zbp-join-notice {
     background: rgba(255, 241, 242, 0.96);
     border: 1px solid #d71920;
@@ -861,6 +862,7 @@
     .zbp-join-title-wrap {
         padding: 12px 14px 14px;
     }
+
     .zbp-join-date-row,
     .zbp-join-time-row,
     .zbp-join-volume-row {
@@ -1044,7 +1046,7 @@
 
 .zbp-product-image {
     border-radius: 8px;
-    height: 68px;
+    height: 60px;
     object-fit: cover;
     width: 68px;
 }
