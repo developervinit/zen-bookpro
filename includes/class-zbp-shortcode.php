@@ -45,8 +45,8 @@ class ZBP_Shortcode {
         $style_url = ZBP_PLUGIN_URL . 'public/assets/css/style.css';
         $style_path = ZBP_PLUGIN_PATH . 'public/assets/css/style.css';
 
-        $script_ver = file_exists( $script_path ) ? filemtime( $script_path ) : ZBP_VERSION;
-        $style_ver  = file_exists( $style_path ) ? filemtime( $style_path ) : ZBP_VERSION;
+        $script_ver = ZBP_VERSION . '.' . ( file_exists( $script_path ) ? filemtime( $script_path ) : time() );
+        $style_ver  = ZBP_VERSION . '.' . ( file_exists( $style_path ) ? filemtime( $style_path ) : time() );
 
         wp_register_style(
             'zbp-style',
