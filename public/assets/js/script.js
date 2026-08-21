@@ -646,7 +646,13 @@
 
 
 
-                    var volumeText = bookedSpots + "/" + maxSpots + " (Voll)";
+                    var volumeText = bookedSpots + "/" + maxSpots;
+
+                    if (bookedSpots >= maxSpots) {
+
+                        volumeText += " (Full)";
+
+                    }
 
                     var volumeHtml = '<p style="display: flex; align-items: center; gap: 4px; color: var(--zbp-accent); font-weight: 500; font-size: 14px; margin: 0;">' +
 
